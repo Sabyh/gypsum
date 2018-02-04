@@ -7,3 +7,4 @@ node_modules
 /src
 /tsconfig.json
 /nodemon.json
+npm-debug.log*

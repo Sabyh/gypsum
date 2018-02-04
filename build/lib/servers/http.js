@@ -2,12 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const http = require("http");
-const socketIO = require("socket.io");
+const IO = require("socket.io");
 class Server {
     constructor() {
         this.app = express();
         this.server = http.createServer(this.app);
-        this.io = socketIO(this.server);
+        this.io = IO(this.server);
     }
     start(port) {
         this.server.listen(port);
