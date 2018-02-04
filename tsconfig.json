@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./build",
+    "rootDir": "./src",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "strictNullChecks": true,
+    "experimentalDecorators": true,
+    "declaration": true,
+    "declarationDir": "./build",
+    "noUnusedLocals": false,
+    "types": ["@types/node"],
+    "sourceMap": true
+  },
+
+  "include": [
+    "./src/**/*"
+  ]
+}

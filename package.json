@@ -1,0 +1,60 @@
+{
+  "name": "gypsum",
+  "version": "1.0.0",
+  "license": "ISC",
+  "author": {
+    "name": "AmmAr Mourad",
+    "email": "amrmrd111spcl@hotmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ammar6885/gypsum.git"
+  },
+  "keywords": [
+    "Rest",
+    "socket.io",
+    "server",
+    "framework",
+    "javascript",
+    "realtime",
+    "gypsum",
+    "mongo",
+    "typescript"
+  ],
+  "description": "Simple and easy lightweight typescript server side framework on Node.js.",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "scripts": {
+    "dev": "nodemon"
+  },
+  "dependencies": {
+    "@types/body-parser": "^1.16.8",
+    "@types/chalk": "^2.2.0",
+    "@types/compression": "0.0.35",
+    "@types/cookie-parser": "^1.4.1",
+    "@types/express": "^4.11.0",
+    "@types/jsonwebtoken": "^7.2.5",
+    "@types/method-override": "0.0.31",
+    "@types/mongodb": "^3.0.1",
+    "@types/node": "^9.3.0",
+    "@types/nodemailer": "^4.3.1",
+    "@types/socket.io": "^1.4.31",
+    "body-parser": "^1.18.2",
+    "chalk": "^2.3.0",
+    "compression": "^1.7.1",
+    "cookie-parser": "^1.4.3",
+    "express": "^4.16.2",
+    "jsonwebtoken": "^8.1.0",
+    "method-override": "^2.3.10",
+    "mongodb": "^3.0.1",
+    "nodemailer": "^4.4.2",
+    "socket.io": "^2.0.4",
+    "validall": "^2.4.6"
+  },
+  "devDependencies": {
+    "concurrently": "^3.5.1",
+    "nodemon": "^1.14.11",
+    "tslint": "^5.9.1",
+    "typescript": "^2.6.2"
+  }
+}
