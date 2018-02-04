@@ -4,6 +4,6 @@ import * as http from 'http';
 export declare class Server {
     app: express.Express;
     server: http.Server;
-    io: IO.Server;
+    io: SocketIO.Server;
     start(port: number): void;
 }

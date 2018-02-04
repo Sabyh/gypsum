@@ -11,7 +11,7 @@ export interface IMiddlewares {
 }
 export declare class AppState {
     private _sockets;
-    protected _io: IO.Server;
+    protected _io: SocketIO.Server;
     readonly router: express.Router;
     readonly root: string;
     readonly env: string;
@@ -22,9 +22,9 @@ export declare class AppState {
     hooks: ((ctx: Context, ...args: any[]) => void)[];
     getModel(name: string): Model | undefined;
     getHook(name: string): ((ctx: Context, ...args: any[]) => void) | undefined;
-    pushSocket(socket: IO.Socket): void;
+    pushSocket(socket: SocketIO.Socket): void;
     deleteSocket(id: string): void;
-    readonly sockets: () => IterableIterator<IO.Socket>;
+    readonly sockets: () => IterableIterator<SocketIO.Socket>;
     setConfiguration(userConfig?: IGypsumConfig): void;
 }
 declare const State: AppState;

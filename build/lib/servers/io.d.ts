@@ -1,1 +1,1 @@
-export declare function initSocket(io: IO.Server): void;
+export declare function initSocket(io: SocketIO.Server): void;

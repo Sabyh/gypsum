@@ -11,7 +11,7 @@ export interface IContext {
     service: IService;
     cookies?: any;
     res?: express.Response;
-    socket?: IO.Socket;
+    socket?: SocketIO.Socket;
     domain?: RESPONSE_DOMAINS;
     room?: string;
 }
@@ -35,7 +35,7 @@ export declare class Context {
     logger: Logger;
     constructor(type: API_TYPES.REST | API_TYPES.SOCKET, data: IContext);
     static Rest(model: Model, service: IService): (req: express.Request, res: express.Response, next: express.NextFunction) => void;
-    static Socket(socket: IO.Socket, model: Model, service: IService): (data: any) => void;
+    static Socket(socket: SocketIO.Socket, model: Model, service: IService): (data: any) => void;
     static deleteContextsOf(type: string, identifier: string): void;
     private _mInit(hooks?, extraHooks?);
     private _mRespond();
