@@ -1,6 +1,6 @@
 {
   "name": "gypsum",
-  "version": "2.3.10",
+  "version": "2.3.11",
   "license": "ISC",
   "author": {
     "name": "AmmAr Mourad",
@@ -22,8 +22,8 @@
     "typescript"
   ],
   "description": "Simple and easy lightweight typescript server side framework on Node.js.",
-  "main": "build/index.js",
-  "types": "build/index.d.ts",
+  "main": "build/lib/main.js",
+  "types": "build/lib/main.d.ts",
   "scripts": {
     "dev": "nodemon"
   },
