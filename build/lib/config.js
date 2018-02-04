@@ -21,8 +21,8 @@ exports.Config = {
             tranporterOptions: null,
             activationMailFrom: 'me@threre.com',
             activationMailSubject: 'Activation Email',
-            activationPage: path.join(__dirname, '../../email_templates/activation-page-template.html'),
-            activationMailTemplatePath: path.join(__dirname, '../../email_templates/activation-email-template.html')
+            activationPage: path.join(__dirname, '../templates/activation-page-template.html'),
+            activationMailTemplatePath: path.join(__dirname, '../templates/activation-email-template.html')
         },
         server: {
             server_name: 'gypsum',

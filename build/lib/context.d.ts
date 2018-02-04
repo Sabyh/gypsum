@@ -56,6 +56,6 @@ export declare class Context {
     ok(data: any, count?: number, code?: RESPONSE_CODES): void;
     getResponseData(): any;
     setResponseData(data: any): Context;
-    sendHtml(html: string): void;
-    sendFile(filePath: string): void;
+    sendHtml(html: string, code?: number): void;
+    sendFile(filePath: string, code?: number): void;
 }

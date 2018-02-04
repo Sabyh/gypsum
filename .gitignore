@@ -1,5 +1,7 @@
 .vscode
 build/test
+templates
+prebuild.js
 client
 node_modules
 src

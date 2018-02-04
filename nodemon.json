@@ -2,5 +2,5 @@
   "verbose": true,
   "ext": "ts json",
   "watch": ["./src"],
-  "exec": "tsc && node ./build/test/index"
+  "exec": "node prebuild && tsc && node ./build/test/index"
 }

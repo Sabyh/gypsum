@@ -218,10 +218,11 @@ class Context {
         Object.assign(this._response.data || {}, data || {});
         return this;
     }
-    sendHtml(html) {
+    sendHtml(html, code = 200) {
         if (this._res) {
-            this._res.type('html');
-            this._res.send(html);
+            this._res.type('html')
+                .status(code)
+                .send(html);
         }
         else {
             this.next({
@@ -230,9 +231,9 @@ class Context {
             });
         }
     }
-    sendFile(filePath) {
+    sendFile(filePath, code = 200) {
         if (this._res)
-            this._res.sendFile(filePath);
+            this._res.status(code).sendFile(filePath);
         else
             this.next({
                 message: 'cannot send file on socket connection',
