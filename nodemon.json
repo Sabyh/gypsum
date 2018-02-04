@@ -1,6 +1,0 @@
-{
-  "verbose": true,
-  "ext": "ts json",
-  "watch": ["./src"],
-  "exec": "node prebuild && tsc && node ./build/test/index"
-}
