@@ -63,4 +63,8 @@ export interface IGypsumConfig {
     dev: IConfig;
     prod: IConfig;
 }
+export interface IGypsumConfigurations {
+    dev?: IConfig;
+    prod?: IConfig;
+}
 export declare const Config: IGypsumConfig;

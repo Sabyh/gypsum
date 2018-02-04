@@ -1,22 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const cluster = require("cluster");
-const path = require("path");
 const Types = require("./types");
 exports.Types = Types;
 const safe_1 = require("./misc/safe");
 const logger_1 = require("./misc/logger");
 const safe = new safe_1.Safe('main');
 const state_1 = require("./state");
-let userConfig = {};
-try {
-    userConfig = require(path.join(state_1.State.root, 'gypsum.config.json'));
-}
-catch (e) {
-    logger_1.Logger.Warn('gypsum.config.json not found.. using default configuration');
-}
-state_1.State.setConfiguration(userConfig);
-logger_1.Logger.SetOptions(state_1.State.config.logger_options);
 const hooks_1 = require("./hooks");
 state_1.State.hooks.push(...hooks_1.hooks);
 const model_1 = require("./model/model");
@@ -58,17 +48,25 @@ exports.Gypsum = {
     get(name) {
         return state_1.State.config[name];
     },
-    make(options) {
-        if (state_1.State.config.processes !== 1 && cluster.isMaster) {
-            workers_1.initializeWorkers(state_1.State.config.processes);
-            return;
-        }
+    configure(userConfig = {}) {
+        state_1.State.setConfiguration(userConfig);
+        logger_1.Logger.SetOptions(state_1.State.config.logger_options);
+        return this;
+    },
+    use(options) {
         if (options.hooks)
             useHooks(options.hooks);
         if (options.middlewares)
             useMiddlewares(options.middlewares);
         if (options.models)
             useModels(options.models);
+        return this;
+    },
+    bootstrap() {
+        if (state_1.State.config.processes !== 1 && cluster.isMaster) {
+            workers_1.initializeWorkers(state_1.State.config.processes);
+            return;
+        }
         if (state_1.State.config.authentication)
             authentication_1.initAuthentication();
         logger.info('instantiating Models...');
