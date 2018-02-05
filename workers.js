@@ -3,11 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const cluster = require("cluster");
 const os_1 = require("os");
 const logger_1 = require("./misc/logger");
-const logger = new logger_1.Logger('workers');
+let logger;
 let isRestarting = false;
 function initializeWorkers(processesCount) {
     let cores = os_1.cpus().length;
     let workersCount = (processesCount === 'max' || processesCount >= cores) ? cores : processesCount;
+    logger = new logger_1.Logger('workers');
     logger.info(`forking processes count: ${workersCount}`);
     for (let i = 0; i < workersCount; i++)
         cluster.fork();

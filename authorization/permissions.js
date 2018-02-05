@@ -6,11 +6,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const model_1 = require("../model/model");
-const model_2 = require("../decorators/model");
+const models_1 = require("../models");
+const model_1 = require("../decorators/model");
 const service_1 = require("../decorators/service");
 const state_1 = require("../state");
-let Permissions = class Permissions extends model_1.Model {
+let Permissions = class Permissions extends models_1.Model {
     find(ctx) {
         let models = state_1.State.models;
         let result = [];
@@ -30,7 +30,7 @@ __decorate([
     service_1.SERVICE()
 ], Permissions.prototype, "find", null);
 Permissions = __decorate([
-    model_2.MODEL({
+    model_1.MODEL({
         secure: true,
         authorize: true
     })

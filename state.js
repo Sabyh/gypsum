@@ -11,6 +11,7 @@ const config_1 = require("./config");
 const string_1 = require("./util/string");
 const friend_1 = require("./decorators/friend");
 const safe_1 = require("./misc/safe");
+const logger_1 = require("./misc/logger");
 let safe = new safe_1.Safe('state');
 class AppState {
     constructor() {
@@ -30,18 +31,16 @@ class AppState {
     getHook(name) {
         return this.hooks.find(hook => hook.name === name) || undefined;
     }
+    getSocket(id) {
+        if (id)
+            return this._sockets.find((socket) => socket.id = id);
+    }
     pushSocket(socket) {
         this._sockets[socket.id] = socket;
     }
     deleteSocket(id) {
+        logger_1.Logger.Info('Deleting socket from server state with id:', id);
         delete this._sockets[id];
-    }
-    get sockets() {
-        let self = this;
-        return function* () {
-            for (let prop in self._sockets)
-                yield self._sockets[prop];
-        };
     }
     setConfiguration(userConfig = {}) {
         if (userConfig.dev && userConfig.dev.authConfig)

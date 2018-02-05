@@ -58,6 +58,7 @@ class Context {
         };
     }
     static deleteContextsOf(type, identifier) {
+        logger_1.Logger.Info('Deleteing context of type:', type, ', identifier:', identifier);
         if (type === 'socket') {
             if (identifier)
                 for (let i = 0; i < contexts.length; i++)
@@ -107,22 +108,22 @@ class Context {
                 this._response.room = this._room || this._response.room;
                 if (this._response.domain === types_1.RESPONSE_DOMAINS.ROOM && this._response.room) {
                     if (process && process.send)
-                        process.send({ data: this._response, target: 'others', action: 'response' });
+                        process.send({ data: this._response, target: 'others', action: 'response', socketId: this._socket.id });
                     this._socket.to(this._response.room).emit(this._response.event, this._response);
                 }
                 else if (this._response.domain === types_1.RESPONSE_DOMAINS.ALL_ROOM && this._response.room) {
                     if (process && process.send)
-                        process.send({ data: this._response, target: 'others', action: 'response' });
+                        process.send({ data: this._response, target: 'others', action: 'response', socketId: this._socket.id });
                     this._socket.broadcast.to(this._response.room).emit(this._response.event, this._response);
                 }
                 else if (this._response.domain === types_1.RESPONSE_DOMAINS.OTHERS) {
                     if (process && process.send)
-                        process.send({ data: this._response, target: 'others', action: 'response' });
+                        process.send({ data: this._response, target: 'others', action: 'response', socketId: this._socket.id });
                     this._socket.broadcast.emit(this._response.event, this._response);
                 }
                 else if (this._response.domain === types_1.RESPONSE_DOMAINS.ALL) {
                     if (process && process.send)
-                        process.send({ data: this._response, target: 'others', action: 'response' });
+                        process.send({ data: this._response, target: 'others', action: 'response', socketId: this._socket.id });
                     let io = state_1.State[safe.get('State._io')];
                     io.sockets.emit(this._response.event, this._response);
                 }

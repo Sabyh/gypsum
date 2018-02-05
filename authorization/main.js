@@ -6,11 +6,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const model_1 = require("../model/model");
+const models_1 = require("../models");
 const decorators_1 = require("../decorators");
 const index_1 = require("../types/index");
 const index_2 = require("../util/index");
-let Authorization = Authorization_1 = class Authorization extends model_1.Model {
+let Authorization = Authorization_1 = class Authorization extends models_1.Model {
     _mGetUserRolesFromGroups(id) {
         return new Promise((resolve, reject) => {
             this.groups.find({ users: { $in: [id] } })

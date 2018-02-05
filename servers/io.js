@@ -11,7 +11,7 @@ function initSocket(io) {
     io.on('connection', (socket) => {
         const logger = new logger_1.Logger('ioServer');
         state_1.State.pushSocket(socket);
-        logger.info('socket connected:', socket.id);
+        logger.info(`socket connected: { socketId: ${socket.id}, pid: ${process.pid} }`);
         logger.info('Implementing socket web services');
         if (state_1.State.models && state_1.State.models.length) {
             let models = state_1.State.models;
@@ -27,9 +27,18 @@ function initSocket(io) {
                 }
             }
         }
-        process.on('message', msg => {
-            if (msg.data && msg.action === 'response') {
-                let response = msg.data;
+        socket.on('disconnect', () => {
+            context_1.Context.deleteContextsOf('socket', socket.id);
+            state_1.State.deleteSocket(socket.id);
+            io.emit('user disconnected');
+            socket.disconnect();
+        });
+    });
+    process.on('message', msg => {
+        if (msg.data && msg.action === 'response' && msg.socketId) {
+            let response = msg.data;
+            let socket = state_1.State.getSocket(msg.socketId);
+            if (socket) {
                 if (response.domain === types_1.RESPONSE_DOMAINS.ROOM && response.room) {
                     socket.to(response.room).emit(response.event, response);
                 }
@@ -43,12 +52,7 @@ function initSocket(io) {
                     io.sockets.emit(response.event, response);
                 }
             }
-        });
-        socket.on('disconnect', () => {
-            context_1.Context.deleteContextsOf('socket', socket.id);
-            state_1.State.deleteSocket(socket.id);
-            io.emit('user disconnected');
-        });
+        }
     });
 }
 exports.initSocket = initSocket;

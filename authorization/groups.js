@@ -6,10 +6,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mongo_model_1 = require("../model/mongo-model");
+const models_1 = require("../models");
 const index_1 = require("../decorators/index");
 const state_1 = require("../state");
-let AuthGroups = class AuthGroups extends mongo_model_1.MongoModel {
+let AuthGroups = class AuthGroups extends models_1.MongoModel {
     onCollection() {
         state_1.State.getModel('Authorization').groups = this.collection;
     }

@@ -6,10 +6,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mongo_model_1 = require("../model/mongo-model");
+const models_1 = require("../models");
 const decorators_1 = require("../decorators");
 const state_1 = require("../state");
-let AuthRoles = class AuthRoles extends mongo_model_1.MongoModel {
+let AuthRoles = class AuthRoles extends models_1.MongoModel {
     constructor() {
         super();
         this.authenticationModel = state_1.State.getModel('Authentication');

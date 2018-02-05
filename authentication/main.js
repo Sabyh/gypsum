@@ -12,11 +12,11 @@ const Validall = require("validall");
 const jwt = require("jsonwebtoken");
 const nodemailer_1 = require("nodemailer");
 const state_1 = require("../state");
-const model_1 = require("../model/model");
+const models_1 = require("../models");
 const types_1 = require("../types");
 const decorators_1 = require("../decorators");
 const util_1 = require("../util");
-let Authentication = class Authentication extends model_1.Model {
+let Authentication = class Authentication extends models_1.Model {
     constructor() {
         super();
         if (state_1.State.config.usersModel) {
