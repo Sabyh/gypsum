@@ -1,10 +1,10 @@
 .vscode
-/build/test
-/templates
+/test
 /prebuild.js
 /client
 node_modules
-/src
 /tsconfig.json
 /nodemon.json
 npm-debug.log*
+*.ts
+!*.d.ts
