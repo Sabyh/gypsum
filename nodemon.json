@@ -1,0 +1,10 @@
+{
+  "verbose": true,
+  "ext": "ts json",
+  "exec": "tsc && node ./test/index",
+  "ignore": [
+    ".git",
+    "node_modules/**/*",
+    "node_modules/**/node_modules"
+  ]
+}

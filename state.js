@@ -32,8 +32,7 @@ class AppState {
         return this.hooks.find(hook => hook.name === name) || undefined;
     }
     getSocket(id) {
-        if (id)
-            return this._sockets.find((socket) => socket.id = id);
+        return this._sockets[id];
     }
     pushSocket(socket) {
         this._sockets[socket.id] = socket;

@@ -1,0 +1,10 @@
+.vscode
+/test
+/prebuild.js
+/client
+node_modules
+/tsconfig.json
+/nodemon.json
+npm-debug.log*
+*.ts
+!*.d.ts

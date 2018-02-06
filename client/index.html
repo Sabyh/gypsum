@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Gypsum Client Socket Test</title>
+
+  <style>
+    * {
+      font-family: 'Lato'
+    }
+
+    p {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Gypsum Client Socket Test</h1>
+
+  <p>Event</p>
+  <input type="text" id="eventInput" value="Users publish">
+  <hr>
+  <p>Room</p>
+  <input type="text" id="roomInput">
+  <hr>
+  <p>Query</p>
+  <textarea id="queryInput" cols="30" rows="5">{"name":"Ammar"}</textarea>
+  <hr>
+  <p>Body</p>
+  <textarea id="bodyArea" cols="30" rows="10">{"age": 33}</textarea>
+  <br>
+  <br>
+  <button id="sendButton">Send</button>
+
+  <script src="http://localhost:7771/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io('http://localhost:7771', { forceNew: true });
+
+    let eventInput = document.getElementById("eventInput");
+    let roomInput = document.getElementById("roomInput");
+    let queryInput = document.getElementById("queryInput");
+    let bodyArea = document.getElementById("bodyArea");
+    let sendButton = document.getElementById("sendButton");
+
+    sendButton.addEventListener('click', e => {
+      socket.emit(eventInput.value, {
+        room: roomInput.value,
+        query: JSON.parse(queryInput.value),
+        body: JSON.parse(bodyArea.value)
+      });
+
+    });
+
+    socket.on(eventInput.value, data => {
+      console.log(data);
+    });
+    
+  </script>
+</body>
+
+</html>
