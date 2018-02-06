@@ -8,7 +8,7 @@ npm install --save gypsum
 
 ## Status:
 
-On test.
+Testing.
 
 ## Documentation:
 
