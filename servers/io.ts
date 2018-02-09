@@ -49,20 +49,13 @@ export function initSocket(io: any) {
   });
 
   process.on('message', msg => {
-    if (msg.data && msg.action === 'response' && msg.socketId) {
+    if (msg.data && msg.action === 'response') {
       let response: Response = msg.data;
-      let socket = State.getSocket(msg.socketId);
 
-      if (socket) {
-        if (response.domain === RESPONSE_DOMAINS.ROOM && response.room) {
-          socket.to(response.room).emit(response.event, response);
-        } else if (response.domain === RESPONSE_DOMAINS.ALL_ROOM && response.room) {
-          socket.broadcast.to(response.room).emit(response.event, response);
-        } else if (response.domain === RESPONSE_DOMAINS.OTHERS) {
-          socket.broadcast.emit(response.event, response);
-        } else if (response.domain === RESPONSE_DOMAINS.ALL) {
-          io.sockets.emit(response.event, response);
-        }
+      if ((response.domain === RESPONSE_DOMAINS.ROOM || response.domain === RESPONSE_DOMAINS.ALL_ROOM) && response.room) {
+        io.to(response.room).emit(response.event, response);
+      } else if (response.domain === RESPONSE_DOMAINS.OTHERS || response.domain === RESPONSE_DOMAINS.ALL) {
+        io.sockets.emit(response.event, response);
       }
     }
   });

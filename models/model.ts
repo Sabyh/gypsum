@@ -33,7 +33,7 @@ export class Model {
 
     for (let prop in this) {
       
-      let service: IService = this[prop];
+      let service: IService = <any>this[prop];
       let isService = service.isService ? !this.$get('internal') : false;
 
       if (service && isService) {        
@@ -104,11 +104,11 @@ export class Model {
     this._hooksData = {};
 
     for (let prop in this) {
-      if (this[prop] && (<IHook>this[prop]).isHook) {
+      if (this[prop] && (<any>this[prop]).isHook) {
         this._hooksData[prop] = <IHook>{};
 
         for (let key in this[prop])
-          this._hooksData[prop][key] = this[prop][key];
+          (<any>this._hooksData[prop])[key] = this[prop][key];
       }
     }
   }

@@ -35,22 +35,13 @@ function initSocket(io) {
         });
     });
     process.on('message', msg => {
-        if (msg.data && msg.action === 'response' && msg.socketId) {
+        if (msg.data && msg.action === 'response') {
             let response = msg.data;
-            let socket = state_1.State.getSocket(msg.socketId);
-            if (socket) {
-                if (response.domain === types_1.RESPONSE_DOMAINS.ROOM && response.room) {
-                    socket.to(response.room).emit(response.event, response);
-                }
-                else if (response.domain === types_1.RESPONSE_DOMAINS.ALL_ROOM && response.room) {
-                    socket.broadcast.to(response.room).emit(response.event, response);
-                }
-                else if (response.domain === types_1.RESPONSE_DOMAINS.OTHERS) {
-                    socket.broadcast.emit(response.event, response);
-                }
-                else if (response.domain === types_1.RESPONSE_DOMAINS.ALL) {
-                    io.sockets.emit(response.event, response);
-                }
+            if ((response.domain === types_1.RESPONSE_DOMAINS.ROOM || response.domain === types_1.RESPONSE_DOMAINS.ALL_ROOM) && response.room) {
+                io.to(response.room).emit(response.event, response);
+            }
+            else if (response.domain === types_1.RESPONSE_DOMAINS.OTHERS || response.domain === types_1.RESPONSE_DOMAINS.ALL) {
+                io.sockets.emit(response.event, response);
             }
         }
     });
