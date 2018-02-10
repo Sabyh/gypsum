@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { IGypsumConfig, IAuthenticationConfigOptions, IServerConfigOptions } from './config';
-import { Model } from './model/model';
+import { Model } from './models/model';
 import { Context } from './context';
 export interface IMiddleware {
     (app: express.Express): void;

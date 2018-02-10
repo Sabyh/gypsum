@@ -1,4 +1,4 @@
-import { MongoModel } from '../model/mongo-model';
+import { MongoModel } from '../models/mongo-model';
 export interface IPermission {
     model: string;
     services: string[];

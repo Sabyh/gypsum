@@ -1,7 +1,8 @@
 import * as express from 'express';
 import { Logger } from './misc/logger';
-import { Model } from './model/model';
-import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, IResponseError, IService } from './types';
+import { Model } from './models/model';
+import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, IResponseError } from './types';
+import { IService } from './decorators';
 export interface IContext {
     headers: any;
     query: any;

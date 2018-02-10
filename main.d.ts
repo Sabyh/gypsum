@@ -1,9 +1,9 @@
 import * as Types from './types';
 import { IGypsumConfigurations } from './config';
 import { IMiddlewares } from './state';
-import { Model } from './model/model';
-import { FileModel } from './model/file-model';
-import { MongoModel } from './model/mongo-model';
+import { Model } from './models/model';
+import { FileModel } from './models/file-model';
+import { MongoModel } from './models/mongo-model';
 import { Context } from './context';
 import { SERVICE, HOOK, MODEL } from './decorators';
 export declare namespace Gypsum {

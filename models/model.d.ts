@@ -1,5 +1,5 @@
 import { Logger } from '../misc/logger';
-import { IService, IHook } from '../types';
+import { IService, IHook } from '../decorators';
 export declare type ServiceOptions = {
     [key: string]: IService | boolean;
 };
