@@ -61,8 +61,6 @@ class AppState {
         }
         if (this.config.services_prefix)
             this.config.services_prefix = '/' + string_1.stringUtil.cleanPath(this.config.services_prefix);
-        if (this.config.static_prefix)
-            this.config.static_prefix = '/' + string_1.stringUtil.cleanPath(this.config.static_prefix);
         this.config.files_data_dir = string_1.stringUtil.cleanPath(this.config.files_data_dir);
     }
 }

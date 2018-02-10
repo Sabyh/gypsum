@@ -1,6 +1,6 @@
 {
   "name": "gypsum",
-  "version": "2.4.7",
+  "version": "2.4.8",
   "license": "ISC",
   "author": {
     "name": "AmmAr Mourad",
@@ -25,7 +25,8 @@
   "main": "main.js",
   "types": "main.d.ts",
   "scripts": {
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "build": "tsc"
   },
   "dependencies": {
     "@types/body-parser": "^1.16.8",

@@ -40,8 +40,7 @@ export interface IServerConfigOptions {
     port: number;
     host: string;
     services_prefix: string;
-    static_dir: string;
-    static_prefix: string;
+    statics: string[];
     files_data_dir: string;
     mongodb_url: string;
     mongo_database_name: string;

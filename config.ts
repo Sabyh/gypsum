@@ -45,8 +45,7 @@ export interface IServerConfigOptions {
   port: number;
   host: string;
   services_prefix: string;
-  static_dir: string;
-  static_prefix: string;
+  statics: string[];
   files_data_dir: string;
   mongodb_url: string;
   mongo_database_name: string;
@@ -106,8 +105,7 @@ export const Config: IGypsumConfig = {
       port: 7771,
       host: "http://localhost:7771",
       services_prefix: "apis",
-      static_dir: 'static',
-      static_prefix: "",
+      statics: ['static'],
       files_data_dir: ".data",
       mongodb_url: "mongodb://localhost:27017/gypsum_dev_db",
       mongo_database_name: 'test',

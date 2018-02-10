@@ -62,8 +62,14 @@ export function initExpress(app: express.Express) {
 
 
   logger.info('Implementing static..');
-  if (State.config.static_dir)
-    app.use(<string>State.config.static_prefix || "", express.static(path.join(State.root, State.config.static_dir)));
+  if (State.config.statics && State.config.statics.length) {
+    for (let i = 0; i < State.config.statics.length; i++) {
+      let parts = State.config.statics[i].split(',');
+      let fileName = parts[0];
+      let prefix = parts[1] || '';
+      app.use(prefix, express.static(path.join(State.root, fileName)));
+    }
+  }
 
   logger.info('Implementing after middlwares..');
   if (State.middlewares.after.length)

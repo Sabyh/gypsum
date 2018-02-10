@@ -48,8 +48,14 @@ function initExpress(app) {
         app.use(state_1.State.config.services_prefix, state_1.State.router);
     }
     logger.info('Implementing static..');
-    if (state_1.State.config.static_dir)
-        app.use(state_1.State.config.static_prefix || "", express.static(path.join(state_1.State.root, state_1.State.config.static_dir)));
+    if (state_1.State.config.statics && state_1.State.config.statics.length) {
+        for (let i = 0; i < state_1.State.config.statics.length; i++) {
+            let parts = state_1.State.config.statics[i].split(',');
+            let fileName = parts[0];
+            let prefix = parts[1] || '';
+            app.use(prefix, express.static(path.join(state_1.State.root, fileName)));
+        }
+    }
     logger.info('Implementing after middlwares..');
     if (state_1.State.middlewares.after.length)
         for (let i = 0; i < state_1.State.middlewares.after.length; i++)

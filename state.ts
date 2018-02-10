@@ -93,9 +93,6 @@ export class AppState {
     if (this.config.services_prefix)
       this.config.services_prefix = '/' + stringUtil.cleanPath(this.config.services_prefix);
 
-    if (this.config.static_prefix)
-      this.config.static_prefix = '/' + stringUtil.cleanPath(<string>this.config.static_prefix);
-
     this.config.files_data_dir = stringUtil.cleanPath(<string>this.config.files_data_dir);
   }
 }
