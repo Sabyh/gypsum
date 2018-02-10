@@ -1,5 +1,5 @@
 import { Collection } from 'mongodb';
-import { Model } from '../models/model';
+import { Model } from '../models';
 import { Context } from '../context';
 export declare namespace Authorization {
     interface IAuthorizeOption {

@@ -1,5 +1,4 @@
-import { Model } from '../models/model';
-import { MongoModel } from '../models/mongo-model';
+import { Model, MongoModel } from '../models';
 import { Context } from '../context';
 export declare class Authentication extends Model {
     userModel: MongoModel;

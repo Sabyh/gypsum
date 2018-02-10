@@ -1,3 +1,3 @@
-import { Context } from '../context';
-import { MongoModel } from '../models/mongo-model';
-export declare const hooks: (((ctx: Context, model: MongoModel, field: string) => void) | ((ctx: Context, fields: string | string[], source?: string | undefined) => void))[];
+import { exists } from './exists';
+import { filter } from './filter';
+export declare const hooks: (typeof exists | typeof filter)[];

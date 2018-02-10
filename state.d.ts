@@ -1,7 +1,7 @@
 import * as express from 'express';
 import { IGypsumConfig, IAuthenticationConfigOptions, IServerConfigOptions } from './config';
-import { Model } from './models/model';
 import { Context } from './context';
+import { Model } from './models';
 export interface IMiddleware {
     (app: express.Express): void;
 }
@@ -22,9 +22,9 @@ export declare class AppState {
     hooks: ((ctx: Context, ...args: any[]) => void)[];
     getModel(name: string): Model | undefined;
     getHook(name: string): ((ctx: Context, ...args: any[]) => void) | undefined;
+    getSocket(id: string): any;
     pushSocket(socket: any): void;
     deleteSocket(id: string): void;
-    readonly sockets: () => IterableIterator<any>;
     setConfiguration(userConfig?: IGypsumConfig): void;
 }
 declare const State: AppState;

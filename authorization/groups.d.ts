@@ -1,4 +1,4 @@
-import { MongoModel } from '../models/mongo-model';
+import { MongoModel } from '../models';
 export declare class AuthGroups extends MongoModel {
     onCollection(): void;
 }

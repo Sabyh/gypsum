@@ -2,11 +2,6 @@ import * as MongoDB from 'mongodb';
 import * as Validall from 'validall';
 import { API_TYPES, RESPONSE_DOMAINS } from '../types';
 import { IHookOptions } from './hook';
-export interface IAuthorizeOption {
-    roles?: string | string[];
-    groups?: string | string[];
-    fields?: string | string[];
-}
 export interface IModelOptions {
     secure?: boolean;
     authorize?: boolean;

@@ -8,7 +8,6 @@
     "strictNullChecks": true,
     "experimentalDecorators": true,
     "declaration": true,
-    "declarationDir": "/",
     "noUnusedLocals": false,
     "types": ["@types/node"],
     "sourceMap": true
