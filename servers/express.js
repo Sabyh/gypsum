@@ -47,12 +47,13 @@ function initExpress(app) {
         }
         app.use(state_1.State.config.services_prefix, state_1.State.router);
     }
-    logger.info('Implementing static..');
+    logger.info('Implementing statics..');
     if (state_1.State.config.statics && state_1.State.config.statics.length) {
         for (let i = 0; i < state_1.State.config.statics.length; i++) {
             let parts = state_1.State.config.statics[i].split(',');
             let fileName = parts[0];
             let prefix = parts[1] || '';
+            logger.info(`static file path: '${path.join(state_1.State.root, fileName)}', static prefix: '${prefix}'`);
             app.use(prefix, express.static(path.join(state_1.State.root, fileName)));
         }
     }

@@ -61,12 +61,13 @@ export function initExpress(app: express.Express) {
   }
 
 
-  logger.info('Implementing static..');
+  logger.info('Implementing statics..');
   if (State.config.statics && State.config.statics.length) {
     for (let i = 0; i < State.config.statics.length; i++) {
       let parts = State.config.statics[i].split(',');
       let fileName = parts[0];
       let prefix = parts[1] || '';
+      logger.info(`static file path: '${path.join(State.root, fileName)}', static prefix: '${prefix}'`);
       app.use(prefix, express.static(path.join(State.root, fileName)));
     }
   }
