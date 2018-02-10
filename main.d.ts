@@ -1,6 +1,7 @@
 import { IServerConfigOptions, IAuthenticationConfigOptions, IGypsumConfigurations } from './config';
 import { IMiddlewares } from './state';
 import { Context } from './context';
+export { IGypsumConfigurations };
 export interface IGypsumUseOptions {
     models?: any[];
     middlewares?: IMiddlewares;

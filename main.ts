@@ -58,6 +58,8 @@ function useModels(models: typeof Model[]) {
   }
 }
 
+export { IGypsumConfigurations };
+
 export interface IGypsumUseOptions {
   models?: any[];
   middlewares?: IMiddlewares;
