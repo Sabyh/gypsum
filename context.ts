@@ -102,7 +102,7 @@ export class Context {
   }
 
   static deleteContextsOf(type: string, identifier: string) {
-    Logger.Info('Deleteing context of type:', type, ', identifier:', identifier );
+    Logger.Info('Deleteing context of type:', type, ', identifier:', identifier);
     if (type === 'socket') {
       if (identifier)
         for (let i = 0; i < contexts.length; i++)
@@ -120,13 +120,13 @@ export class Context {
   private _mInit(hooks: 'before' | 'after' | 'both' | 'none' = 'both', extraHooks?: any[]): void {
     // Authentication Layer
     if (this.service.secure) {
-      let Authentication = State.getModel('Authentication');    
-      this._stack.push({ handler: (<any>Authentication).secure.bind(Authentication), args: []});
+      let Authentication = State.getModel('Authentication');
+      this._stack.push({ handler: (<any>Authentication).secure.bind(Authentication), args: [] });
     }
-    
+
     if (this.service.authorize) {
-      let Authorization = State.getModel('Authorization');    
-      this._stack.push({ handler: (<any>Authorization).authorize.bind(Authorization), args: [this.service.authorize]});
+      let Authorization = State.getModel('Authorization');
+      this._stack.push({ handler: (<any>Authorization).authorize.bind(Authorization), args: [this.service.authorize] });
     }
 
     if (this.service.validate)
@@ -221,6 +221,7 @@ export class Context {
     this._mPushStack(service.after);
   }
 
+  get domain(): RESPONSE_DOMAINS { return <RESPONSE_DOMAINS>this._domain; }
   set domain(value: RESPONSE_DOMAINS) { this._domain = value; }
   get room(): string { return this._room; }
 
@@ -298,37 +299,37 @@ export class Context {
     this.next();
   }
 
-getResponseData(): any {
-  return this._response.data;
-}
-
-setResponseData(data: any): Context {
-  Object.assign(this._response.data || {}, data || {});
-  return this;
-}
-
-sendHtml(html: string, code = 200) {
-  if (this._res) {
-    this._res.type('html')
-      .status(code)
-      .send(html);
-  } else {
-    this.next({
-      message: 'cannot send html content on socket connection',
-      code: RESPONSE_CODES.BAD_REQUEST
-    });
+  getResponseData(): any {
+    return this._response.data;
   }
-}
 
-sendFile(filePath: string, code = 200) {
-  if (this._res)
-    this._res.status(code).sendFile(filePath);
-  else
-    this.next({
-      message: 'cannot send file on socket connection',
-      code: RESPONSE_CODES.BAD_REQUEST
-    });
-}
+  setResponseData(data: any): Context {
+    Object.assign(this._response.data || {}, data || {});
+    return this;
+  }
+
+  sendHtml(html: string, code = 200) {
+    if (this._res) {
+      this._res.type('html')
+        .status(code)
+        .send(html);
+    } else {
+      this.next({
+        message: 'cannot send html content on socket connection',
+        code: RESPONSE_CODES.BAD_REQUEST
+      });
+    }
+  }
+
+  sendFile(filePath: string, code = 200) {
+    if (this._res)
+      this._res.status(code).sendFile(filePath);
+    else
+      this.next({
+        message: 'cannot send file on socket connection',
+        code: RESPONSE_CODES.BAD_REQUEST
+      });
+  }
 }
 
 function* getHooks(context: Context, list: IHookOptions[]) {

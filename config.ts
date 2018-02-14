@@ -4,19 +4,19 @@ import { ILoggerOptions } from './misc/logger';
 
 // Email Transporter Interface
 export interface IEmailTransporter {
-  pool: boolean;
-  host: string;
-  port: number;
-  secure: boolean;
-  service: string;
-  auth: { user: string; pass: string };
+  pool?: boolean;
+  host?: string;
+  port?: number;
+  secure?: boolean;
+  service?: string;
+  auth?: { user: string; pass: string };
 }
 
 // Authentication Configurations Interface
 export interface IAuthenticationConfigOptions {
   rootUser: string;
   rootUserEmail: string;
-  rootPassword: string;
+  rootUserPassword: string;
   usersModel: string;
   userEmailField: string;
   userIdField: string;
@@ -89,7 +89,7 @@ export const Config: IGypsumConfig = {
     authConfig: {
       rootUser: 'root',
       rootUserEmail: 'root@admin.com',
-      rootPassword: 'admin',
+      rootUserPassword: 'admin',
       usersModel: 'Users',
       userEmailField: 'email',
       userIdField: 'userid',
@@ -103,7 +103,7 @@ export const Config: IGypsumConfig = {
       passwordpattern: '/[a-zA-Z0-9_]{5,}/',
       tranporterOptions: null,
       activationMailFrom: 'me@threre.com',
-      activationMailSubject: 'Activation Email',
+      activationMailSubject: 'Gypsum Activation Email',
       activationPage: path.join(__dirname, '../templates/activation-page-template.html'),
       activationMailTemplatePath: path.join(__dirname, '../templates/activation-email-template.html')
     },

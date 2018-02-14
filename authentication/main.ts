@@ -67,13 +67,14 @@ export class Authentication extends Model {
   createRootUser(): Promise<any> {
     this.$logger.info('creating root user: ' + State.config.rootUser);
     return new Promise((resolve, reject) => {
-      hash(State.config.rootPassword)
+      hash(State.config.rootUserPassword)
         .then(results => {
           this.userModel.collection.insertOne({
             [State.config.usernameField]: State.config.rootUser,
             [State.config.userEmailField]: State.config.rootUserEmail,
             [State.config.passwordField]: results[0],
-            [State.config.passwordSaltField]: results[1]
+            [State.config.passwordSaltField]: results[1],
+            [State.config.userIsActiveField]: true
           })
             .then(doc => {
               if (doc)

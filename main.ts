@@ -145,7 +145,7 @@ export const Gypsum: IGypsum = {
           // TODO: pushing services map...
 
           logger.info('running server...');
-          server.start(State.config.port);
+          server.start();
         })
         .catch(error => logger.error(error));
     } catch (error) {
