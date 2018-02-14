@@ -13,12 +13,15 @@ const safe_1 = require("../misc/safe");
 const safe = new safe_1.Safe('model');
 const skippedServicesNames = ['find', 'findById', 'insert', 'update', 'updateById', 'delete', 'deleteById'];
 class Model {
-    static createPath(service, prefix = "") {
-        let path = (prefix ? `/${prefix}` : "") + "/" + (service.path || (skippedServicesNames.indexOf(service.name) > -1 ? '' : service.name));
+    static createPath(service, ...prefixes) {
+        let path = '';
+        if (prefixes && prefixes.length)
+            path += prefixes.join('/') + '/';
+        path += service.path || (skippedServicesNames.indexOf(service.name) > -1 ? '' : service.name);
         if (service.params.length)
             for (let i = 0; i < service.params.length; i++)
                 path += `/:${service.params[i]}`;
-        return path.replace(/\/{2,}/g, '/');
+        return '/' + path.replace(/\/{2,}/g, '/').replace(/\/$/, '');
     }
     _mArrangeServices() {
         this._servicesData = {};
@@ -42,9 +45,9 @@ class Model {
                     internal: service.internal,
                     apiType: this.$get('apiType') === types_1.API_TYPES.ALL ? service.apiType : this.$get('apiType'),
                     name: service.name,
-                    event: `${this.$get('name')} ${service.event}`,
+                    event: `${this.$get('app') || ''} ${this.$get('name')} ${service.event}`.trim(),
                     method: service.method,
-                    path: Model.createPath(service, this.$get('name')),
+                    path: Model.createPath(service, this.$get('app'), this.$get('name')),
                     params: service.params,
                     domain: (!this.$get('domain') || this.$get('domain') > service.domain) ? service.domain : this.$get('domain'),
                     before: [],

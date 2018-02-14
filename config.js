@@ -32,22 +32,27 @@ exports.Config = {
             services_prefix: "apis",
             statics: ['static'],
             files_data_dir: ".data",
-            mongodb_url: "mongodb://localhost:27017/gypsum_dev_db",
-            mongo_database_name: 'test',
             processes: 1,
             cookie_key: 'kdu8v9qwem8hqe',
             upload_size_limit_mb: 10,
             logger_options: { all: 'debug' },
             authentication: false,
             authorization: false
+        },
+        database: {
+            host: 'localhost',
+            port: 27017,
+            databases: [{ name: 'gypsum_dev_db' }]
         }
     },
     prod: {
         server: {
             origin: "http://localhost",
-            mongodb_url: "mongodb://localhost:27017/gypsum_db",
             processes: 'max',
             logger_options: { all: "error" }
+        },
+        database: {
+            databases: [{ name: 'gypsum_db' }]
         }
     }
 };

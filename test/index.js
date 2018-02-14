@@ -9,47 +9,33 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const main_1 = require("../main");
 const decorators_1 = require("../decorators");
 const models_1 = require("../models");
-const types_1 = require("../types");
-let Users = class Users extends models_1.Model {
-    publish(ctx) {
-        ctx.ok({ pid: process.pid });
-    }
+let Coll01 = class Coll01 extends models_1.MongoModel {
 };
-__decorate([
-    decorators_1.SERVICE({
-        domain: types_1.RESPONSE_DOMAINS.ALL
-    })
-], Users.prototype, "publish", null);
-Users = __decorate([
+Coll01 = __decorate([
     decorators_1.MODEL({
-        after: ['filter:-password,passwordSalt'],
-        schema: {
-            username: 'string',
-            email: 'string',
-            password: 'string',
-            passwordSalt: 'string',
-            'age?': 'number',
-            createdAt: { $type: 'date', $default: 'Date.now' },
-            isActive: { $type: 'boolean', $default: false }
-        },
-        schemaOptions: { required: true, strict: true }
+        app: 'db01'
     })
-], Users);
-function testHook01(ctx, place) {
-    console.log('message from test 01, ' + place);
-    ctx.next();
-}
+], Coll01);
+let Coll02 = class Coll02 extends models_1.MongoModel {
+};
+Coll02 = __decorate([
+    decorators_1.MODEL({
+        app: 'db02'
+    })
+], Coll02);
 main_1.Gypsum
     .configure({
     dev: {
-        server: {
-            processes: 3
+        database: {
+            databases: [
+                { name: 'db01' },
+                { name: 'db02' }
+            ]
         }
     }
 })
     .use({
-    models: [Users],
-    hooks: [testHook01]
+    models: [Coll01, Coll02]
 })
     .bootstrap();
 //# sourceMappingURL=index.js.map

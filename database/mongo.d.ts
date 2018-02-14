@@ -1,2 +1,1 @@
-import { Db } from 'mongodb';
-export declare function initMongo(): Promise<Db>;
+export declare function initMongo(): Promise<boolean>;

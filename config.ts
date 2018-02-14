@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { MongoClientOptions } from 'mongodb';
 import { ILoggerOptions } from './misc/logger';
 
 // Email Transporter Interface
@@ -47,8 +48,6 @@ export interface IServerConfigOptions {
   services_prefix: string;
   statics: string[];
   files_data_dir: string;
-  mongodb_url: string;
-  mongo_database_name: string;
   processes: number | 'max';
   cookie_key: string;
   upload_size_limit_mb: number;
@@ -61,9 +60,18 @@ export type IServerConfig = {
   [key in keyof IServerConfigOptions]?: IServerConfigOptions[key];
 }
 
+export interface IDatabaseConnection {
+  host?: string;
+  port?: number;
+  username?: string;
+  password?: string;
+  databases?: { name: string; app?: string; options?: MongoClientOptions; }[];
+}
+
 export interface IConfig {
   authConfig?: IAuthenticationConfig;
   server?: IServerConfig;
+  database?: IDatabaseConnection;
 }
 
 export interface IGypsumConfig {
@@ -107,23 +115,28 @@ export const Config: IGypsumConfig = {
       services_prefix: "apis",
       statics: ['static'],
       files_data_dir: ".data",
-      mongodb_url: "mongodb://localhost:27017/gypsum_dev_db",
-      mongo_database_name: 'test',
       processes: 1,
       cookie_key: 'kdu8v9qwem8hqe',
       upload_size_limit_mb: 10,
       logger_options: { all: 'debug' },
       authentication: false,
       authorization: false
+    },
+    database: {
+      host: 'localhost',
+      port: 27017,
+      databases: [{ name: 'gypsum_dev_db'}]
     }
   },
 
   prod: {
     server: {
       origin: "http://localhost",
-      mongodb_url: "mongodb://localhost:27017/gypsum_db",
       processes: 'max',
       logger_options: { all: "error" }
+    },
+    database: {
+      databases: [{ name: 'gypsum_db' }]
     }
   }
 }

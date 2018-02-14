@@ -1,3 +1,4 @@
+import { MongoClientOptions } from 'mongodb';
 import { ILoggerOptions } from './misc/logger';
 export interface IEmailTransporter {
     pool: boolean;
@@ -42,8 +43,6 @@ export interface IServerConfigOptions {
     services_prefix: string;
     statics: string[];
     files_data_dir: string;
-    mongodb_url: string;
-    mongo_database_name: string;
     processes: number | 'max';
     cookie_key: string;
     upload_size_limit_mb: number;
@@ -54,9 +53,21 @@ export interface IServerConfigOptions {
 export declare type IServerConfig = {
     [key in keyof IServerConfigOptions]?: IServerConfigOptions[key];
 };
+export interface IDatabaseConnection {
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string;
+    databases?: {
+        name: string;
+        app?: string;
+        options?: MongoClientOptions;
+    }[];
+}
 export interface IConfig {
     authConfig?: IAuthenticationConfig;
     server?: IServerConfig;
+    database?: IDatabaseConnection;
 }
 export interface IGypsumConfig {
     dev: IConfig;

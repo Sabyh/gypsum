@@ -3,6 +3,7 @@
   "ext": "ts json",
   "exec": "tsc && node ./test/index",
   "ignore": [
+    "*.d.ts",
     ".git",
     "node_modules/**/*",
     "node_modules/**/node_modules"

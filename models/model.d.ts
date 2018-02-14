@@ -1,19 +1,19 @@
 import { Logger } from '../misc/logger';
-import { IService, IHook } from '../decorators';
+import { IService, IHook, IModelOptions } from '../decorators';
 export declare type ServiceOptions = {
     [key: string]: IService | boolean;
 };
-export declare type getOptions = 'name' | 'secure' | 'authorize' | 'accessable' | 'internal' | 'eliminate' | 'apiType' | 'before' | 'after' | 'schema' | 'schemaOptions' | 'domain' | 'indexes';
+export declare type getOptions = keyof IModelOptions;
 export declare class Model {
     private _servicesData;
     private _hooksData;
     type: 'Mongo' | 'File' | undefined;
     $logger: Logger;
-    static createPath(service: IService, prefix?: string): string;
+    static createPath(service: IService, ...prefixes: string[]): string;
     private _mArrangeServices();
     private _mArrangeHooks();
     protected init(): void;
-    $get(prop: getOptions): any;
+    $get(prop: getOptions | 'name'): any;
     $getServices(): {
         [key: string]: IService;
     };

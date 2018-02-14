@@ -8,7 +8,7 @@ const safe = new Safe('main');
 /**
  * import default config and Server state
  */
-import { IServerConfigOptions, IAuthenticationConfigOptions, IGypsumConfigurations } from './config';
+import { IServerConfigOptions, IAuthenticationConfigOptions, IGypsumConfigurations, IGypsumConfig } from './config';
 import { State, IMiddlewares } from './state';
 
 /**
@@ -81,7 +81,7 @@ export const Gypsum: IGypsum = {
   env: State.env,
   dev: State.env !== 'production',
 
-  get(name: keyof (IServerConfigOptions & IAuthenticationConfigOptions)) {
+  get(name: keyof (IServerConfigOptions)) {
     return State.config[name];
   },
 
@@ -89,7 +89,7 @@ export const Gypsum: IGypsum = {
     /**
      * applying user config on the default config
      */
-    State.setConfiguration(userConfig ? <any>userConfig : {});
+    State.setConfiguration(userConfig ? <IGypsumConfig>userConfig : <IGypsumConfig>{});
 
     /**
      * Setting up Logger options
@@ -112,6 +112,9 @@ export const Gypsum: IGypsum = {
   },
 
   bootstrap(): void {
+    if (Object.keys(State.config).length === 0)
+      State.setConfiguration(<IGypsumConfig>{});
+
     if (State.config.processes !== 1 && cluster.isMaster) {
       initializeWorkers(State.config.processes);
       return;

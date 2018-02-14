@@ -1,12 +1,12 @@
 import { Logger } from '../misc/logger';
 import { API_TYPES } from '../types';
-import { FRIEND, IService, IHook, IHookOptions } from '../decorators';
+import { FRIEND, IService, IHook, IHookOptions, IModelOptions } from '../decorators';
 import { Safe } from '../misc/safe';
 
 const safe = new Safe('model');
 
 export type ServiceOptions = { [key: string]: IService | boolean };
-export type getOptions = 'name' | 'secure' | 'authorize' | 'accessable' | 'internal' | 'eliminate' | 'apiType' | 'before' | 'after' | 'schema' | 'schemaOptions' | 'domain' | 'indexes';
+export type getOptions = keyof IModelOptions;
 
 const skippedServicesNames = ['find', 'findById', 'insert', 'update', 'updateById', 'delete', 'deleteById'];
 
@@ -17,14 +17,19 @@ export class Model {
   public type: 'Mongo' | 'File' | undefined;
   public $logger: Logger;
 
-  static createPath(service: IService, prefix: string = ""): string {
-    let path = (prefix ? `/${prefix}` : "") + "/" + (service.path || (skippedServicesNames.indexOf(service.name) > -1 ? '' : service.name));
+  static createPath(service: IService, ...prefixes: string[]): string {
+    let path = '';
+
+    if (prefixes && prefixes.length)
+      path += prefixes.join('/') + '/';
+
+    path += service.path || (skippedServicesNames.indexOf(service.name) > -1 ? '' : service.name);
 
     if (service.params.length)
       for (let i = 0; i < service.params.length; i++)
         path += `/:${service.params[i]}`;
 
-    return path.replace(/\/{2,}/g, '/');
+    return '/' + path.replace(/\/{2,}/g, '/').replace(/\/$/, '');
   }
 
   private _mArrangeServices() {
@@ -32,11 +37,11 @@ export class Model {
     let eliminationsList = this.$get('eliminate');
 
     for (let prop in this) {
-      
+
       let service: IService = <any>this[prop];
       let isService = service.isService ? !this.$get('internal') : false;
 
-      if (service && isService) {        
+      if (service && isService) {
 
         if (eliminationsList.indexOf(prop) > -1) {
           delete this[prop];
@@ -56,9 +61,9 @@ export class Model {
           internal: service.internal,
           apiType: this.$get('apiType') === API_TYPES.ALL ? service.apiType : this.$get('apiType'),
           name: service.name,
-          event: `${this.$get('name')} ${service.event}`,
+          event: `${this.$get('app') || ''} ${this.$get('name')} ${service.event}`.trim(),
           method: service.method,
-          path: Model.createPath(service, this.$get('name')),
+          path: Model.createPath(service, this.$get('app'), this.$get('name')),
           params: service.params,
           domain: (!this.$get('domain') || this.$get('domain') > service.domain) ? service.domain : this.$get('domain'),
           before: [],
@@ -121,7 +126,7 @@ export class Model {
     this._mArrangeHooks();
   }
 
-  $get(prop: getOptions) {
+  $get(prop: getOptions | 'name') {
     if (prop === 'name')
       return this.constructor.name;
     else
@@ -169,7 +174,7 @@ function cleanHooks(hooks: IHookOptions[]) {
 
     } else if (modifier === '=') {
       hookName = hookName.slice(1);
-      
+
       if (typeof hook === 'string')
         hooks[i] = (<string>hooks[i]).slice(1);
       else

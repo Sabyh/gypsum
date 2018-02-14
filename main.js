@@ -50,6 +50,8 @@ exports.Gypsum = {
         return this;
     },
     bootstrap() {
+        if (Object.keys(state_1.State.config).length === 0)
+            state_1.State.setConfiguration({});
         if (state_1.State.config.processes !== 1 && cluster.isMaster) {
             workers_1.initializeWorkers(state_1.State.config.processes);
             return;
