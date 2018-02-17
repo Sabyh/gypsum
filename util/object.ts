@@ -1,3 +1,5 @@
+import { Types } from 'validall';
+
 export interface IObject {
   [key: string]: any;
 }
@@ -232,17 +234,17 @@ export const objectUtil = {
 
   toQueryObject(query: string): any {
     query = decodeURI(query);
-    
+
     let result: any = {};
     let parts: any[] = query.split('&');
-  
+
     for (let i = 0; i < parts.length; i++) {
       let part: any = parts[i];
       let pair: any[] = part.split('=');
-  
+
       result[pair[0]] = pair[1] ? this.parse(pair[1]) : null;
     }
-  
+
     return result;
   },
 
@@ -250,12 +252,12 @@ export const objectUtil = {
     let result: any = {};
     for (let i = 0; i < props.length; i++) {
       let path = props[i].split('.');
-  
+
       if (path.length === 1) {
         result[props[i]] = obj[props[i]];
         continue;
       }
-  
+
       result[path[0]] = result[path[0]] || {};
       let temp = result;
       let currentvalue = obj[path[0]];
@@ -269,19 +271,19 @@ export const objectUtil = {
         temp = temp[path[j - 1]];
       }
     }
-  
+
     return result;
   },
 
   omit(obj: any, props: string[]) {
     for (let i = 0; i < props.length; i++) {
       let path = props[i].split('.');
-  
+
       if (path.length === 1) {
         delete obj[props[i]];
         continue;
       }
-  
+
       let temp = obj;
       for (let j = 0; j < path.length; j++) {
         temp = temp[path[j]];
@@ -290,9 +292,9 @@ export const objectUtil = {
           break;
         }
       }
-  
+
     }
-  
+
     return obj;
   },
 
@@ -340,13 +342,28 @@ export const objectUtil = {
 
   objectToQueryString(obj: any, encode: boolean): string {
     let result = "";
-    
+
     if (!obj || !Object.keys(obj).length)
       return result;
-  
+
     for (let prop in obj)
       result += '&' + prop + '=' + this.valueToString(obj[prop]);
-  
+
     return encode ? encodeURI(result.slice(1)) : result.slice(1);
+  },
+
+  compareValue(path: string, obj1: any, obj2: any): boolean {
+    let value01 = this.getValue(obj1, path);
+    let value02 = this.getValue(obj2, path);
+
+    return this.equals(value01, value02, true);
+  },
+
+  compareValues(paths: string[], obj1: any, obj2: any): string {
+    for (let i = 0; i < paths.length; i++)
+      if (!this.compareValue(paths[i], obj1, obj2))
+        return paths[i];
+
+    return '';
   }
 }

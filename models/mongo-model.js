@@ -12,6 +12,7 @@ const model_1 = require("./model");
 const types_1 = require("../types");
 const decorators_1 = require("../decorators");
 const safe_1 = require("../misc/safe");
+const util_1 = require("../util");
 const safe = new safe_1.Safe('mongoModel');
 class MongoModel extends model_1.Model {
     constructor() {
@@ -117,16 +118,37 @@ class MongoModel extends model_1.Model {
         if (!ctx.body || !ctx.body.documents)
             return ctx.ok(null);
         ctx.body.documents = Array.isArray(ctx.body.documents) ? ctx.body.documents : [ctx.body.documents];
-        for (let i = 0; i < ctx.body.documents.length; i++)
-            delete ctx.body.documents[i]._id;
         let schema = this.$get('schema');
-        if (schema)
-            if (!schema.test(ctx.body.documents))
-                return ctx.next({
-                    message: schema.error.message,
-                    original: schema.error,
-                    code: types_1.RESPONSE_CODES.UNAUTHORIZED
-                });
+        for (let i = 0; i < ctx.body.documents.length; i++) {
+            let document = ctx.body.documents[i];
+            delete document._id;
+            if (schema)
+                if (!schema.test(document))
+                    return ctx.next({
+                        message: schema.error.message,
+                        original: schema.error,
+                        code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                    });
+            let props = schema.getProps();
+            let internals = [];
+            for (let prop in props)
+                if (props[prop].internal)
+                    internals.push(prop);
+            if (internals.length) {
+                for (let i = 0; i < internals.length; i++)
+                    if (schema.defaults[internals[i]] !== undefined)
+                        if (util_1.objectUtil.getValue(document, internals[i]) !== schema.defaults[internals[i]])
+                            return ctx.next({
+                                message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
+                                code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                            });
+                        else if (util_1.objectUtil.getValue(document, internals[i]) !== undefined)
+                            return ctx.next({
+                                message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
+                                code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                            });
+            }
+        }
         this.collection.insertMany(ctx.body.documents, ctx.body.writeConcern)
             .then(res => {
             this.$logger.debug('insert service result:');
@@ -200,15 +222,94 @@ class MongoModel extends model_1.Model {
             ctx.body.filter._id = new MongoDB.ObjectID(ctx.body.filter._id);
         delete ctx.body.update._id;
         delete ctx.body.update.token;
-        this.collection.findOneAndUpdate(ctx.body.filter, ctx.body.update, Object.assign(ctx.body.options || {}, { returnOriginal: false })).then(res => {
-            this.$logger.debug('updateOne service result:', res);
-            ctx.ok(res.value);
-        })
-            .catch(error => ctx.next({
-            message: `[${this.$get('name')}] - updateOne: unknown error`,
-            original: error,
-            code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
-        }));
+        let schema = this.$get('schema');
+        if (!schema) {
+            this.collection.findOneAndUpdate(ctx.body.filter, ctx.body.update, Object.assign(ctx.body.options || {}, { returnOriginal: false })).then(res => {
+                this.$logger.debug('updateOne service result:', res);
+                ctx.ok(res.value);
+            })
+                .catch(error => ctx.next({
+                message: `[${this.$get('name')}] - updateOne: unknown error`,
+                original: error,
+                code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
+            }));
+        }
+        else {
+            this.collection.findOne(ctx.body.filter)
+                .then(doc => {
+                if (!doc)
+                    return ctx.ok(null);
+                let preUpdatedDoc = doc;
+                let docId = preUpdatedDoc._id;
+                let updatedDoc;
+                let errObj;
+                delete preUpdatedDoc._id;
+                this.collection.findOneAndUpdate(ctx.body.filter, ctx.body.update, Object.assign(ctx.body.options || {}, { returnOriginal: false })).then(res => {
+                    updatedDoc = res.value;
+                    delete updatedDoc._id;
+                    let state = schema.test(updatedDoc);
+                    if (state) {
+                        let props = schema.getProps();
+                        if (Object.keys(props).length) {
+                            let constants = [], internals = [];
+                            for (let prop in props) {
+                                if (props[prop].constant)
+                                    constants.push(prop);
+                                else if (props[prop].internal) {
+                                    internals.push(prop);
+                                }
+                            }
+                            if (constants.length) {
+                                let changedField = util_1.objectUtil.compareValues(constants, preUpdatedDoc, updatedDoc);
+                                if (changedField)
+                                    errObj = {
+                                        message: `[${this.$get('name')}]: '${changedField}' is a constant field that cannot be changed!`,
+                                        code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                                    };
+                            }
+                            if (!errObj && internals.length) {
+                                let changedField = util_1.objectUtil.compareValues(internals, preUpdatedDoc, updatedDoc);
+                                if (changedField)
+                                    errObj = {
+                                        message: `[${this.$get('name')}]: '${changedField}' cannot be modified externaly!`,
+                                        code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                                    };
+                            }
+                        }
+                    }
+                    else {
+                        errObj = {
+                            message: schema.error.message,
+                            original: schema.error,
+                            code: types_1.RESPONSE_CODES.BAD_REQUEST
+                        };
+                    }
+                    if (errObj) {
+                        this.collection.replaceOne({ _id: docId }, preUpdatedDoc)
+                            .then(res => ctx.next(errObj))
+                            .catch(error => ctx.next({
+                            message: 'error reverting document after update',
+                            original: { message: schema.error.message, error: error },
+                            code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
+                        }));
+                    }
+                    else {
+                        this.$logger.debug('updateOne service result:', updatedDoc);
+                        ctx.ok(updatedDoc);
+                    }
+                })
+                    .catch(error => ctx.next({
+                    message: `[${this.$get('name')}] - updateOne: unknown error`,
+                    original: error,
+                    code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
+                }));
+            })
+                .catch(error => ctx.next({
+                message: `[${this.$get('name')}] - findOne: unknown error`,
+                original: error,
+                code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
+            }));
+        }
     }
     updateById(ctx) {
         this.$logger.info('updateById service called');
@@ -220,15 +321,93 @@ class MongoModel extends model_1.Model {
             return ctx.ok(null);
         delete ctx.body.update._id;
         delete ctx.body.update.token;
-        this.collection.findOneAndUpdate({ _id: new MongoDB.ObjectID(ctx.params.id) }, ctx.body.update, Object.assign(ctx.body.options || {}, { returnOriginal: false })).then(res => {
-            this.$logger.debug('updateById service result:', res);
-            ctx.ok(res.value);
-        })
-            .catch(error => ctx.next({
-            message: `[${this.$get('name')}] - updateById: unknown error`,
-            original: error,
-            code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
-        }));
+        let schema = this.$get('schema');
+        if (!schema) {
+            this.collection.findOneAndUpdate({ _id: new MongoDB.ObjectID(ctx.params.id) }, ctx.body.update, Object.assign(ctx.body.options || {}, { returnOriginal: false })).then(res => {
+                this.$logger.debug('updateById service result:', res);
+                ctx.ok(res.value);
+            })
+                .catch(error => ctx.next({
+                message: `[${this.$get('name')}] - updateById: unknown error`,
+                original: error,
+                code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
+            }));
+        }
+        else {
+            this.collection.findOne({ _id: new MongoDB.ObjectID(ctx.params.id) })
+                .then(doc => {
+                if (!doc)
+                    return ctx.ok(null);
+                let preUpdatedDoc = doc;
+                let updatedDoc;
+                let errObj;
+                delete preUpdatedDoc._id;
+                this.collection.findOneAndUpdate({ _id: new MongoDB.ObjectID(ctx.params.id) }, ctx.body.update, Object.assign(ctx.body.options || {}, { returnOriginal: false })).then(res => {
+                    updatedDoc = res.value;
+                    delete updatedDoc._id;
+                    let state = schema.test(updatedDoc);
+                    if (state) {
+                        let props = schema.getProps();
+                        if (Object.keys(props).length) {
+                            let constants = [], internals = [];
+                            for (let prop in props) {
+                                if (props[prop].constant)
+                                    constants.push(prop);
+                                else if (props[prop].internal) {
+                                    internals.push(prop);
+                                }
+                            }
+                            if (constants.length) {
+                                let changedField = util_1.objectUtil.compareValues(constants, preUpdatedDoc, updatedDoc);
+                                if (changedField)
+                                    errObj = {
+                                        message: `[${this.$get('name')}]: '${changedField}' is a constant field that cannot be changed!`,
+                                        code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                                    };
+                            }
+                            if (!errObj && internals.length) {
+                                let changedField = util_1.objectUtil.compareValues(internals, preUpdatedDoc, updatedDoc);
+                                if (changedField)
+                                    errObj = {
+                                        message: `[${this.$get('name')}]: '${changedField}' cannot be modified externaly!`,
+                                        code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                                    };
+                            }
+                        }
+                    }
+                    else {
+                        errObj = {
+                            message: schema.error.message,
+                            original: schema.error,
+                            code: types_1.RESPONSE_CODES.BAD_REQUEST
+                        };
+                    }
+                    if (errObj) {
+                        this.collection.replaceOne({ _id: new MongoDB.ObjectID(ctx.params.id) }, preUpdatedDoc)
+                            .then(res => ctx.next(errObj))
+                            .catch(error => ctx.next({
+                            message: 'error reverting document after update',
+                            original: { message: schema.error.message, error: error },
+                            code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
+                        }));
+                    }
+                    else {
+                        this.$logger.debug('updateOne service result:', updatedDoc);
+                        ctx.ok(updatedDoc);
+                    }
+                })
+                    .catch(error => ctx.next({
+                    message: `[${this.$get('name')}] - updateOne: unknown error`,
+                    original: error,
+                    code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
+                }));
+            })
+                .catch(error => ctx.next({
+                message: `[${this.$get('name')}] - findOne: unknown error`,
+                original: error,
+                code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
+            }));
+        }
     }
     delete(ctx) {
         this.$logger.info('delete service called');

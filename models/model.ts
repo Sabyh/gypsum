@@ -2,6 +2,7 @@ import { Logger } from '../misc/logger';
 import { API_TYPES } from '../types';
 import { FRIEND, IService, IHook, IHookOptions, IModelOptions } from '../decorators';
 import { Safe } from '../misc/safe';
+import { State } from '../state';
 
 const safe = new Safe('model');
 
@@ -17,11 +18,20 @@ export class Model {
   public type: 'Mongo' | 'File' | undefined;
   public $logger: Logger;
 
-  static createPath(service: IService, ...prefixes: string[]): string {
+  static createPath(service: IService, model?: Model): string {
     let path = '';
 
-    if (prefixes && prefixes.length)
-      path += prefixes.join('/') + '/';
+    if (model) {
+      path += model.$get('name') + '/';
+
+      let modelApp = model.$get('app');
+
+      if (modelApp) {
+        let appConf = State.apps.find(app => app.name === modelApp);
+        if (!appConf || !appConf.subdomain)
+          path = modelApp + '/' + path;
+      }
+    }
 
     path += service.path || (skippedServicesNames.indexOf(service.name) > -1 ? '' : service.name);
 
@@ -63,7 +73,7 @@ export class Model {
           name: service.name,
           event: `${this.$get('app') || ''} ${this.$get('name')} ${service.event}`.trim(),
           method: service.method,
-          path: Model.createPath(service, this.$get('app'), this.$get('name')),
+          path: Model.createPath(service, this),
           params: service.params,
           domain: (!this.$get('domain') || this.$get('domain') > service.domain) ? service.domain : this.$get('domain'),
           before: [],

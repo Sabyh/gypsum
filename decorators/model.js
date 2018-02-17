@@ -30,7 +30,7 @@ function MODEL(options = {}) {
             if (!(options.schema instanceof Validall.Schema)) {
                 options.schemaOptions = Object.assign({}, defaultSchemaOptions, { root: Target.name }, options.schemaOptions || {});
                 options.schema = Object.assign(options.schema, { '_id?': 'string' });
-                options.schema = new Validall.Schema({ $cast: 'array', $each: options.schema }, options.schemaOptions);
+                options.schema = new Validall.Schema(options.schema, options.schemaOptions);
             }
             else {
                 options.schema.schema['_id?'] = 'string';

@@ -47,8 +47,8 @@ export declare class FileCollection {
     count(query: Validall.ISchema): Promise<number>;
     insert(documents: any[]): Promise<FileCollection.Document[]>;
     update(filter: Validall.ISchema, update: any, options?: FileCollection.IUpdateOptions): Promise<FileCollection.Document[] | number>;
-    updateById(id: string, update: any): Promise<FileCollection.Document>;
-    updateOne(filter: Validall.ISchema, update: any): Promise<FileCollection.Document>;
+    updateById(id: string, update: any): Promise<FileCollection.Document | null>;
+    updateOne(filter: Validall.ISchema, update: any): Promise<FileCollection.Document | null>;
     delete(filter: Validall.ISchema, options?: FileCollection.IDeleteOptions): Promise<FileCollection.Document[] | number>;
     deleteById(id: string): Promise<FileCollection.Document>;
     deleteOne(filter: Validall.ISchema): Promise<FileCollection.Document>;

@@ -310,6 +310,17 @@ exports.objectUtil = {
         for (let prop in obj)
             result += '&' + prop + '=' + this.valueToString(obj[prop]);
         return encode ? encodeURI(result.slice(1)) : result.slice(1);
+    },
+    compareValue(path, obj1, obj2) {
+        let value01 = this.getValue(obj1, path);
+        let value02 = this.getValue(obj2, path);
+        return this.equals(value01, value02, true);
+    },
+    compareValues(paths, obj1, obj2) {
+        for (let i = 0; i < paths.length; i++)
+            if (!this.compareValue(paths[i], obj1, obj2))
+                return paths[i];
+        return '';
     }
 };
 //# sourceMappingURL=object.js.map

@@ -18,4 +18,6 @@ export declare const objectUtil: {
     omit(obj: any, props: string[]): any;
     valueToString(value: any): string;
     objectToQueryString(obj: any, encode: boolean): string;
+    compareValue(path: string, obj1: any, obj2: any): boolean;
+    compareValues(paths: string[], obj1: any, obj2: any): string;
 };

@@ -212,7 +212,7 @@ export class FileCollection {
           if (!documents || documents.length)
             return resolve([]);          
 
-          for (let i = 0; i < documents.length; i++){
+          for (let i = 0; i < documents.length; i++) {
             delete documents[1]._id;
 
             if (this.schema && !this.schema.test(documents[i]))
@@ -277,23 +277,23 @@ export class FileCollection {
     });
   }
 
-  updateById(id: string, update: any): Promise<FileCollection.Document> {
+  updateById(id: string, update: any): Promise<FileCollection.Document | null> {
     return this.update({ _id: id }, update, { multi: false, returnDoc: true })
       .then((docs: FileCollection.Document[]) => {
         if (docs && docs.length)
           return docs[0];
         else
-          return <FileCollection.Document>{};
+          return null;
       });
   }
 
-  updateOne(filter: Validall.ISchema, update: any): Promise<FileCollection.Document> {
+  updateOne(filter: Validall.ISchema, update: any): Promise<FileCollection.Document | null> {
     return this.update(filter, update, { multi: false, returnDoc: true })
       .then((docs: FileCollection.Document[]) => {
         if (docs && docs.length)
           return docs[0];
         else
-          return <FileCollection.Document>{};
+          return null;
       });
   }
 

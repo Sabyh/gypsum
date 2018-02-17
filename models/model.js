@@ -10,13 +10,21 @@ const logger_1 = require("../misc/logger");
 const types_1 = require("../types");
 const decorators_1 = require("../decorators");
 const safe_1 = require("../misc/safe");
+const state_1 = require("../state");
 const safe = new safe_1.Safe('model');
 const skippedServicesNames = ['find', 'findById', 'insert', 'update', 'updateById', 'delete', 'deleteById'];
 class Model {
-    static createPath(service, ...prefixes) {
+    static createPath(service, model) {
         let path = '';
-        if (prefixes && prefixes.length)
-            path += prefixes.join('/') + '/';
+        if (model) {
+            path += model.$get('name') + '/';
+            let modelApp = model.$get('app');
+            if (modelApp) {
+                let appConf = state_1.State.apps.find(app => app.name === modelApp);
+                if (!appConf || !appConf.subdomain)
+                    path = modelApp + '/' + path;
+            }
+        }
         path += service.path || (skippedServicesNames.indexOf(service.name) > -1 ? '' : service.name);
         if (service.params.length)
             for (let i = 0; i < service.params.length; i++)
@@ -47,7 +55,7 @@ class Model {
                     name: service.name,
                     event: `${this.$get('app') || ''} ${this.$get('name')} ${service.event}`.trim(),
                     method: service.method,
-                    path: Model.createPath(service, this.$get('app'), this.$get('name')),
+                    path: Model.createPath(service, this),
                     params: service.params,
                     domain: (!this.$get('domain') || this.$get('domain') > service.domain) ? service.domain : this.$get('domain'),
                     before: [],

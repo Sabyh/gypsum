@@ -21,17 +21,17 @@ export class Authentication extends Model {
   constructor() {
     super();
 
-    if (State.config.usersModel) {
-      this.userModel = <MongoModel>State.getModel(State.config.usersModel);
+    if (State.authConfig.usersModel) {
+      this.userModel = <MongoModel>State.getModel(State.authConfig.usersModel);
 
       if (!this.userModel)
-        throw `'${State.config.usersModel}' not found!`;
+        throw `'${State.authConfig.usersModel}' not found!`;
 
       if (!this.userModel.$get('accessable'))
-        throw `'${State.config.usersModel}' must be public!`;
+        throw `'${State.authConfig.usersModel}' must be public!`;
 
-      if (State.config.tranporterOptions) {
-        this.transporter = createTransport(State.config.tranporterOptions);
+      if (State.authConfig.tranporterOptions) {
+        this.transporter = createTransport(State.authConfig.tranporterOptions);
 
         // creating nodemailer test account
       } else {
@@ -55,8 +55,8 @@ export class Authentication extends Model {
 
   getRootUser(): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.$logger.info('getting root user: ' + State.config.rootUser);
-      this.userModel.collection.findOne({ username: State.config.rootUser })
+      this.$logger.info('getting root user: ' + State.authConfig.rootUser);
+      this.userModel.collection.findOne({ username: State.authConfig.rootUser })
         .then(doc => {
           resolve(doc);
         })
@@ -65,16 +65,16 @@ export class Authentication extends Model {
   }
 
   createRootUser(): Promise<any> {
-    this.$logger.info('creating root user: ' + State.config.rootUser);
+    this.$logger.info('creating root user: ' + State.authConfig.rootUser);
     return new Promise((resolve, reject) => {
-      hash(State.config.rootUserPassword)
+      hash(State.authConfig.rootUserPassword)
         .then(results => {
           this.userModel.collection.insertOne({
-            [State.config.usernameField]: State.config.rootUser,
-            [State.config.userEmailField]: State.config.rootUserEmail,
-            [State.config.passwordField]: results[0],
-            [State.config.passwordSaltField]: results[1],
-            [State.config.userIsActiveField]: true
+            [State.authConfig.usernameField]: State.authConfig.rootUser,
+            [State.authConfig.userEmailField]: State.authConfig.rootUserEmail,
+            [State.authConfig.passwordField]: results[0],
+            [State.authConfig.passwordSaltField]: results[1],
+            [State.authConfig.userIsActiveField]: true
           })
             .then(doc => {
               if (doc)
@@ -96,13 +96,13 @@ export class Authentication extends Model {
     if (!responseData || Array.isArray(responseData) || !Validall.Types.object(responseData))
       return ctx.next();
 
-    responseData[State.config.tokenFieldName] = jwt.sign({ id: responseData._id }, State.config.tokenSecret);
+    responseData[State.authConfig.tokenFieldName] = jwt.sign({ id: responseData._id }, State.authConfig.tokenSecret);
     ctx.next();
   }
 
   @HOOK()
   secure(ctx: Context) {
-    let token = ctx.getHeader(State.config.tokenFieldName) || ctx.query[State.config.tokenFieldName] || ctx.cookies(State.config.tokenFieldName) || ctx.body[State.config.tokenFieldName];
+    let token = ctx.getHeader(State.authConfig.tokenFieldName) || ctx.query[State.authConfig.tokenFieldName] || ctx.cookies(State.authConfig.tokenFieldName) || ctx.body[State.authConfig.tokenFieldName];
 
     if (!token)
       return ctx.next({
@@ -110,7 +110,7 @@ export class Authentication extends Model {
         code: RESPONSE_CODES.UNAUTHORIZED
       });
 
-    let data: any = jwt.verify(token, State.config.tokenSecret);
+    let data: any = jwt.verify(token, State.authConfig.tokenSecret);
 
     if (!data.id)
       return ctx.next({
@@ -146,7 +146,7 @@ export class Authentication extends Model {
         code: RESPONSE_CODES.UNKNOWN_ERROR
       });
 
-    fs.readFile(State.config.activationMailTemplatePath, (err, template) => {
+    fs.readFile(State.authConfig.activationMailTemplatePath, (err, template) => {
       if (err)
         return ctx.next({
           message: 'error reading activation email template',
@@ -154,14 +154,14 @@ export class Authentication extends Model {
           code: RESPONSE_CODES.UNKNOWN_ERROR
         });
 
-      let token = jwt.sign({ id: user._id }, State.config.tokenSecret);
-      let activationLink = stringUtil.cleanPath(`${State.config.host}/${State.config.services_prefix}/authentication/activateUser?${State.config.tokenFieldName}=${token}`);
+      let token = jwt.sign({ id: user._id }, State.authConfig.tokenSecret);
+      let activationLink = stringUtil.cleanPath(`${State.config.host}/${State.config.services_prefix}/authentication/activateUser?${State.authConfig.tokenFieldName}=${token}`);
 
       let emailOptions: SendMailOptions = {
-        from: State.config.activationMailSubject,
-        to: user[State.config.userEmailField],
-        subject: State.config.activationMailSubject,
-        html: stringUtil.compile(template.toString('utf-8'), { username: user[State.config.usernameField], activationLink })
+        from: State.authConfig.activationMailSubject,
+        to: user[State.authConfig.userEmailField],
+        subject: State.authConfig.activationMailSubject,
+        html: stringUtil.compile(template.toString('utf-8'), { username: user[State.authConfig.usernameField], activationLink })
       };
 
       this.transporter.sendMail(emailOptions, (sendEmailError: any, info: any) => {
@@ -193,9 +193,9 @@ export class Authentication extends Model {
     let user = ctx.user;
 
     this.userModel.collection
-      .updateOne({ _id: new MongoDB.ObjectID(user._id) }, { $set: { [State.config.userIsActiveField]: true } })
+      .updateOne({ _id: new MongoDB.ObjectID(user._id) }, { $set: { [State.authConfig.userIsActiveField]: true } })
       .then(doc => {
-        fs.readFile(State.config.activationPage, 'utf-8', (err, data) => {
+        fs.readFile(State.authConfig.activationPage, 'utf-8', (err, data) => {
           if (err)
             ctx.next({
               message: '',
@@ -238,9 +238,9 @@ export class Authentication extends Model {
     let query: any = {};
 
     if (Validall.Is.email(userId))
-      query[State.config.userEmailField] = userId;
+      query[State.authConfig.userEmailField] = userId;
     else
-      query[State.config.usernameField] = userId;
+      query[State.authConfig.usernameField] = userId;
 
     this.userModel.collection
       .findOne(query)
@@ -251,7 +251,7 @@ export class Authentication extends Model {
             code: RESPONSE_CODES.UNAUTHORIZED
           });
 
-        verify(password, doc[State.config.passwordField], doc[State.config.passwordSaltField])
+        verify(password, doc[State.authConfig.passwordField], doc[State.authConfig.passwordSaltField])
           .then((match: boolean) => {
             if (match === true) {
               ctx.useServiceHooks(this.userModel.$getService('findOne'));
@@ -278,15 +278,15 @@ export class Authentication extends Model {
 
   @SERVICE({
     method: 'post',
-    before: [`exists:@${State.config.usersModel}:documents.email`, `exists:@${State.config.usersModel}:documents.username`],
+    before: [`exists:@${State.authConfig.usersModel}:documents.email`, `exists:@${State.authConfig.usersModel}:documents.username`],
     after: ['Authentication.pushToken', 'Authentication.activationEmail']
   })
   signup(ctx: Context) {
     try {
       let state = Validall(ctx.body.documents, {
-        [State.config.usernameField]: { $type: 'string', $regex: toRegExp(State.config.usernamePattern), $message: 'invalid username' },
-        [State.config.userEmailField]: { $type: 'string', $is: 'email', $message: 'invalid email' },
-        [State.config.passwordField]: { $required: true, $type: 'string', $regex: toRegExp(State.config.passwordpattern), $message: 'invalid password' }
+        [State.authConfig.usernameField]: { $type: 'string', $regex: toRegExp(State.authConfig.usernamePattern), $message: 'invalid username' },
+        [State.authConfig.userEmailField]: { $type: 'string', $is: 'email', $message: 'invalid email' },
+        [State.authConfig.passwordField]: { $required: true, $type: 'string', $regex: toRegExp(State.authConfig.passwordpattern), $message: 'invalid password' }
       });
 
       if (!state)
@@ -299,11 +299,11 @@ export class Authentication extends Model {
       console.trace(e);
     }
 
-    hash(ctx.body.documents[State.config.passwordField])
+    hash(ctx.body.documents[State.authConfig.passwordField])
       .then(results => {
         if (results && results.length) {
-          ctx.body.documents[State.config.passwordField] = results[0];
-          ctx.body.documents[State.config.passwordSaltField] = results[1];
+          ctx.body.documents[State.authConfig.passwordField] = results[0];
+          ctx.body.documents[State.authConfig.passwordSaltField] = results[1];
           console.log(results);
           ctx.useService(this.userModel, 'insert');
         } else {

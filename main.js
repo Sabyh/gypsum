@@ -13,6 +13,7 @@ const io_1 = require("./servers/io");
 const authentication_1 = require("./authentication");
 const http_1 = require("./servers/http");
 const workers_1 = require("./workers");
+const generate_client_gypsum_1 = require("./client/generate-client-gypsum");
 let logger;
 function useHooks(hooks) {
     for (let i = 0; i < hooks.length; i++)
@@ -20,12 +21,27 @@ function useHooks(hooks) {
             state_1.State.hooks.push(hooks[i]);
 }
 function useMiddlewares(middlewares) {
-    state_1.State.middlewares = middlewares;
+    for (let prop in middlewares) {
+        if (state_1.State.middlewares[prop]) {
+            if (middlewares[prop].before && middlewares[prop].before.length)
+                if (state_1.State.middlewares[prop].before)
+                    state_1.State.middlewares[prop].before.push(...middlewares[prop].before);
+            if (middlewares[prop].after && middlewares[prop].after.length)
+                if (state_1.State.middlewares[prop].after)
+                    state_1.State.middlewares[prop].after.push(...middlewares[prop].after);
+        }
+        else {
+            state_1.State.middlewares[prop] = { before: [], after: [] };
+            if (middlewares[prop].before && middlewares[prop].before.length)
+                state_1.State.middlewares[prop].before.push(...middlewares[prop].before);
+            if (middlewares[prop].after && middlewares[prop].after.length)
+                state_1.State.middlewares[prop].after.push(...middlewares[prop].after);
+        }
+    }
 }
 function useModels(models) {
-    for (let i = 0; i < models.length; i++) {
+    for (let i = 0; i < models.length; i++)
         state_1.State.Models.push(models[i]);
-    }
 }
 exports.Gypsum = {
     root: state_1.State.root,
@@ -35,18 +51,25 @@ exports.Gypsum = {
         return state_1.State.config[name];
     },
     configure(userConfig) {
+        logger_1.Logger.Info('Configuring Gypsum..');
         state_1.State.setConfiguration(userConfig ? userConfig : {});
         logger_1.Logger.SetOptions(state_1.State.config.logger_options);
         logger = new logger_1.Logger('gypsum');
         return this;
     },
     use(options) {
-        if (options.hooks)
+        if (options.hooks) {
+            logger.info('using hooks..');
             useHooks(options.hooks);
-        if (options.middlewares)
+        }
+        if (options.middlewares) {
+            logger.info('using middlwares..');
             useMiddlewares(options.middlewares);
-        if (options.models)
+        }
+        if (options.models) {
+            logger.info('using models..');
             useModels(options.models);
+        }
         return this;
     },
     bootstrap() {
@@ -64,6 +87,8 @@ exports.Gypsum = {
             model[safe.get('model.init')]();
             state_1.State.models.push(model);
         }
+        logger.info('generating gypsum-client.js');
+        generate_client_gypsum_1.generateClientGypsum();
         logger.info('initializing mongodb...');
         try {
             mongo_1.initMongo()
@@ -74,7 +99,7 @@ exports.Gypsum = {
                 logger.info('initializeing socket...');
                 io_1.initSocket(server.io);
                 logger.info('running server...');
-                server.start(state_1.State.config.port);
+                server.start();
             })
                 .catch(error => logger.error(error));
         }

@@ -219,7 +219,7 @@ class FileCollection {
             if (docs && docs.length)
                 return docs[0];
             else
-                return {};
+                return null;
         });
     }
     updateOne(filter, update) {
@@ -228,7 +228,7 @@ class FileCollection {
             if (docs && docs.length)
                 return docs[0];
             else
-                return {};
+                return null;
         });
     }
     delete(filter, options) {

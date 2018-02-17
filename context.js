@@ -153,6 +153,7 @@ class Context {
             this._stack = [];
         this._mPushStack(service.after);
     }
+    get domain() { return this._domain; }
     set domain(value) { this._domain = value; }
     get room() { return this._room; }
     getHeader(name) {

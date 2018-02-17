@@ -5,27 +5,16 @@ import { Context } from '../context';
 import { RESPONSE_DOMAINS } from '../types';
 
 @MODEL({
-  app: 'db01'
+  schema: {
+    name: 'string',
+    active: { $type: 'boolean', $default: false, $props: { constant: true } }
+  }
 })
-class Coll01 extends MongoModel {}
-
-@MODEL({
-  app: 'db02'
-})
-class Coll02 extends MongoModel {}
+class Users extends MongoModel {}
 
 Gypsum
-  .configure({
-    dev: {
-      database: {
-        databases: [
-          { name: 'db01' },
-          { name: 'db02' }
-        ]
-      }
-    }
-  })
+  .configure()
   .use({
-    models: [Coll01, Coll02]
+    models: [Users]
   })
   .bootstrap();

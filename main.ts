@@ -36,6 +36,7 @@ import { initAuthentication } from './authentication';
  */
 import { Server } from './servers/http';
 import { initializeWorkers } from './workers';
+import { generateClientGypsum } from './client/generate-client-gypsum';
 
 /**
  * Instanciating Logger for gypsum
@@ -49,13 +50,29 @@ function useHooks(hooks: ((ctx: Context) => void)[]) {
 }
 
 function useMiddlewares(middlewares: IMiddlewares): void {
-  State.middlewares = middlewares;
+  for (let prop in middlewares) {
+    if (State.middlewares[prop]) {
+      if (middlewares[prop].before && middlewares[prop].before.length)
+        if (State.middlewares[prop].before)
+          State.middlewares[prop].before.push(...middlewares[prop].before);
+
+      if (middlewares[prop].after && middlewares[prop].after.length)
+        if (State.middlewares[prop].after)
+          State.middlewares[prop].after.push(...middlewares[prop].after);
+    } else {
+      State.middlewares[prop] = { before: [], after: [] };
+      if (middlewares[prop].before && middlewares[prop].before.length)
+        State.middlewares[prop].before.push(...middlewares[prop].before);
+
+      if (middlewares[prop].after && middlewares[prop].after.length)
+        State.middlewares[prop].after.push(...middlewares[prop].after);
+    }
+  }
 }
 
 function useModels(models: typeof Model[]) {
-  for (let i = 0; i < models.length; i++) {
+  for (let i = 0; i < models.length; i++)
     State.Models.push(models[i]);
-  }
 }
 
 export { IGypsumConfigurations };
@@ -89,6 +106,7 @@ export const Gypsum: IGypsum = {
     /**
      * applying user config on the default config
      */
+    Logger.Info('Configuring Gypsum..');
     State.setConfiguration(userConfig ? <IGypsumConfig>userConfig : <IGypsumConfig>{});
 
     /**
@@ -101,12 +119,19 @@ export const Gypsum: IGypsum = {
   },
 
   use(options: IGypsumUseOptions) {
-    if (options.hooks)
+
+    if (options.hooks) {
+      logger.info('using hooks..');
       useHooks(options.hooks);
-    if (options.middlewares)
+    }
+    if (options.middlewares) {
+      logger.info('using middlwares..');
       useMiddlewares(options.middlewares);
-    if (options.models)
+    }
+    if (options.models) {
+      logger.info('using models..');
       useModels(options.models);
+    }
 
     return this;
   },
@@ -129,6 +154,9 @@ export const Gypsum: IGypsum = {
       model[<'init'>safe.get('model.init')]();
       State.models.push(model);
     }
+
+    logger.info('generating gypsum-client.js');
+    generateClientGypsum();
 
     logger.info('initializing mongodb...');
     try {

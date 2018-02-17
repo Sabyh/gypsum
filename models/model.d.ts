@@ -9,7 +9,7 @@ export declare class Model {
     private _hooksData;
     type: 'Mongo' | 'File' | undefined;
     $logger: Logger;
-    static createPath(service: IService, ...prefixes: string[]): string;
+    static createPath(service: IService, model?: Model): string;
     private _mArrangeServices();
     private _mArrangeHooks();
     protected init(): void;

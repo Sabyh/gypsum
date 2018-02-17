@@ -20,9 +20,11 @@ class AppState {
         this.root = process.cwd();
         this.env = process.env.NODE_ENV || 'developemt';
         this.config = {};
+        this.authConfig = {};
+        this.apps = [];
         this.models = [];
         this.Models = [];
-        this.middlewares = { before: [], after: [] };
+        this.middlewares = {};
         this.hooks = [];
     }
     getModel(name) {
@@ -42,59 +44,40 @@ class AppState {
         delete this._sockets[id];
     }
     setConfiguration(userConfig = {}) {
-        if (userConfig.dev && userConfig.dev.authConfig)
-            Object.assign(this.config, config_1.Config.dev.authConfig, userConfig.dev.authConfig);
-        else
-            Object.assign(this.config, config_1.Config.dev.authConfig);
-        if (userConfig.dev && userConfig.dev.server)
-            Object.assign(this.config, config_1.Config.dev.server, userConfig.dev.server);
-        else
-            Object.assign(this.config, config_1.Config.dev.server);
-        this.config.database = { databases: [] };
-        if (userConfig.dev && userConfig.dev.database) {
-            this.config.database.host = userConfig.dev.database.host || config_1.Config.dev.database.host;
-            this.config.database.port = userConfig.dev.database.port || config_1.Config.dev.database.port;
-            this.config.database.username = userConfig.dev.database.username || config_1.Config.dev.database.username;
-            this.config.database.password = userConfig.dev.database.password || config_1.Config.dev.database.password;
-            if (userConfig.dev.database.databases)
-                for (let i = 0; i < userConfig.dev.database.databases.length; i++)
-                    Object.assign(this.config.database.databases[i] = {}, config_1.Config.dev.database.databases[0], userConfig.dev.database.databases[i]);
+        if (userConfig.dev) {
+            if (userConfig.dev.authConfig)
+                Object.assign(this.authConfig, config_1.Config.dev.authConfig, userConfig.dev.authConfig);
             else
-                Object.assign(this.config.database.databases[0], config_1.Config.dev.database.databases[0]);
+                Object.assign(this.authConfig, config_1.Config.dev.authConfig);
+            if (userConfig.dev.server)
+                Object.assign(this.config, config_1.Config.dev.server, userConfig.dev.server);
+            else
+                Object.assign(this.config, config_1.Config.dev.server);
         }
         else {
-            this.config.database.host = config_1.Config.dev.database.host;
-            this.config.database.port = config_1.Config.dev.database.port;
-            this.config.database.username = config_1.Config.dev.database.username;
-            this.config.database.password = config_1.Config.dev.database.password;
-            Object.assign(this.config.database.databases[0], config_1.Config.dev.database.databases[0]);
+            Object.assign(this.authConfig, config_1.Config.dev.authConfig);
+            Object.assign(this.config, config_1.Config.dev.server);
         }
         if (this.env === 'production') {
-            userConfig.prod = userConfig.prod || {};
-            if (userConfig.prod && userConfig.prod.authConfig)
-                Object.assign(this.config, userConfig.prod.authConfig);
-            if (userConfig.prod && userConfig.prod.server)
-                Object.assign(this.config, config_1.Config.prod.server, userConfig.prod.server);
-            else
-                Object.assign(this.config, config_1.Config.prod.server);
-            if (userConfig.prod && userConfig.prod.database) {
-                this.config.database.host = userConfig.prod.database.host || config_1.Config.prod.database.host;
-                this.config.database.port = userConfig.prod.database.port || config_1.Config.prod.database.port;
-                this.config.database.username = userConfig.prod.database.username || config_1.Config.prod.database.username;
-                this.config.database.password = userConfig.prod.database.password || config_1.Config.prod.database.password;
-                if (userConfig.prod.database.databases)
-                    for (let i = 0; i < userConfig.prod.database.databases.length; i++)
-                        Object.assign(this.config.database.databases[i], config_1.Config.prod.database.databases[0], userConfig.prod.database.databases[i]);
+            if (userConfig.prod) {
+                if (userConfig.prod.authConfig)
+                    Object.assign(this.authConfig, config_1.Config.prod.authConfig, userConfig.prod.authConfig);
                 else
-                    Object.assign(this.config.database.databases[0], config_1.Config.prod.database.databases[0]);
+                    Object.assign(this.authConfig, config_1.Config.prod.authConfig);
+                if (userConfig.prod.server)
+                    Object.assign(this.config, config_1.Config.prod.server, userConfig.prod.server);
+                else
+                    Object.assign(this.config, config_1.Config.prod.server);
+                if (userConfig.prod.apps && userConfig.prod.apps.length)
+                    this.apps = userConfig.prod.apps;
             }
             else {
-                this.config.database.host = config_1.Config.prod.database.host;
-                this.config.database.port = config_1.Config.prod.database.port;
-                this.config.database.username = config_1.Config.prod.database.username;
-                this.config.database.password = config_1.Config.prod.database.password;
-                Object.assign(this.config.database.databases[0], config_1.Config.prod.database.databases[0]);
+                Object.assign(this.authConfig, config_1.Config.prod.authConfig);
+                Object.assign(this.config, config_1.Config.prod.server);
             }
+        }
+        else if (userConfig.dev && userConfig.dev.apps && userConfig.dev.apps.length) {
+            this.apps = userConfig.dev.apps;
         }
         if (this.config.services_prefix)
             this.config.services_prefix = '/' + string_1.stringUtil.cleanPath(this.config.services_prefix);

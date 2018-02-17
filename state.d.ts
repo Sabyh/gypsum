@@ -1,13 +1,15 @@
 import * as express from 'express';
-import { IGypsumConfig, IAuthenticationConfigOptions, IServerConfigOptions, IDatabaseConnection } from './config';
+import { IGypsumConfig, IAuthenticationConfigOptions, IServerConfigOptions, IApp } from './config';
 import { Context } from './context';
 import { Model } from './models';
 export interface IMiddleware {
     (app: express.Express): void;
 }
 export interface IMiddlewares {
-    before: IMiddleware[];
-    after: IMiddleware[];
+    [key: string]: {
+        before: IMiddleware[];
+        after: IMiddleware[];
+    };
 }
 export declare class AppState {
     private _sockets;
@@ -15,9 +17,9 @@ export declare class AppState {
     readonly router: express.Router;
     readonly root: string;
     readonly env: string;
-    config: IAuthenticationConfigOptions & IServerConfigOptions & {
-        database: IDatabaseConnection;
-    };
+    config: IServerConfigOptions;
+    authConfig: IAuthenticationConfigOptions;
+    apps: IApp[];
     models: Model[];
     Models: typeof Model[];
     middlewares: IMiddlewares;

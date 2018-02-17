@@ -42,6 +42,7 @@ export type IAuthenticationConfig = {
 // Server Configurations Interface
 export interface IServerConfigOptions {
   server_name: string;
+  secure: boolean;
   origin: string;
   port: number;
   host: string;
@@ -54,24 +55,25 @@ export interface IServerConfigOptions {
   logger_options: ILoggerOptions | null;
   authentication: boolean;
   authorization: boolean;
+  mongodb_url: string;
+  database_name: string;
 }
 
 export type IServerConfig = {
   [key in keyof IServerConfigOptions]?: IServerConfigOptions[key];
 }
 
-export interface IDatabaseConnection {
-  host?: string;
-  port?: number;
-  username?: string;
-  password?: string;
-  databases?: { name: string; app?: string; options?: MongoClientOptions; }[];
+export interface IApp {
+  name: string;
+  database?: string;
+  subdomain?: boolean;
+  secure?: boolean;
 }
 
 export interface IConfig {
   authConfig?: IAuthenticationConfig;
   server?: IServerConfig;
-  database?: IDatabaseConnection;
+  apps?: IApp[];
 }
 
 export interface IGypsumConfig {
@@ -109,9 +111,10 @@ export const Config: IGypsumConfig = {
     },
     server: {
       server_name: 'gypsum',
-      origin: "http://localhost",
+      secure: false,
+      origin: "http://localhost:7771",
       port: 7771,
-      host: "http://localhost:7771",
+      host: "localhost",
       services_prefix: "apis",
       statics: ['static'],
       files_data_dir: ".data",
@@ -120,23 +123,19 @@ export const Config: IGypsumConfig = {
       upload_size_limit_mb: 10,
       logger_options: { all: 'debug' },
       authentication: false,
-      authorization: false
-    },
-    database: {
-      host: 'localhost',
-      port: 27017,
-      databases: [{ name: 'gypsum_dev_db'}]
+      authorization: false,
+      mongodb_url: 'mongodb://localhost:27017',
+      database_name: 'gypsum_dev_db'
     }
   },
 
   prod: {
     server: {
+      secure: true,
       origin: "http://localhost",
       processes: 'max',
-      logger_options: { all: "error" }
-    },
-    database: {
-      databases: [{ name: 'gypsum_db' }]
+      logger_options: { all: "error" },
+      database_name: 'gypsum_db'
     }
   }
 }

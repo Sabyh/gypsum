@@ -6,7 +6,7 @@ exports.Config = {
         authConfig: {
             rootUser: 'root',
             rootUserEmail: 'root@admin.com',
-            rootPassword: 'admin',
+            rootUserPassword: 'admin',
             usersModel: 'Users',
             userEmailField: 'email',
             userIdField: 'userid',
@@ -20,15 +20,16 @@ exports.Config = {
             passwordpattern: '/[a-zA-Z0-9_]{5,}/',
             tranporterOptions: null,
             activationMailFrom: 'me@threre.com',
-            activationMailSubject: 'Activation Email',
+            activationMailSubject: 'Gypsum Activation Email',
             activationPage: path.join(__dirname, '../templates/activation-page-template.html'),
             activationMailTemplatePath: path.join(__dirname, '../templates/activation-email-template.html')
         },
         server: {
             server_name: 'gypsum',
-            origin: "http://localhost",
+            secure: false,
+            origin: "http://localhost:7771",
             port: 7771,
-            host: "http://localhost:7771",
+            host: "localhost",
             services_prefix: "apis",
             statics: ['static'],
             files_data_dir: ".data",
@@ -37,22 +38,18 @@ exports.Config = {
             upload_size_limit_mb: 10,
             logger_options: { all: 'debug' },
             authentication: false,
-            authorization: false
-        },
-        database: {
-            host: 'localhost',
-            port: 27017,
-            databases: [{ name: 'gypsum_dev_db' }]
+            authorization: false,
+            mongodb_url: 'mongodb://localhost:27017',
+            database_name: 'gypsum_dev_db'
         }
     },
     prod: {
         server: {
+            secure: true,
             origin: "http://localhost",
             processes: 'max',
-            logger_options: { all: "error" }
-        },
-        database: {
-            databases: [{ name: 'gypsum_db' }]
+            logger_options: { all: "error" },
+            database_name: 'gypsum_db'
         }
     }
 };

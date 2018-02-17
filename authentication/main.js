@@ -19,14 +19,14 @@ const util_1 = require("../util");
 let Authentication = class Authentication extends models_1.Model {
     constructor() {
         super();
-        if (state_1.State.config.usersModel) {
-            this.userModel = state_1.State.getModel(state_1.State.config.usersModel);
+        if (state_1.State.authConfig.usersModel) {
+            this.userModel = state_1.State.getModel(state_1.State.authConfig.usersModel);
             if (!this.userModel)
-                throw `'${state_1.State.config.usersModel}' not found!`;
+                throw `'${state_1.State.authConfig.usersModel}' not found!`;
             if (!this.userModel.$get('accessable'))
-                throw `'${state_1.State.config.usersModel}' must be public!`;
-            if (state_1.State.config.tranporterOptions) {
-                this.transporter = nodemailer_1.createTransport(state_1.State.config.tranporterOptions);
+                throw `'${state_1.State.authConfig.usersModel}' must be public!`;
+            if (state_1.State.authConfig.tranporterOptions) {
+                this.transporter = nodemailer_1.createTransport(state_1.State.authConfig.tranporterOptions);
             }
             else {
                 nodemailer_1.createTestAccount((err, account) => {
@@ -47,8 +47,8 @@ let Authentication = class Authentication extends models_1.Model {
     }
     getRootUser() {
         return new Promise((resolve, reject) => {
-            this.$logger.info('getting root user: ' + state_1.State.config.rootUser);
-            this.userModel.collection.findOne({ username: state_1.State.config.rootUser })
+            this.$logger.info('getting root user: ' + state_1.State.authConfig.rootUser);
+            this.userModel.collection.findOne({ username: state_1.State.authConfig.rootUser })
                 .then(doc => {
                 resolve(doc);
             })
@@ -56,15 +56,16 @@ let Authentication = class Authentication extends models_1.Model {
         });
     }
     createRootUser() {
-        this.$logger.info('creating root user: ' + state_1.State.config.rootUser);
+        this.$logger.info('creating root user: ' + state_1.State.authConfig.rootUser);
         return new Promise((resolve, reject) => {
-            util_1.hash(state_1.State.config.rootPassword)
+            util_1.hash(state_1.State.authConfig.rootUserPassword)
                 .then(results => {
                 this.userModel.collection.insertOne({
-                    [state_1.State.config.usernameField]: state_1.State.config.rootUser,
-                    [state_1.State.config.userEmailField]: state_1.State.config.rootUserEmail,
-                    [state_1.State.config.passwordField]: results[0],
-                    [state_1.State.config.passwordSaltField]: results[1]
+                    [state_1.State.authConfig.usernameField]: state_1.State.authConfig.rootUser,
+                    [state_1.State.authConfig.userEmailField]: state_1.State.authConfig.rootUserEmail,
+                    [state_1.State.authConfig.passwordField]: results[0],
+                    [state_1.State.authConfig.passwordSaltField]: results[1],
+                    [state_1.State.authConfig.userIsActiveField]: true
                 })
                     .then(doc => {
                     if (doc)
@@ -82,17 +83,17 @@ let Authentication = class Authentication extends models_1.Model {
         console.log('pushToken', responseData);
         if (!responseData || Array.isArray(responseData) || !Validall.Types.object(responseData))
             return ctx.next();
-        responseData[state_1.State.config.tokenFieldName] = jwt.sign({ id: responseData._id }, state_1.State.config.tokenSecret);
+        responseData[state_1.State.authConfig.tokenFieldName] = jwt.sign({ id: responseData._id }, state_1.State.authConfig.tokenSecret);
         ctx.next();
     }
     secure(ctx) {
-        let token = ctx.getHeader(state_1.State.config.tokenFieldName) || ctx.query[state_1.State.config.tokenFieldName] || ctx.cookies(state_1.State.config.tokenFieldName) || ctx.body[state_1.State.config.tokenFieldName];
+        let token = ctx.getHeader(state_1.State.authConfig.tokenFieldName) || ctx.query[state_1.State.authConfig.tokenFieldName] || ctx.cookies(state_1.State.authConfig.tokenFieldName) || ctx.body[state_1.State.authConfig.tokenFieldName];
         if (!token)
             return ctx.next({
                 message: 'user token is missing',
                 code: types_1.RESPONSE_CODES.UNAUTHORIZED
             });
-        let data = jwt.verify(token, state_1.State.config.tokenSecret);
+        let data = jwt.verify(token, state_1.State.authConfig.tokenSecret);
         if (!data.id)
             return ctx.next({
                 message: 'invalid user token',
@@ -121,20 +122,20 @@ let Authentication = class Authentication extends models_1.Model {
                 message: 'user not provided',
                 code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
             });
-        fs.readFile(state_1.State.config.activationMailTemplatePath, (err, template) => {
+        fs.readFile(state_1.State.authConfig.activationMailTemplatePath, (err, template) => {
             if (err)
                 return ctx.next({
                     message: 'error reading activation email template',
                     original: err,
                     code: types_1.RESPONSE_CODES.UNKNOWN_ERROR
                 });
-            let token = jwt.sign({ id: user._id }, state_1.State.config.tokenSecret);
-            let activationLink = util_1.stringUtil.cleanPath(`${state_1.State.config.host}/${state_1.State.config.services_prefix}/authentication/activateUser?${state_1.State.config.tokenFieldName}=${token}`);
+            let token = jwt.sign({ id: user._id }, state_1.State.authConfig.tokenSecret);
+            let activationLink = util_1.stringUtil.cleanPath(`${state_1.State.config.host}/${state_1.State.config.services_prefix}/authentication/activateUser?${state_1.State.authConfig.tokenFieldName}=${token}`);
             let emailOptions = {
-                from: state_1.State.config.activationMailSubject,
-                to: user[state_1.State.config.userEmailField],
-                subject: state_1.State.config.activationMailSubject,
-                html: util_1.stringUtil.compile(template.toString('utf-8'), { username: user[state_1.State.config.usernameField], activationLink })
+                from: state_1.State.authConfig.activationMailSubject,
+                to: user[state_1.State.authConfig.userEmailField],
+                subject: state_1.State.authConfig.activationMailSubject,
+                html: util_1.stringUtil.compile(template.toString('utf-8'), { username: user[state_1.State.authConfig.usernameField], activationLink })
             };
             this.transporter.sendMail(emailOptions, (sendEmailError, info) => {
                 if (sendEmailError)
@@ -154,9 +155,9 @@ let Authentication = class Authentication extends models_1.Model {
     activateUser(ctx) {
         let user = ctx.user;
         this.userModel.collection
-            .updateOne({ _id: new MongoDB.ObjectID(user._id) }, { $set: { [state_1.State.config.userIsActiveField]: true } })
+            .updateOne({ _id: new MongoDB.ObjectID(user._id) }, { $set: { [state_1.State.authConfig.userIsActiveField]: true } })
             .then(doc => {
-            fs.readFile(state_1.State.config.activationPage, 'utf-8', (err, data) => {
+            fs.readFile(state_1.State.authConfig.activationPage, 'utf-8', (err, data) => {
                 if (err)
                     ctx.next({
                         message: '',
@@ -189,9 +190,9 @@ let Authentication = class Authentication extends models_1.Model {
             });
         let query = {};
         if (Validall.Is.email(userId))
-            query[state_1.State.config.userEmailField] = userId;
+            query[state_1.State.authConfig.userEmailField] = userId;
         else
-            query[state_1.State.config.usernameField] = userId;
+            query[state_1.State.authConfig.usernameField] = userId;
         this.userModel.collection
             .findOne(query)
             .then(doc => {
@@ -200,7 +201,7 @@ let Authentication = class Authentication extends models_1.Model {
                     message: 'user is not found',
                     code: types_1.RESPONSE_CODES.UNAUTHORIZED
                 });
-            util_1.verify(password, doc[state_1.State.config.passwordField], doc[state_1.State.config.passwordSaltField])
+            util_1.verify(password, doc[state_1.State.authConfig.passwordField], doc[state_1.State.authConfig.passwordSaltField])
                 .then((match) => {
                 if (match === true) {
                     ctx.useServiceHooks(this.userModel.$getService('findOne'));
@@ -228,9 +229,9 @@ let Authentication = class Authentication extends models_1.Model {
     signup(ctx) {
         try {
             let state = Validall(ctx.body.documents, {
-                [state_1.State.config.usernameField]: { $type: 'string', $regex: util_1.toRegExp(state_1.State.config.usernamePattern), $message: 'invalid username' },
-                [state_1.State.config.userEmailField]: { $type: 'string', $is: 'email', $message: 'invalid email' },
-                [state_1.State.config.passwordField]: { $required: true, $type: 'string', $regex: util_1.toRegExp(state_1.State.config.passwordpattern), $message: 'invalid password' }
+                [state_1.State.authConfig.usernameField]: { $type: 'string', $regex: util_1.toRegExp(state_1.State.authConfig.usernamePattern), $message: 'invalid username' },
+                [state_1.State.authConfig.userEmailField]: { $type: 'string', $is: 'email', $message: 'invalid email' },
+                [state_1.State.authConfig.passwordField]: { $required: true, $type: 'string', $regex: util_1.toRegExp(state_1.State.authConfig.passwordpattern), $message: 'invalid password' }
             });
             if (!state)
                 return ctx.next({
@@ -242,11 +243,11 @@ let Authentication = class Authentication extends models_1.Model {
         catch (e) {
             console.trace(e);
         }
-        util_1.hash(ctx.body.documents[state_1.State.config.passwordField])
+        util_1.hash(ctx.body.documents[state_1.State.authConfig.passwordField])
             .then(results => {
             if (results && results.length) {
-                ctx.body.documents[state_1.State.config.passwordField] = results[0];
-                ctx.body.documents[state_1.State.config.passwordSaltField] = results[1];
+                ctx.body.documents[state_1.State.authConfig.passwordField] = results[0];
+                ctx.body.documents[state_1.State.authConfig.passwordSaltField] = results[1];
                 console.log(results);
                 ctx.useService(this.userModel, 'insert');
             }
@@ -295,7 +296,7 @@ __decorate([
 __decorate([
     decorators_1.SERVICE({
         method: 'post',
-        before: [`exists:@${state_1.State.config.usersModel}:documents.email`, `exists:@${state_1.State.config.usersModel}:documents.username`],
+        before: [`exists:@${state_1.State.authConfig.usersModel}:documents.email`, `exists:@${state_1.State.authConfig.usersModel}:documents.username`],
         after: ['Authentication.pushToken', 'Authentication.activationEmail']
     })
 ], Authentication.prototype, "signup", null);

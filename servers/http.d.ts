@@ -5,5 +5,5 @@ export declare class Server {
     app: express.Express;
     server: http.Server;
     io: any;
-    start(port: number): void;
+    start(): void;
 }

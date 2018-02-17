@@ -9,33 +9,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const main_1 = require("../main");
 const decorators_1 = require("../decorators");
 const models_1 = require("../models");
-let Coll01 = class Coll01 extends models_1.MongoModel {
+let Users = class Users extends models_1.MongoModel {
 };
-Coll01 = __decorate([
+Users = __decorate([
     decorators_1.MODEL({
-        app: 'db01'
-    })
-], Coll01);
-let Coll02 = class Coll02 extends models_1.MongoModel {
-};
-Coll02 = __decorate([
-    decorators_1.MODEL({
-        app: 'db02'
-    })
-], Coll02);
-main_1.Gypsum
-    .configure({
-    dev: {
-        database: {
-            databases: [
-                { name: 'db01' },
-                { name: 'db02' }
-            ]
+        schema: {
+            name: 'string',
+            active: { $type: 'boolean', $default: false, $props: { constant: true } }
         }
-    }
-})
+    })
+], Users);
+main_1.Gypsum
+    .configure()
     .use({
-    models: [Coll01, Coll02]
+    models: [Users]
 })
     .bootstrap();
 //# sourceMappingURL=index.js.map

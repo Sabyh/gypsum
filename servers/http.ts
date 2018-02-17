@@ -10,6 +10,6 @@ export class Server {
 
   start() {
     this.server.listen(State.config.port);
-    console.log(`${State.config.server_name} is running on port: ${State.config.port}`);
+    console.log(`${State.config.server_name} is running on port: ${State.config.port}, pid: ${process.pid}`);
   }
 }

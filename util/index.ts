@@ -1,3 +1,5 @@
+import { objectUtil } from '.';
+
 export * from './array';
 export * from './crypt';
 export * from './object';

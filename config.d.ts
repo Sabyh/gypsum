@@ -1,12 +1,11 @@
-import { MongoClientOptions } from 'mongodb';
 import { ILoggerOptions } from './misc/logger';
 export interface IEmailTransporter {
-    pool: boolean;
-    host: string;
-    port: number;
-    secure: boolean;
-    service: string;
-    auth: {
+    pool?: boolean;
+    host?: string;
+    port?: number;
+    secure?: boolean;
+    service?: string;
+    auth?: {
         user: string;
         pass: string;
     };
@@ -14,7 +13,7 @@ export interface IEmailTransporter {
 export interface IAuthenticationConfigOptions {
     rootUser: string;
     rootUserEmail: string;
-    rootPassword: string;
+    rootUserPassword: string;
     usersModel: string;
     userEmailField: string;
     userIdField: string;
@@ -37,6 +36,7 @@ export declare type IAuthenticationConfig = {
 };
 export interface IServerConfigOptions {
     server_name: string;
+    secure: boolean;
     origin: string;
     port: number;
     host: string;
@@ -49,25 +49,22 @@ export interface IServerConfigOptions {
     logger_options: ILoggerOptions | null;
     authentication: boolean;
     authorization: boolean;
+    mongodb_url: string;
+    database_name: string;
 }
 export declare type IServerConfig = {
     [key in keyof IServerConfigOptions]?: IServerConfigOptions[key];
 };
-export interface IDatabaseConnection {
-    host?: string;
-    port?: number;
-    username?: string;
-    password?: string;
-    databases?: {
-        name: string;
-        app?: string;
-        options?: MongoClientOptions;
-    }[];
+export interface IApp {
+    name: string;
+    database?: string;
+    subdomain?: boolean;
+    secure?: boolean;
 }
 export interface IConfig {
     authConfig?: IAuthenticationConfig;
     server?: IServerConfig;
-    database?: IDatabaseConnection;
+    apps?: IApp[];
 }
 export interface IGypsumConfig {
     dev: IConfig;
