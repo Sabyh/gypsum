@@ -14,7 +14,7 @@ const decorators_1 = require("../../decorators");
 class FileModel extends model_1.Model {
     constructor() {
         super();
-        this.collection = new collection_1.FileCollection(this.$get('name'), { schema: this.$get('schema'), schemaOptions: this.$get('schemaOptions') });
+        this.collection = new collection_1.FileCollection(this.$get('name'), this.$get('schema'));
         this.type = 'File';
     }
     find(ctx) {
@@ -60,15 +60,8 @@ class FileModel extends model_1.Model {
     }
     insert(ctx) {
         this.$logger.info('insert service called');
-        this.$logger.debug('documents:', ctx.body);
-        this.collection.insert(ctx.body)
-            .then(res => ctx.ok(res))
-            .catch((error) => ctx.next(error));
-    }
-    insertOne(ctx) {
-        this.$logger.info('insertOne service called');
-        this.$logger.debug('document:', ctx.body);
-        this.collection.insert(ctx.body)
+        this.$logger.debug('documents:', ctx.body.documents);
+        this.collection.insert(ctx.body.documents)
             .then(res => ctx.ok(res))
             .catch((error) => ctx.next(error));
     }
@@ -154,9 +147,6 @@ __decorate([
 __decorate([
     decorators_1.SERVICE()
 ], FileModel.prototype, "insert", null);
-__decorate([
-    decorators_1.SERVICE()
-], FileModel.prototype, "insertOne", null);
 __decorate([
     decorators_1.SERVICE()
 ], FileModel.prototype, "update", null);

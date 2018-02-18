@@ -1,6 +1,6 @@
 import { Gypsum } from '../main';
 import { MODEL, SERVICE } from '../decorators';
-import { MongoModel } from '../models';
+import { FileModel } from '../models';
 import { Context } from '../context';
 import { RESPONSE_DOMAINS } from '../types';
 
@@ -10,7 +10,7 @@ import { RESPONSE_DOMAINS } from '../types';
     active: { $type: 'boolean', $default: false, $props: { constant: true } }
   }
 })
-class Users extends MongoModel {}
+class Users extends FileModel {}
 
 Gypsum
   .configure()

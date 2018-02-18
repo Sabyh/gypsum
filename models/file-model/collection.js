@@ -6,14 +6,6 @@ const state_1 = require("../../state");
 const logger_1 = require("../../misc/logger");
 const types_1 = require("../../types");
 const util_1 = require("../../util");
-const defaultSchemaOptions = {
-    required: false,
-    strict: true,
-    filter: false,
-    root: 'document',
-    throwMode: false,
-    traceError: false
-};
 class FileCollection {
     constructor(name, schema, options) {
         this.findOptions = { skip: -1, limit: -1 };
@@ -24,7 +16,7 @@ class FileCollection {
             fs.mkdirSync(dir);
         this.filename = name;
         this.filePath = `${dir}/${name}`;
-        this.schema = schema ? new Validall.Schema(schema.schema, Object.assign({}, defaultSchemaOptions, { root: name }, schema.schemaOptions || {})) : null;
+        this.schema = schema || null;
         this.logger = new logger_1.Logger(name);
         if (options) {
             Object.assign(this.findOptions, options.findOptions || {});
@@ -159,21 +151,47 @@ class FileCollection {
                 .then((data) => {
                 if (documents && !Array.isArray(documents))
                     documents = [documents];
-                if (!documents || documents.length)
+                if (!documents || !documents.length)
                     return resolve([]);
                 for (let i = 0; i < documents.length; i++) {
-                    delete documents[1]._id;
-                    if (this.schema && !this.schema.test(documents[i]))
-                        return reject({ message: this.schema.error.toString(), original: this.schema.error, code: types_1.RESPONSE_CODES.BAD_REQUEST });
-                    while (true) {
-                        let id = util_1.random();
-                        if (data.indexes.indexOf(id) === -1) {
-                            documents[i]._id = id;
-                            break;
+                    let document = documents[i];
+                    delete document._id;
+                    if (this.schema) {
+                        if (!this.schema.test(document))
+                            return reject({
+                                message: this.schema.error.message,
+                                original: this.schema.error,
+                                code: types_1.RESPONSE_CODES.BAD_REQUEST
+                            });
+                        let props = this.schema.getProps();
+                        let internals = [];
+                        for (let prop in props)
+                            if (props[prop].internal)
+                                internals.push(prop);
+                        if (internals.length) {
+                            for (let i = 0; i < internals.length; i++)
+                                if (this.schema.defaults[internals[i]] !== undefined)
+                                    if (util_1.objectUtil.getValue(document, internals[i]) !== this.schema.defaults[internals[i]])
+                                        return reject({
+                                            message: `[${this.filename}]: '${internals[i]}' cannot be set externaly!`,
+                                            code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                                        });
+                                    else if (util_1.objectUtil.getValue(document, internals[i]) !== undefined)
+                                        return reject({
+                                            message: `[${this.filename}]: '${internals[i]}' cannot be set externaly!`,
+                                            code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                                        });
                         }
+                        while (true) {
+                            let id = util_1.random();
+                            if (data.indexes.indexOf(id) === -1) {
+                                document._id = id;
+                                break;
+                            }
+                        }
+                        data.indexes.push(document._id);
+                        data.documents.push(document);
                     }
-                    data.indexes.push(documents[i]._id);
-                    data.documents.push(documents[i]);
                 }
                 this.write(data)
                     .then(() => resolve(documents))
@@ -182,7 +200,7 @@ class FileCollection {
                 .catch(error => reject(error));
         });
     }
-    update(filter, update, options) {
+    update(filter, update, options, single = false) {
         if (options)
             options = Object.assign({}, this.updateOptions, options);
         return new Promise((resolve, reject) => {
@@ -196,25 +214,63 @@ class FileCollection {
                 for (let i = 0; i < data.documents.length; i++) {
                     if (Validall(data.documents[i], filter)) {
                         result++;
-                        docs.push(data.documents[i]);
+                        let updatedDoc = {};
+                        util_1.objectUtil.merge(updatedDoc, data.documents[i], true, true);
                         if (Validall.Types.primitive(data.documents[i]))
-                            data.documents[i] = update;
+                            updatedDoc = update;
                         else
-                            util_1.objectUtil.merge(data.documents[i], update, true, true);
+                            util_1.objectUtil.merge(updatedDoc, update, true, true);
+                        if (this.schema) {
+                            if (!this.schema.test(updatedDoc))
+                                return reject({
+                                    message: this.schema.error.message,
+                                    original: this.schema.error,
+                                    code: types_1.RESPONSE_CODES.BAD_REQUEST
+                                });
+                            let props = this.schema.getProps();
+                            if (Object.keys(props).length) {
+                                let constants = [], internals = [];
+                                for (let prop in props) {
+                                    if (props[prop].constant)
+                                        constants.push(prop);
+                                    else if (props[prop].internal) {
+                                        internals.push(prop);
+                                    }
+                                }
+                                if (constants.length) {
+                                    let changedField = util_1.objectUtil.compareValues(constants, data.documents[i], updatedDoc);
+                                    if (changedField)
+                                        return reject({
+                                            message: `[${this.filename}]: '${changedField}' is a constant field that cannot be changed!`,
+                                            code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                                        });
+                                }
+                                if (internals.length) {
+                                    let changedField = util_1.objectUtil.compareValues(internals, data.documents[i], updatedDoc);
+                                    if (changedField)
+                                        return reject({
+                                            message: `[${this.filename}]: '${changedField}' cannot be modified externaly!`,
+                                            code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                                        });
+                                }
+                            }
+                        }
+                        data.documents[i] = updatedDoc;
+                        docs.push(updatedDoc);
                         if (!options.multi)
                             break;
                     }
                 }
                 if (result)
                     this.write(data)
-                        .then(() => resolve((options && options.returnDoc) ? docs : result))
+                        .then(() => resolve((options && options.returnDoc) ? (single ? docs[0] : docs) : result))
                         .catch(error => reject(error));
             })
                 .catch(error => reject(error));
         });
     }
     updateById(id, update) {
-        return this.update({ _id: id }, update, { multi: false, returnDoc: true })
+        return this.update({ _id: id }, update, { multi: false, returnDoc: true }, true)
             .then((docs) => {
             if (docs && docs.length)
                 return docs[0];
@@ -223,7 +279,7 @@ class FileCollection {
         });
     }
     updateOne(filter, update) {
-        return this.update(filter, update, { multi: false, returnDoc: true })
+        return this.update(filter, update, { multi: false, returnDoc: true }, true)
             .then((docs) => {
             if (docs && docs.length)
                 return docs[0];

@@ -10,7 +10,7 @@ export class FileModel extends Model {
 
   constructor() {
     super();
-    this.collection = new FileCollection(this.$get('name'), { schema: this.$get('schema'), schemaOptions: this.$get('schemaOptions')});
+    this.collection = new FileCollection(this.$get('name'), this.$get('schema'));
     this.type = 'File';
   }
 
@@ -73,19 +73,9 @@ export class FileModel extends Model {
   @SERVICE()
   insert(ctx: Context) {
     this.$logger.info('insert service called');
-    this.$logger.debug('documents:', ctx.body);
+    this.$logger.debug('documents:', ctx.body.documents);
 
-    this.collection.insert(ctx.body)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
-  }
-
-  @SERVICE()
-  insertOne(ctx: Context) {
-    this.$logger.info('insertOne service called');
-    this.$logger.debug('document:', ctx.body);
-
-    this.collection.insert(ctx.body)
+    this.collection.insert(ctx.body.documents)
       .then(res => ctx.ok(res))
       .catch((error: IResponseError) => ctx.next(error));
   }

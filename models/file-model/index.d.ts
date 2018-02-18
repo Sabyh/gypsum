@@ -10,7 +10,6 @@ export declare class FileModel extends Model {
     count(ctx: Context): void;
     search(ctx: Context): void;
     insert(ctx: Context): void;
-    insertOne(ctx: Context): void;
     update(ctx: Context): void;
     updateById(ctx: Context): void;
     updateOne(ctx: Context): void;

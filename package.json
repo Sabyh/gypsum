@@ -50,7 +50,7 @@
     "mongodb": "^3.0.1",
     "nodemailer": "^4.4.2",
     "socket.io": "^2.0.4",
-    "validall": "^2.4.10",
+    "validall": "^2.5.2",
     "vhost": "^3.0.2"
   },
   "devDependencies": {

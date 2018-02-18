@@ -156,7 +156,7 @@ export class MongoModel extends Model {
       let document = ctx.body.documents[i];
       delete document._id;
 
-      if (schema)
+      if (schema) {
         if (!schema.test(document))
           return ctx.next({
             message: schema.error.message,
@@ -164,26 +164,27 @@ export class MongoModel extends Model {
             code: RESPONSE_CODES.UNAUTHORIZED
           });
 
-      let props = schema.getProps();
-      let internals = [];
+        let props = schema.getProps();
+        let internals = [];
 
-      for (let prop in props)
-        if (props[prop].internal)
-          internals.push(prop);
+        for (let prop in props)
+          if (props[prop].internal)
+            internals.push(prop);
 
-      if (internals.length) {
-        for (let i = 0; i < internals.length; i++)
-          if (schema.defaults[internals[i]] !== undefined)
-            if (objectUtil.getValue(document, internals[i]) !== schema.defaults[internals[i]])
-              return ctx.next({
-                message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
-                code: RESPONSE_CODES.UNAUTHORIZED
-              });
-            else if (objectUtil.getValue(document, internals[i]) !== undefined)
-              return ctx.next({
-                message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
-                code: RESPONSE_CODES.UNAUTHORIZED
-              });
+        if (internals.length) {
+          for (let i = 0; i < internals.length; i++)
+            if (schema.defaults[internals[i]] !== undefined)
+              if (objectUtil.getValue(document, internals[i]) !== schema.defaults[internals[i]])
+                return ctx.next({
+                  message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
+                  code: RESPONSE_CODES.UNAUTHORIZED
+                });
+              else if (objectUtil.getValue(document, internals[i]) !== undefined)
+                return ctx.next({
+                  message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
+                  code: RESPONSE_CODES.UNAUTHORIZED
+                });
+        }
       }
     }
 

@@ -122,31 +122,32 @@ class MongoModel extends model_1.Model {
         for (let i = 0; i < ctx.body.documents.length; i++) {
             let document = ctx.body.documents[i];
             delete document._id;
-            if (schema)
+            if (schema) {
                 if (!schema.test(document))
                     return ctx.next({
                         message: schema.error.message,
                         original: schema.error,
                         code: types_1.RESPONSE_CODES.UNAUTHORIZED
                     });
-            let props = schema.getProps();
-            let internals = [];
-            for (let prop in props)
-                if (props[prop].internal)
-                    internals.push(prop);
-            if (internals.length) {
-                for (let i = 0; i < internals.length; i++)
-                    if (schema.defaults[internals[i]] !== undefined)
-                        if (util_1.objectUtil.getValue(document, internals[i]) !== schema.defaults[internals[i]])
-                            return ctx.next({
-                                message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
-                                code: types_1.RESPONSE_CODES.UNAUTHORIZED
-                            });
-                        else if (util_1.objectUtil.getValue(document, internals[i]) !== undefined)
-                            return ctx.next({
-                                message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
-                                code: types_1.RESPONSE_CODES.UNAUTHORIZED
-                            });
+                let props = schema.getProps();
+                let internals = [];
+                for (let prop in props)
+                    if (props[prop].internal)
+                        internals.push(prop);
+                if (internals.length) {
+                    for (let i = 0; i < internals.length; i++)
+                        if (schema.defaults[internals[i]] !== undefined)
+                            if (util_1.objectUtil.getValue(document, internals[i]) !== schema.defaults[internals[i]])
+                                return ctx.next({
+                                    message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
+                                    code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                                });
+                            else if (util_1.objectUtil.getValue(document, internals[i]) !== undefined)
+                                return ctx.next({
+                                    message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
+                                    code: types_1.RESPONSE_CODES.UNAUTHORIZED
+                                });
+                }
             }
         }
         this.collection.insertMany(ctx.body.documents, ctx.body.writeConcern)

@@ -6,7 +6,7 @@ import { RESPONSE_CODES } from '../../types';
 import { objectUtil, random } from '../../util';
 
 export namespace FileCollection {
-  export interface Document { _id: string; [key: string]: any; }
+  export interface Document { _id: string;[key: string]: any; }
   export interface IFindOptions { skip?: number; limit?: number; }
   export interface IUpdateOptions { multi: boolean; returnDoc?: boolean }
   export interface IDeleteOptions { limit?: number; returnDoc?: boolean; }
@@ -22,15 +22,6 @@ export interface IFileData {
   documents: FileCollection.Document[];
 }
 
-const defaultSchemaOptions: Validall.ISchemaOptions = {
-  required: false,
-  strict: true,
-  filter: false,
-  root: 'document',
-  throwMode: false,
-  traceError: false
-};
-
 export class FileCollection {
   protected filename: string;
   protected filePath: string;
@@ -41,7 +32,7 @@ export class FileCollection {
 
   public logger: Logger;
 
-  constructor(name: string, schema?: { schema: Validall.Schema, schemaOptions?: Validall.ISchemaOptions }, options?: FileCollection.ICollectionOptions) {
+  constructor(name: string, schema?: Validall.Schema, options?: FileCollection.ICollectionOptions) {
     let dir = State.config.files_data_dir;
 
     if (!fs.existsSync(dir))
@@ -49,7 +40,7 @@ export class FileCollection {
 
     this.filename = name;
     this.filePath = `${dir}/${name}`;
-    this.schema = schema ? new Validall.Schema(schema.schema, Object.assign({}, defaultSchemaOptions, { root: name }, schema.schemaOptions || {})) : null;
+    this.schema = schema || null;
     this.logger = new Logger(name);
 
     if (options) {
@@ -82,7 +73,7 @@ export class FileCollection {
             let parsedData: IFileData = JSON.parse(data);
             resolve(parsedData);
 
-          } catch(parseError) {
+          } catch (parseError) {
             this.logger.error(`Error parsing file: '${this.filePath}':`, parseError);
             reject({ message: `Error parsing file: '${this.filePath}'`, original: parseError, code: RESPONSE_CODES.UNKNOWN_ERROR });
           }
@@ -195,7 +186,7 @@ export class FileCollection {
           for (let i = 0; i < documents.length; i++)
             if (Validall(documents[0], query))
               count++;
-            
+
           resolve(count);
         })
         .catch(error => reject(error));
@@ -208,26 +199,55 @@ export class FileCollection {
         .then((data: IFileData) => {
           if (documents && !Array.isArray(documents))
             documents = [documents];
-          
-          if (!documents || documents.length)
-            return resolve([]);          
+
+          if (!documents || !documents.length)
+            return resolve([]);
 
           for (let i = 0; i < documents.length; i++) {
-            delete documents[1]._id;
+            let document = documents[i];
+            delete document._id;
 
-            if (this.schema && !this.schema.test(documents[i]))
-              return reject({ message: this.schema.error.toString(), original: this.schema.error, code: RESPONSE_CODES.BAD_REQUEST });
+            if (this.schema) {
+              if (!this.schema.test(document))
+                return reject({
+                  message: this.schema.error.message,
+                  original: this.schema.error,
+                  code: RESPONSE_CODES.BAD_REQUEST
+                });
 
-            while (true) {
-              let id: string = random();
-              if (data.indexes.indexOf(id) === -1) {
-                documents[i]._id = id;
-                break;
+              let props = this.schema.getProps();
+              let internals = [];
+
+              for (let prop in props)
+                if (props[prop].internal)
+                  internals.push(prop);
+
+              if (internals.length) {
+                for (let i = 0; i < internals.length; i++)
+                  if (this.schema.defaults[internals[i]] !== undefined)
+                    if (objectUtil.getValue(document, internals[i]) !== this.schema.defaults[internals[i]])
+                      return reject({
+                        message: `[${this.filename}]: '${internals[i]}' cannot be set externaly!`,
+                        code: RESPONSE_CODES.UNAUTHORIZED
+                      });
+                    else if (objectUtil.getValue(document, internals[i]) !== undefined)
+                      return reject({
+                        message: `[${this.filename}]: '${internals[i]}' cannot be set externaly!`,
+                        code: RESPONSE_CODES.UNAUTHORIZED
+                      })
               }
-            }
 
-            data.indexes.push(documents[i]._id);
-            data.documents.push(documents[i]);
+              while (true) {
+                let id: string = random();
+                if (data.indexes.indexOf(id) === -1) {
+                  document._id = id;
+                  break;
+                }
+              }
+
+              data.indexes.push(document._id);
+              data.documents.push(document);
+            }
           }
 
           this.write(data)
@@ -238,7 +258,7 @@ export class FileCollection {
     });
   }
 
-  update(filter: Validall.ISchema, update: any, options?: FileCollection.IUpdateOptions): Promise<FileCollection.Document[] | number> {
+  update(filter: Validall.ISchema, update: any, options?: FileCollection.IUpdateOptions, single = false): Promise<FileCollection.Document | FileCollection.Document[] | number> {
     if (options)
       options = Object.assign({}, this.updateOptions, options);
 
@@ -256,12 +276,58 @@ export class FileCollection {
           for (let i = 0; i < data.documents.length; i++) {
             if (Validall(data.documents[i], filter)) {
               result++;
-              docs.push(data.documents[i]);
+              let updatedDoc = <FileCollection.Document>{};
+              objectUtil.merge(updatedDoc, data.documents[i], true, true);
+              // docs.push(data.documents[i]);
 
               if (Validall.Types.primitive(data.documents[i]))
-                data.documents[i] = update;
+                updatedDoc = update;
               else
-                objectUtil.merge(data.documents[i], update, true, true);
+                objectUtil.merge(updatedDoc, update, true, true);
+
+              if (this.schema) {
+                if (!this.schema.test(updatedDoc))
+                  return reject({
+                    message: this.schema.error.message,
+                    original: this.schema.error,
+                    code: RESPONSE_CODES.BAD_REQUEST
+                  });
+
+                let props = this.schema.getProps();
+                if (Object.keys(props).length) {
+                  let constants: string[] = [], internals: string[] = [];
+
+                  for (let prop in props) {
+                    if (props[prop].constant)
+                      constants.push(prop);
+                    else if (props[prop].internal) {
+                      internals.push(prop);
+                    }
+                  }
+
+                  if (constants.length) {
+                    let changedField = objectUtil.compareValues(constants, data.documents[i], updatedDoc);
+                    if (changedField)
+                      return reject({
+                        message: `[${this.filename}]: '${changedField}' is a constant field that cannot be changed!`,
+                        code: RESPONSE_CODES.UNAUTHORIZED
+                      });
+                  }
+
+                  if (internals.length) {
+                    let changedField = objectUtil.compareValues(internals, data.documents[i], updatedDoc);
+                    if (changedField)
+                      return reject({
+                        message: `[${this.filename}]: '${changedField}' cannot be modified externaly!`,
+                        code: RESPONSE_CODES.UNAUTHORIZED
+                      });
+                  }
+                }
+              }
+
+              data.documents[i] = updatedDoc;
+              docs.push(updatedDoc);
+
 
               if (!(<FileCollection.IUpdateOptions>options).multi)
                 break;
@@ -270,7 +336,7 @@ export class FileCollection {
 
           if (result)
             this.write(data)
-              .then(() => resolve((options && options.returnDoc) ? docs : result))
+              .then(() => resolve((options && options.returnDoc) ? (single ? docs[0] : docs) : result))
               .catch(error => reject(error));
         })
         .catch(error => reject(error));
@@ -278,7 +344,7 @@ export class FileCollection {
   }
 
   updateById(id: string, update: any): Promise<FileCollection.Document | null> {
-    return this.update({ _id: id }, update, { multi: false, returnDoc: true })
+    return this.update({ _id: id }, update, { multi: false, returnDoc: true }, true)
       .then((docs: FileCollection.Document[]) => {
         if (docs && docs.length)
           return docs[0];
@@ -288,7 +354,7 @@ export class FileCollection {
   }
 
   updateOne(filter: Validall.ISchema, update: any): Promise<FileCollection.Document | null> {
-    return this.update(filter, update, { multi: false, returnDoc: true })
+    return this.update(filter, update, { multi: false, returnDoc: true }, true)
       .then((docs: FileCollection.Document[]) => {
         if (docs && docs.length)
           return docs[0];

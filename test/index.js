@@ -9,7 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const main_1 = require("../main");
 const decorators_1 = require("../decorators");
 const models_1 = require("../models");
-let Users = class Users extends models_1.MongoModel {
+let Users = class Users extends models_1.FileModel {
 };
 Users = __decorate([
     decorators_1.MODEL({
