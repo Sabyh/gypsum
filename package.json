@@ -1,6 +1,6 @@
 {
   "name": "gypsum",
-  "version": "2.4.12",
+  "version": "2.4.13",
   "license": "ISC",
   "author": {
     "name": "AmmAr Mourad",
@@ -40,6 +40,7 @@
     "@types/node": "^9.3.0",
     "@types/nodemailer": "^4.3.1",
     "@types/socket.io": "^1.4.31",
+    "axios": "^0.17.1",
     "body-parser": "^1.18.2",
     "chalk": "^2.3.0",
     "compression": "^1.7.1",
