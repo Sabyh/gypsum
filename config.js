@@ -40,7 +40,8 @@ exports.Config = {
             authentication: false,
             authorization: false,
             mongodb_url: 'mongodb://localhost:27017',
-            database_name: 'gypsum_dev_db'
+            database_name: 'gypsum_dev_db',
+            spa: ''
         }
     },
     prod: {

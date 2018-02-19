@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const path = require("path");
 const express = require("express");
 const types_1 = require("../../types");
 const logger_1 = require("../../misc/logger");
 const context_1 = require("../../context");
 const state_1 = require("../../state");
-function pushApis(app, appName = 'default', isSubDomain, logger) {
+function pushApis(app, appName = 'default', isSubDomain, spa = '', logger) {
     logger = logger || new logger_1.Logger(appName);
     logger.info('Implementing before middlwares for', appName, 'app..');
     if (state_1.State.middlewares && state_1.State.middlewares[appName] && state_1.State.middlewares[appName].before && state_1.State.middlewares[appName].before.length)
@@ -52,6 +53,10 @@ function pushApis(app, appName = 'default', isSubDomain, logger) {
             }));
         }
     });
+    if (spa && spa.trim())
+        app.get('*', (req, res) => {
+            res.sendFile(path.join(state_1.State.root, spa));
+        });
 }
 exports.pushApis = pushApis;
 //# sourceMappingURL=push_apis.js.map

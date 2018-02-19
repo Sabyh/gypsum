@@ -22,16 +22,20 @@ export function initExpress(app: express.Express) {
     }
   }
 
-  pushApis(app, 'default', false, logger);
+  app.get('/gypsum-client.js', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../client/client.js'));
+  });
 
-  let subDomains = State.apps.filter(app => app.subdomain).map(app => app.name);
+  let subDomains = State.apps.filter(app => app.subdomain).map(app => ({ name: app.name, spa: app.spa }));
 
   if (subDomains.length) {
     for (let i = 0; i < subDomains.length; i++) {
       let subApp = express();
-      configure(subApp, subDomains[i]);
-      pushApis(subApp, subDomains[i], true);
-      app.use(vhost(`${subDomains[i]}.${State.config.host}`, subApp))
+      configure(subApp, subDomains[i].name);
+      pushApis(subApp, subDomains[i].name, true, subDomains[i].spa);
+      app.use(vhost(`${subDomains[i].name}.${State.config.host}`, subApp))
     }
   }
+
+  pushApis(app, 'default', false, State.config.spa, logger);
 }

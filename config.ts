@@ -57,6 +57,7 @@ export interface IServerConfigOptions {
   authorization: boolean;
   mongodb_url: string;
   database_name: string;
+  spa: string;
 }
 
 export type IServerConfig = {
@@ -68,6 +69,7 @@ export interface IApp {
   database?: string;
   subdomain?: boolean;
   secure?: boolean;
+  spa?: string;
 }
 
 export interface IConfig {
@@ -125,7 +127,8 @@ export const Config: IGypsumConfig = {
       authentication: false,
       authorization: false,
       mongodb_url: 'mongodb://localhost:27017',
-      database_name: 'gypsum_dev_db'
+      database_name: 'gypsum_dev_db',
+      spa: ''
     }
   },
 

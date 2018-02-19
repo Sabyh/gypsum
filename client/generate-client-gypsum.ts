@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { State } from "../state";
 import { stringUtil } from '../util';
+import { RESPONSE_DOMAINS, API_TYPES } from '../types';
 
 export function generateClientGypsum() {
   
@@ -19,30 +20,37 @@ export function generateClientGypsum() {
     let isSubdomain = subDomains.indexOf(modelApp) > -1;
     let isSecure = State.apps.filter(app => (app.name === modelApp && app.secure)).length;
     let modelServices = model.$getServices();
-    let servicesArr: any[] = [];
+    let services: any = {};
 
     for (let prop in modelServices) {
       let service = modelServices[prop];
-      let path = 'http' + (isSecure ? 's' : '') + '://';
+      let path = null;
+      let event = null;
+      
+      if (service.apiType !== API_TYPES.SOCKET) {
+        path = 'http' + (isSecure ? 's' : '') + '://';
+        path += (isSubdomain ? (modelApp + '.') : '') + State.config.host;
+        path += (State.env !== 'production') ? ':' + State.config.port : '';
+        path += '/' + (State.config.services_prefix ? State.config.services_prefix : '');
+        path += service.path;      
+        path = stringUtil.cleanPath(path);
+      }
 
-      path += (isSubdomain ? (modelApp + '.') : '') + State.config.host;
-      path += (State.env !== 'production') ? ':' + State.config.port : '';
-      path += '/' + (State.config.services_prefix ? State.config.services_prefix : '');
-      path += service.path;      
-      path = stringUtil.cleanPath(path);
+      if (service.apiType !== API_TYPES.REST)
+        event = service.event;
 
-      servicesArr.push({
+      services[service.name.toLowerCase()] = {
         name: service.name,
-        event: service.event,
+        event: event,
         method: service.method,
         path: path
-      });
+      };
     }
 
     configurations.models.push({
       app: model.$get('app'),
       name: model.$get('name'),
-      services: servicesArr
+      services: services
     });
   }
 

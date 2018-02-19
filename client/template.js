@@ -115,13 +115,20 @@
     if (this.listeners.hasOwnProperty(serviceName)) {
       if (Number(res.code) < 400) {
         this.listeners[serviceName].res = res;
-        for (let i = 0; i < this.listeners[serviceName].handlers.length; i++)
+        for (let i = 0; i < this.listeners[serviceName].handlers.length; i++) {
           this.listeners[serviceName].handlers[i].call(this, res);
+          if (this.listeners[serviceName].handlers[i].once)
+            this.listeners[serviceName].handlers.splice(i--, 1);
+        }
+
+        if (!this.listeners[serviceName].handlers.length)
+          this.off(serviceName);
+
       } else {
         for (let i = 0; i < this.listeners[serviceName].errorHandlers.length; i++)
           this.listeners[serviceName].errorHandlers[i].call(this, res);
       }
-    } 
+    }
   }
 
   function generateServiceUrl(path, params, query) {
@@ -153,44 +160,75 @@
       this.name = name;
       this.services = services;
       this.listeners = {};
-      this.eventsMap = {};
       this.lastEvent = '';
-
-      services.forEach(service => {
-        this.eventsMap[service.name.toLowerCase()] = { event: service.event, path: service.path };
-      });
     }
 
     // Public Methods
     // ----------------------------------------------------------------------------------------------------------------------
-    on(serviceName, callback) {
-      if (!this.eventsMap.hasOwnProperty(serviceName)) {
+    on(serviceName, callback, once) {
+      if (!serviceName) {
+        console.warn('service name was not defined');
+        return this;
+      }
+
+      if (!callback) {
+        console.warn('handler was not defined');
+        return this;
+      }
+
+      serviceName = serviceName.toLowerCase();
+
+      callback.once = once;
+
+      if (!this.services.hasOwnProperty(serviceName)) {
         console.warn(serviceName, 'service for model:', this.name, 'does not exists');
-      } else {
-        if (this.listeners.hasOwnProperty(serviceName)) {
-          for (let i = 0; i < this.listeners[serviceName].handlers.length; i++)
-            if (this.listeners[serviceName].handlers[i] === callback)
-              return;
-        }
+        return this;
+      }
 
-        if (socket) {
-          if (!this.listeners.hasOwnProperty(serviceName))
-            socket.on(this.eventsMap[serviceName].event, res => {
-              respond.call(this, serviceName, res);
-            });
-        }
-
-        if (!this.listeners[serviceName])
-          this.listeners[serviceName] = { res: null, handlers: [], errorHandlers: [] };
+      if (this.listeners.hasOwnProperty(serviceName)) {
+        for (let i = 0; i < this.listeners[serviceName].handlers.length; i++)
+          if (this.listeners[serviceName].handlers[i] === callback) {
+            this.lastEvent = serviceName;
+            return this;
+          }
 
         this.listeners[serviceName].handlers.push(callback);
+        this.lastEvent = serviceName;
+        return this;
+      }
+
+      this.listeners[serviceName] = { res: null, handlers: [callback], errorHandlers: [] };
+
+      if (socket && this.services[serviceName].event) {
+        socket.on(this.services[serviceName].event, res => {
+          respond.call(this, serviceName, res);
+        });
       }
 
       this.lastEvent = serviceName;
       return this;
     }
 
+    once(serviceName, callback) {
+      return this.on(serviceName, callback, true);
+    }
+
+    then(callback, once) {
+      if (this.lastEvent)
+        return this.on(this.lastEvent, callback, once);
+
+      console.warn('cannot call then without a dispatch!');
+      return this;
+    }
+
     off(serviceName, handler) {
+      if (!serviceName) {
+        console.warn('service name was not defined');
+        return this;
+      }
+
+      serviceName = serviceName.toLowerCase();
+
       if (!handler && serviceName) {
         delete this.listeners[serviceName];
         if (socket)
@@ -211,10 +249,22 @@
     }
 
     dispatch(serviceName, data) {
-      if (socket) {
-        socket.emit(this.eventsMap[serviceName].event, data);
-      } else if (axios) {
-        let service = this.eventsMap[serviceName];
+      if (!serviceName) {
+        console.warn('service name was not defined');
+        return this;
+      }
+
+      serviceName = serviceName.toLowerCase();
+
+      if (!this.services.hasOwnProperty(serviceName)) {
+        console.warn(serviceName, 'service for model:', this.name, 'does not exists');
+        return this;
+      }
+
+      if (socket && this.services[serviceName].event) {
+        socket.emit(this.services[serviceName].event, data);
+      } else if (axios && this.services[serviceName].path) {
+        let service = this.services[serviceName];
         axios[service.method]({
           url: generateServiceUrl(service.path, data.params, data.query),
           body: data.body,
@@ -226,6 +276,12 @@
           .catch(err => {
             respond.call(this, serviceName, res);
           });
+      } else {
+        if (this.services[serviceName].event && !socket) {
+          console.error('socket is required to dispatch', this.name, serviceName, 'service!');
+        } else {
+          console.error('axios is required to dispatch', this.name, serviceName, 'service!');
+        }
       }
 
       this.lastEvent = serviceName;

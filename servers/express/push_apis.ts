@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as express from 'express';
 import { Model } from '../../models';
 import { API_TYPES, RESPONSE_CODES, ResponseError } from '../../types';
@@ -5,7 +6,7 @@ import { Logger } from '../../misc/logger';
 import { Context } from '../../context';
 import { State } from '../../state';
 
-export function pushApis(app: express.Express, appName: string = 'default', isSubDomain?: boolean, logger?: Logger) {
+export function pushApis(app: express.Express, appName: string = 'default', isSubDomain?: boolean, spa: string = '', logger?: Logger) {
   logger = logger || new Logger(appName);
 
   logger.info('Implementing before middlwares for', appName, 'app..');
@@ -62,4 +63,9 @@ export function pushApis(app: express.Express, appName: string = 'default', isSu
       }));
     }
   });
+
+  if (spa && spa.trim())
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(State.root, spa));
+    });
 }

@@ -51,6 +51,7 @@ export interface IServerConfigOptions {
     authorization: boolean;
     mongodb_url: string;
     database_name: string;
+    spa: string;
 }
 export declare type IServerConfig = {
     [key in keyof IServerConfigOptions]?: IServerConfigOptions[key];
@@ -60,6 +61,7 @@ export interface IApp {
     database?: string;
     subdomain?: boolean;
     secure?: boolean;
+    spa?: string;
 }
 export interface IConfig {
     authConfig?: IAuthenticationConfig;
