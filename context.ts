@@ -17,6 +17,7 @@ export interface IContext {
   model: Model;
   service: IService;
   cookies?: any;
+  req?: express.Request;
   res?: express.Response;
   socket?: any;
   domain?: RESPONSE_DOMAINS;
@@ -36,9 +37,11 @@ export class Context {
   private _stack: IStack[] = [];
   private _locals: any = {};
   private _cookies: any;
-  private _res: express.Response | undefined;
   private _domain: RESPONSE_DOMAINS | undefined;
   private _room: string;
+  
+  readonly _req: express.Request | undefined;
+  readonly _res: express.Response | undefined;
 
   public model: Model;
   public service: IService;
@@ -52,6 +55,7 @@ export class Context {
 
   constructor(type: API_TYPES.REST | API_TYPES.SOCKET, data: IContext) {
     this._socket = data.socket || undefined;
+    this._req = data.req || undefined;
     this._res = data.res || undefined;
     this._cookies = data.cookies;
     this._domain = data.domain;
@@ -78,6 +82,7 @@ export class Context {
         body: req.body,
         params: req.params,
         cookies: req.cookies,
+        req: req,
         res: res,
         model: model,
         service: service
@@ -289,6 +294,25 @@ export class Context {
       else
         this._mRespond();
     }
+  }
+
+  nextHook(hook: any, args?: any[]) {
+    if (!hook)
+      return this;
+
+    if (typeof hook === 'function') {
+      this._stack.unshift({ handler: hook, args: args || [] });
+      return this;
+    }
+
+    let handler = State.getHook(hook);
+
+    if (handler)
+      this._stack.unshift({ handler: handler, args: args || [] });
+    else
+      this.logger.warn(`${hook} was not found`);
+
+    return this;
   }
 
   ok(data: any, count?: number, code: RESPONSE_CODES = RESPONSE_CODES.OK): void {
