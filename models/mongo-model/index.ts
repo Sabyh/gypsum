@@ -1,11 +1,12 @@
 import * as Validall from 'validall';
 import * as MongoDB from 'mongodb';
-import { Model } from './model';
-import { RESPONSE_CODES, ResponseError, IResponseError } from '../types';
-import { SERVICE, FRIEND } from '../decorators';
-import { Context } from '../context';
-import { Safe } from '../misc/safe';
-import { objectUtil } from '../util';
+import { Model } from '../model';
+import { RESPONSE_CODES, ResponseError, IResponseError } from '../../types';
+import { SERVICE, FRIEND } from '../../decorators';
+import { Context } from '../../context';
+import { Safe } from '../../misc/safe';
+import { objectUtil } from '../../util';
+import { configureCollection } from './configure';
 
 const safe = new Safe('mongoModel');
 
@@ -27,6 +28,7 @@ export class MongoModel extends Model {
         if (this.$get('indexes')[i].name !== '_id')
           this.collection.createIndex(this.$get('indexes')[i].name, this.$get('indexes').options || { unique: true });
 
+    configureCollection.call(this, this.collection);
     this.onCollection();
   }
 
