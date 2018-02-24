@@ -28,10 +28,10 @@ function exists(ctx, model, field) {
     logger.info(`model check passed`);
     logger.info(`counting documents`);
     try {
-        model.collection.count(query)
-            .then(count => {
-            logger.info(`counting results: ${count}`);
-            if (count) {
+        model.count(query)
+            .then(res => {
+            logger.info(`counting results: ${res.data}`);
+            if (res.data) {
                 logger.info(`document exists`);
                 ctx.next({
                     message: `document with same ${field} already exists!`,

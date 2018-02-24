@@ -2,7 +2,7 @@
 // import * as fs from 'fs';
 import * as express from 'express';
 import * as IO from 'socket.io';
-import { Config, IConfig, IGypsumConfig, IAuthenticationConfigOptions, IServerConfigOptions, IApp } from './config';
+import { Config, IConfig, IGypsumConfig, IServerConfigOptions, IApp } from './config';
 import { Context } from './context';
 import { Model } from './models';
 import { stringUtil } from './util/string';
@@ -31,19 +31,22 @@ export class AppState {
   readonly env: string = process.env.NODE_ENV || 'developemt';
 
   config = <IServerConfigOptions>{};
-  authConfig = <IAuthenticationConfigOptions>{};
   apps = <IApp[]>[];
   models: Model[] = [];
   Models: typeof Model[] = [];
   middlewares: IMiddlewares = {};
   hooks: ((ctx: Context, ...args: any[]) => void)[] = [];
 
+  getModelConstructor(name: string) {
+    return this.Models.find(Model => Model.name === name) || undefined;
+  }
+
   getModel(name: string) {
     return this.models.find(model => model.$get('name') === name) || undefined;
   }
 
   getHook(name: string) {
-    return this.hooks.find(hook => hook.name === name) || undefined;
+    return this.hooks.find(hook => (<any>hook).__name === name) || undefined;
   }
 
   getSocket(id: string) {
@@ -62,10 +65,6 @@ export class AppState {
   public setConfiguration(userConfig: IGypsumConfig = <IGypsumConfig>{}) {
     
     if (userConfig.dev) {
-      if (userConfig.dev.authConfig)
-        Object.assign(this.authConfig, (<any>Config).dev.authConfig, userConfig.dev.authConfig);
-      else
-        Object.assign(this.authConfig, (<any>Config).dev.authConfig);
 
       if (userConfig.dev.server)
         Object.assign(this.config, (<any>Config).dev.server, userConfig.dev.server);
@@ -73,18 +72,12 @@ export class AppState {
         Object.assign(this.config, (<any>Config).dev.server);
 
     } else {
-      Object.assign(this.authConfig, (<any>Config).dev.authConfig);
       Object.assign(this.config, (<any>Config).dev.server);
     }
 
     if (this.env === 'production') {
 
       if (userConfig.prod) {
-        if (userConfig.prod.authConfig)
-          Object.assign(this.authConfig, (<any>Config).prod.authConfig, userConfig.prod.authConfig);
-        else
-          Object.assign(this.authConfig, (<any>Config).prod.authConfig);
-
         if (userConfig.prod.server)
           Object.assign(this.config, (<any>Config).prod.server, userConfig.prod.server);
         else
@@ -94,7 +87,6 @@ export class AppState {
           this.apps = userConfig.prod.apps;
 
       } else {
-        Object.assign(this.authConfig, (<any>Config).prod.authConfig);
         Object.assign(this.config, (<any>Config).prod.server);
       }
     } else if (userConfig.dev && userConfig.dev.apps && userConfig.dev.apps.length) {

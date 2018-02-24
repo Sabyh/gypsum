@@ -41,13 +41,13 @@ export function reference (ctx: Context, options: IReferenceHookOptions) {
     return ctx.next();
   }
 
-  model.collection.findOne({ _id: new Mongodb.ObjectID(id) })
-    .then(doc => {
-      if (!doc) {
+  model.findOne({ _id: new Mongodb.ObjectID(id) })
+    .then(res => {
+      if (!res.data) {
         logger.warn(`${options.model} with reference '${id}' was not found`);
         ctx.next();
       } else {
-        objectUtil.setValue(response, options.path, doc);
+        objectUtil.setValue(response, options.path, res.data);
         ctx.next();
       }
     })

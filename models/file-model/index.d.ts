@@ -1,19 +1,19 @@
 import { FileCollection } from './collection';
 import { Model } from '../model';
-import { Context } from '../../context';
+import { IResponse } from '../../types';
 export declare class FileModel extends Model {
-    collection: FileCollection;
+    protected collection: FileCollection;
     constructor();
-    find(ctx: Context): void;
-    findById(ctx: Context): void;
-    findOne(ctx: Context): void;
-    count(ctx: Context): void;
-    search(ctx: Context): void;
-    insert(ctx: Context): void;
-    update(ctx: Context): void;
-    updateById(ctx: Context): void;
-    updateOne(ctx: Context): void;
-    delete(ctx: Context): void;
-    deleteById(ctx: Context): void;
-    deleteOne(ctx: Context): void;
+    find(query: any, projections: string, options: any): Promise<IResponse>;
+    findById(id: string, projections: string): Promise<IResponse>;
+    findOne(query: any, projections: string): Promise<IResponse>;
+    count(query: any): Promise<IResponse>;
+    search(query: any, projections: string, options: any): Promise<IResponse>;
+    insert(documents: any): Promise<IResponse>;
+    update(filter: any, update: any, options: any): Promise<IResponse>;
+    updateById(id: string, update: any): Promise<IResponse>;
+    updateOne(filter: any, update: any): Promise<IResponse>;
+    delete(filter: any, options: any): Promise<IResponse>;
+    deleteById(id: string): Promise<IResponse>;
+    deleteOne(filter: any): Promise<IResponse>;
 }

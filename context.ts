@@ -68,6 +68,7 @@ export class Context {
     this.model = data.model;
     this.service = data.service;
     this.logger = new Logger(this.service.name);
+    
 
     this._mInit();
   }
@@ -142,7 +143,7 @@ export class Context {
       this._mPushStack(this.service.before);
 
     // Pushing service to the stack
-    this._stack.push({ handler: (<any>this.model)[this.service.name].bind(this.model), args: [] });
+    this._stack.push({ handler: (<any>this.model)[this.service.__name].bind(this.model), args: [] });
 
     // Pushing after hooks to the stack
     if ((hooks === 'both' || hooks === 'after') && this.service.after && this.service.after.length)
@@ -155,20 +156,20 @@ export class Context {
   }
 
   private _mRespond(): void {
-    this._response.requestType = this.apiType;
+    this._response.apiType = this.apiType;
     this._response.code = this._response.code || RESPONSE_CODES.UNKNOWN_ERROR;
 
     if (this.apiType === API_TYPES.REST && this._res) {
       this._res.status(this._response.code).json(this._response);
 
     } else if (this._socket) {
-      this._response.event = this.service.event;
+      let event = this.service.event;
 
-      if (!this._response.success) {
-        this._socket.emit(this._response.event, this._response);
+      if (this._response.code < 200 && this._response.code >= 300 ) {
+        this._socket.emit(event, this._response);
 
       } else {
-        this._response.domain = this._response.domain || this._domain || this.service.domain;
+        let domain = this._response.domain || this._domain || this.service.domain;
         this._response.room = this._room || this._response.room;
 
         if (this._response.domain === RESPONSE_DOMAINS.ROOM && this._response.room) {
@@ -315,11 +316,13 @@ export class Context {
     return this;
   }
 
-  ok(data: any, count?: number, code: RESPONSE_CODES = RESPONSE_CODES.OK): void {
-    this._response = new Response({ data, count, code });
-    this._response.count = count || this._response.count;
-    this._response.code = code || this._response.code;
+  ok(res: Response): void {
+    if (res.type === 'html')
+      return this._mSendHtml(res.data, res.code);
+    else if (res.type === 'file')
+      return this._mSendFile(res.data, res.code);
 
+    this._response = res;
     this.next();
   }
 
@@ -332,7 +335,7 @@ export class Context {
     return this;
   }
 
-  sendHtml(html: string, code = 200) {
+  private _mSendHtml(html: string, code = 200) {
     if (this._res) {
       this._res.type('html')
         .status(code)
@@ -345,7 +348,7 @@ export class Context {
     }
   }
 
-  sendFile(filePath: string, code = 200) {
+  private _mSendFile(filePath: string, code = 200) {
     if (this._res)
       this._res.status(code).sendFile(filePath);
     else

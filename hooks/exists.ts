@@ -37,11 +37,11 @@ export function exists(ctx: Context, model: MongoModel, field: string) {
   logger.info(`counting documents`);
 
   try {
-    model.collection.count(query)
-      .then(count => {
-        logger.info(`counting results: ${count}`);
+    model.count(query)
+      .then(res => {
+        logger.info(`counting results: ${res.data}`);
 
-        if (count) {
+        if (res.data) {
           logger.info(`document exists`);
           ctx.next({
             message: `document with same ${field} already exists!`,

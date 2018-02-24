@@ -10,7 +10,6 @@ state_1.State.hooks.push(...hooks_1.hooks);
 const mongo_1 = require("./database/mongo");
 const express_1 = require("./servers/express");
 const io_1 = require("./servers/io");
-const authentication_1 = require("./authentication");
 const http_1 = require("./servers/http");
 const workers_1 = require("./workers");
 const generate_client_gypsum_1 = require("./client/generate-client-gypsum");
@@ -79,8 +78,6 @@ exports.Gypsum = {
             workers_1.initializeWorkers(state_1.State.config.processes);
             return;
         }
-        if (state_1.State.config.authentication)
-            authentication_1.initAuthentication();
         logger.info('instantiating Models...');
         for (let i = 0; i < state_1.State.Models.length; i++) {
             let model = new state_1.State.Models[i]();

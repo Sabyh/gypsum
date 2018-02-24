@@ -110,6 +110,13 @@ class FileCollection {
                             break;
                     }
                 }
+                if (!this.schema)
+                    return resolve(result);
+                let selects = this.schema.getPropsByName('select');
+                selects = selects.filter((item) => item.value === false).map((item) => item.path);
+                if (selects && selects.length)
+                    for (let i = 0; i < result.length; i++)
+                        util_1.objectUtil.omit(result[i], selects);
                 resolve(result);
             })
                 .catch(error => reject(error));
@@ -194,7 +201,17 @@ class FileCollection {
                     }
                 }
                 this.write(data)
-                    .then(() => resolve(documents))
+                    .then(() => {
+                    resolve(documents);
+                    if (!this.schema)
+                        return resolve(documents);
+                    let selects = this.schema.getPropsByName('select');
+                    selects = selects.filter((item) => item.value === false).map((item) => item.path);
+                    if (selects && selects.length)
+                        for (let i = 0; i < documents.length; i++)
+                            util_1.objectUtil.omit(documents[i], selects);
+                    resolve(documents);
+                })
                     .catch(error => reject(error));
             })
                 .catch(error => reject(error));
@@ -263,7 +280,21 @@ class FileCollection {
                 }
                 if (result)
                     this.write(data)
-                        .then(() => resolve((options && options.returnDoc) ? (single ? docs[0] : docs) : result))
+                        .then(() => {
+                        if (options && options.returnDoc) {
+                            if (!this.schema)
+                                return resolve(single ? docs[0] : docs);
+                            let selects = this.schema.getPropsByName('select');
+                            selects = selects.filter((item) => item.value === false).map((item) => item.path);
+                            if (selects && selects.length)
+                                for (let i = 0; i < docs.length; i++)
+                                    util_1.objectUtil.omit(docs[i], selects);
+                            resolve(single ? docs[0] : docs);
+                        }
+                        else {
+                            resolve(result);
+                        }
+                    })
                         .catch(error => reject(error));
             })
                 .catch(error => reject(error));

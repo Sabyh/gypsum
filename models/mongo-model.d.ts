@@ -1,21 +1,21 @@
 import * as MongoDB from 'mongodb';
 import { Model } from './model';
-import { Context } from '../context';
+import { IResponse } from '../types';
 export declare class MongoModel extends Model {
-    collection: MongoDB.Collection;
+    protected collection: MongoDB.Collection;
     constructor();
     protected setCollection(collection: MongoDB.Collection): void;
     protected onCollection(): void;
-    count(ctx: Context): void;
-    find(ctx: Context): void;
-    findOne(ctx: Context): void;
-    findById(ctx: Context): void;
-    insert(ctx: Context): void;
-    search(ctx: Context): void;
-    update(ctx: Context): void;
-    updateOne(ctx: Context): void;
-    updateById(ctx: Context): void;
-    delete(ctx: Context): void;
-    deleteOne(ctx: Context): void;
-    deleteById(ctx: Context): void;
+    count(query?: any, options?: any): Promise<IResponse>;
+    find(query?: any, projections?: any, options?: any): Promise<IResponse>;
+    findOne(query: any, options?: any): Promise<IResponse>;
+    findById(id: string, options?: any): Promise<IResponse>;
+    insert(documents: any, writeConcern?: any): Promise<IResponse>;
+    search(query?: any, projections?: any, options?: any): Promise<IResponse>;
+    update(filter: any, update: any, options?: {}): Promise<IResponse>;
+    updateOne(filter: any, update: any, options?: any): Promise<IResponse>;
+    updateById(id: string, update: any, options?: any): Promise<IResponse>;
+    delete(filter: any, options?: any): Promise<IResponse>;
+    deleteOne(filter: any, options?: any): Promise<IResponse>;
+    deleteById(id: string, options?: any): Promise<IResponse>;
 }

@@ -22,18 +22,18 @@ export class Model {
     let path = '';
 
     if (model) {
-      path += model.$get('name') + '/';
+      path += model.$get('name').toLowerCase() + '/';
 
       let modelApp = model.$get('app');
 
       if (modelApp) {
         let appConf = State.apps.find(app => app.name === modelApp);
         if (!appConf || !appConf.subdomain)
-          path = modelApp + '/' + path;
+          path = modelApp.toLowerCase() + '/' + path;
       }
     }
 
-    path += service.path || (skippedServicesNames.indexOf(service.name) > -1 ? '' : service.name);
+    path += service.path.toLowerCase() || (skippedServicesNames.indexOf(service.__name.toLowerCase()) > -1 ? '' : service.__name.toLowerCase());
 
     if (service.params.length)
       for (let i = 0; i < service.params.length; i++)
@@ -48,8 +48,8 @@ export class Model {
 
     for (let prop in this) {
 
-      let service: IService = <any>this[prop];
-      let isService = service.isService ? !this.$get('internal') : false;
+      let service: IService = <any>this[prop];      
+      let isService = (service && service.isService) ? !this.$get('internal') : false;
 
       if (service && isService) {
 
@@ -64,14 +64,17 @@ export class Model {
           if (service.authorize || this.$get('secure') || this.$get('authorize'))
             service.secure = true;
 
+        let appName = this.$get('app');
+
         this._servicesData[prop] = {
+          __name: service.__name, 
           isService: isService,
+          args: [],
           secure: service.secure,
           authorize: service.authorize,
-          internal: service.internal,
           apiType: this.$get('apiType') === API_TYPES.ALL ? service.apiType : this.$get('apiType'),
           name: service.name,
-          event: `${this.$get('app') || ''} ${this.$get('name')} ${service.event}`.trim(),
+          event: `${appName ? appName.toLowerCase() : ''} ${this.$get('name').toLowerCase()} ${service.event.toLowerCase()}`.trim(),
           method: service.method,
           path: Model.createPath(service, this),
           params: service.params,
@@ -136,9 +139,9 @@ export class Model {
     this._mArrangeHooks();
   }
 
-  $get(prop: getOptions | 'name') {
+  $get(prop: getOptions) {
     if (prop === 'name')
-      return this.constructor.name;
+      return (<any>this)['__name'] || this.constructor.name;
     else
       return (<any>this)[`__${prop}`] === undefined ? null : (<any>this)[`__${prop}`];
   }

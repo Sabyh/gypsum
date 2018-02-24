@@ -2,7 +2,7 @@ import * as express from 'express';
 import { Logger } from './misc/logger';
 import { Model } from './models';
 import { IService } from './decorators';
-import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, IResponseError } from './types';
+import { API_TYPES, RESPONSE_DOMAINS, Response, IResponseError } from './types';
 export interface IContext {
     headers: any;
     query: any;
@@ -11,6 +11,7 @@ export interface IContext {
     model: Model;
     service: IService;
     cookies?: any;
+    req?: express.Request;
     res?: express.Response;
     socket?: any;
     domain?: RESPONSE_DOMAINS;
@@ -22,9 +23,10 @@ export declare class Context {
     private _stack;
     private _locals;
     private _cookies;
-    private _res;
     private _domain;
     private _room;
+    readonly _req: express.Request | undefined;
+    readonly _res: express.Response | undefined;
     model: Model;
     service: IService;
     apiType: API_TYPES.REST | API_TYPES.SOCKET;
@@ -54,9 +56,10 @@ export declare class Context {
     clearCookie(name: string): Context;
     joinRoom(roomName?: string): boolean;
     next(err?: IResponseError): void;
-    ok(data: any, count?: number, code?: RESPONSE_CODES): void;
+    nextHook(hook: any, args?: any[]): this;
+    ok(res: Response): void;
     getResponseData(): any;
     setResponseData(data: any): Context;
-    sendHtml(html: string, code?: number): void;
-    sendFile(filePath: string, code?: number): void;
+    private _mSendHtml(html, code?);
+    private _mSendFile(filePath, code?);
 }

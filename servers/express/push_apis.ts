@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as express from 'express';
 import { Model } from '../../models';
-import { API_TYPES, RESPONSE_CODES, ResponseError } from '../../types';
+import { API_TYPES, RESPONSE_CODES, ResponseError, Response } from '../../types';
 import { Logger } from '../../misc/logger';
 import { Context } from '../../context';
 import { State } from '../../state';

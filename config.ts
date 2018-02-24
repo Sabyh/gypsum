@@ -2,43 +2,6 @@ import * as path from 'path';
 import { MongoClientOptions } from 'mongodb';
 import { ILoggerOptions } from './misc/logger';
 
-// Email Transporter Interface
-export interface IEmailTransporter {
-  pool?: boolean;
-  host?: string;
-  port?: number;
-  secure?: boolean;
-  service?: string;
-  auth?: { user: string; pass: string };
-}
-
-// Authentication Configurations Interface
-export interface IAuthenticationConfigOptions {
-  rootUser: string;
-  rootUserEmail: string;
-  rootUserPassword: string;
-  usersModel: string;
-  userEmailField: string;
-  userIdField: string;
-  usernameField: string;
-  passwordField: string;
-  passwordSaltField: string;
-  userIsActiveField: string;
-  tokenFieldName: string;
-  tokenSecret: string;
-  usernamePattern: string;
-  passwordpattern: string;
-  tranporterOptions: IEmailTransporter | null;
-  activationMailFrom: string;
-  activationMailSubject: string;
-  activationMailTemplatePath: string;
-  activationPage: string;
-}
-
-export type IAuthenticationConfig = {
-  [key in keyof IAuthenticationConfigOptions]?: IAuthenticationConfigOptions[key];
-}
-
 // Server Configurations Interface
 export interface IServerConfigOptions {
   server_name: string;
@@ -73,7 +36,6 @@ export interface IApp {
 }
 
 export interface IConfig {
-  authConfig?: IAuthenticationConfig;
   server?: IServerConfig;
   apps?: IApp[];
 }
@@ -90,27 +52,6 @@ export interface IGypsumConfigurations {
 
 export const Config: IGypsumConfig = {
   dev: {
-    authConfig: {
-      rootUser: 'root',
-      rootUserEmail: 'root@admin.com',
-      rootUserPassword: 'admin',
-      usersModel: 'Users',
-      userEmailField: 'email',
-      userIdField: 'userid',
-      usernameField: 'username',
-      passwordField: 'password',
-      passwordSaltField: 'passwordSalt',
-      userIsActiveField: 'isActive',
-      tokenFieldName: 'token',
-      tokenSecret: '4s8e1doenf3q2d6q2x4fv12',
-      usernamePattern: '/[a-zA-Z0-9_]{5,}/',
-      passwordpattern: '/[a-zA-Z0-9_]{5,}/',
-      tranporterOptions: null,
-      activationMailFrom: 'me@threre.com',
-      activationMailSubject: 'Gypsum Activation Email',
-      activationPage: path.join(__dirname, '../templates/activation-page-template.html'),
-      activationMailTemplatePath: path.join(__dirname, '../templates/activation-email-template.html')
-    },
     server: {
       server_name: 'gypsum',
       secure: false,

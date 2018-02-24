@@ -43,12 +43,12 @@ function pushApis(app, appName = 'default', isSubDomain, spa = '', logger) {
         logger.error(err);
         console.trace(err);
         if (err) {
-            res.status(types_1.RESPONSE_CODES.UNKNOWN_ERROR).json(new Response({
+            res.status(types_1.RESPONSE_CODES.UNKNOWN_ERROR).json(new types_1.Response({
                 data: new types_1.ResponseError({ message: 'unkown error', original: err, code: types_1.RESPONSE_CODES.UNKNOWN_ERROR })
             }));
         }
         else {
-            res.status(types_1.RESPONSE_CODES.NOT_FOUND).json(new Response({
+            res.status(types_1.RESPONSE_CODES.NOT_FOUND).json(new types_1.Response({
                 data: new types_1.ResponseError({ message: '404 not found!', original: err, code: types_1.RESPONSE_CODES.NOT_FOUND })
             }));
         }

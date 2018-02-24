@@ -20,18 +20,20 @@ class AppState {
         this.root = process.cwd();
         this.env = process.env.NODE_ENV || 'developemt';
         this.config = {};
-        this.authConfig = {};
         this.apps = [];
         this.models = [];
         this.Models = [];
         this.middlewares = {};
         this.hooks = [];
     }
+    getModelConstructor(name) {
+        return this.Models.find(Model => Model.name === name) || undefined;
+    }
     getModel(name) {
         return this.models.find(model => model.$get('name') === name) || undefined;
     }
     getHook(name) {
-        return this.hooks.find(hook => hook.name === name) || undefined;
+        return this.hooks.find(hook => hook.__name === name) || undefined;
     }
     getSocket(id) {
         return this._sockets[id];
@@ -45,25 +47,16 @@ class AppState {
     }
     setConfiguration(userConfig = {}) {
         if (userConfig.dev) {
-            if (userConfig.dev.authConfig)
-                Object.assign(this.authConfig, config_1.Config.dev.authConfig, userConfig.dev.authConfig);
-            else
-                Object.assign(this.authConfig, config_1.Config.dev.authConfig);
             if (userConfig.dev.server)
                 Object.assign(this.config, config_1.Config.dev.server, userConfig.dev.server);
             else
                 Object.assign(this.config, config_1.Config.dev.server);
         }
         else {
-            Object.assign(this.authConfig, config_1.Config.dev.authConfig);
             Object.assign(this.config, config_1.Config.dev.server);
         }
         if (this.env === 'production') {
             if (userConfig.prod) {
-                if (userConfig.prod.authConfig)
-                    Object.assign(this.authConfig, config_1.Config.prod.authConfig, userConfig.prod.authConfig);
-                else
-                    Object.assign(this.authConfig, config_1.Config.prod.authConfig);
                 if (userConfig.prod.server)
                     Object.assign(this.config, config_1.Config.prod.server, userConfig.prod.server);
                 else
@@ -72,7 +65,6 @@ class AppState {
                     this.apps = userConfig.prod.apps;
             }
             else {
-                Object.assign(this.authConfig, config_1.Config.prod.authConfig);
                 Object.assign(this.config, config_1.Config.prod.server);
             }
         }

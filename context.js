@@ -14,6 +14,7 @@ class Context {
         this._locals = {};
         this.user = null;
         this._socket = data.socket || undefined;
+        this._req = data.req || undefined;
         this._res = data.res || undefined;
         this._cookies = data.cookies;
         this._domain = data.domain;
@@ -36,6 +37,7 @@ class Context {
                 body: req.body,
                 params: req.params,
                 cookies: req.cookies,
+                req: req,
                 res: res,
                 model: model,
                 service: service
@@ -85,7 +87,7 @@ class Context {
             this._stack.push({ handler: state_1.State.getHook('validate'), args: [this.service.validate] });
         if ((hooks === 'both' || hooks === 'before') && this.service.before && this.service.before.length)
             this._mPushStack(this.service.before);
-        this._stack.push({ handler: this.model[this.service.name].bind(this.model), args: [] });
+        this._stack.push({ handler: this.model[this.service.__name].bind(this.model), args: [] });
         if ((hooks === 'both' || hooks === 'after') && this.service.after && this.service.after.length)
             this._mPushStack(this.service.after);
         if (extraHooks && extraHooks.length)
@@ -93,18 +95,18 @@ class Context {
         this.next();
     }
     _mRespond() {
-        this._response.requestType = this.apiType;
+        this._response.apiType = this.apiType;
         this._response.code = this._response.code || types_1.RESPONSE_CODES.UNKNOWN_ERROR;
         if (this.apiType === types_1.API_TYPES.REST && this._res) {
             this._res.status(this._response.code).json(this._response);
         }
         else if (this._socket) {
-            this._response.event = this.service.event;
-            if (!this._response.success) {
-                this._socket.emit(this._response.event, this._response);
+            let event = this.service.event;
+            if (this._response.code < 200 && this._response.code >= 300) {
+                this._socket.emit(event, this._response);
             }
             else {
-                this._response.domain = this._response.domain || this._domain || this.service.domain;
+                let domain = this._response.domain || this._domain || this.service.domain;
                 this._response.room = this._room || this._response.room;
                 if (this._response.domain === types_1.RESPONSE_DOMAINS.ROOM && this._response.room) {
                     if (process && process.send)
@@ -207,10 +209,26 @@ class Context {
                 this._mRespond();
         }
     }
-    ok(data, count, code = types_1.RESPONSE_CODES.OK) {
-        this._response = new types_1.Response({ data, count, code });
-        this._response.count = count || this._response.count;
-        this._response.code = code || this._response.code;
+    nextHook(hook, args) {
+        if (!hook)
+            return this;
+        if (typeof hook === 'function') {
+            this._stack.unshift({ handler: hook, args: args || [] });
+            return this;
+        }
+        let handler = state_1.State.getHook(hook);
+        if (handler)
+            this._stack.unshift({ handler: handler, args: args || [] });
+        else
+            this.logger.warn(`${hook} was not found`);
+        return this;
+    }
+    ok(res) {
+        if (res.type === 'html')
+            return this._mSendHtml(res.data, res.code);
+        else if (res.type === 'file')
+            return this._mSendFile(res.data, res.code);
+        this._response = res;
         this.next();
     }
     getResponseData() {
@@ -220,7 +238,7 @@ class Context {
         Object.assign(this._response.data || {}, data || {});
         return this;
     }
-    sendHtml(html, code = 200) {
+    _mSendHtml(html, code = 200) {
         if (this._res) {
             this._res.type('html')
                 .status(code)
@@ -233,7 +251,7 @@ class Context {
             });
         }
     }
-    sendFile(filePath, code = 200) {
+    _mSendFile(filePath, code = 200) {
         if (this._res)
             this._res.status(code).sendFile(filePath);
         else

@@ -13,7 +13,7 @@ export declare class Model {
     private _mArrangeServices();
     private _mArrangeHooks();
     protected init(): void;
-    $get(prop: getOptions | 'name'): any;
+    $get(prop: getOptions): any;
     $getServices(): {
         [key: string]: IService;
     };

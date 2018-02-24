@@ -3,9 +3,10 @@ import * as Validall from 'validall';
 import { IHookOptions } from './hook';
 export interface IService {
     isService: boolean;
+    __name: string;
     secure: boolean;
     authorize: boolean | string[];
-    internal: boolean;
+    args: string[];
     name: string;
     method: "get" | "post" | "put" | "delete";
     apiType: API_TYPES;
@@ -22,8 +23,8 @@ export interface IService {
     };
 }
 export interface IServiceOptions {
+    args?: string[];
     secure?: boolean;
-    internal?: boolean;
     authorize?: boolean | string[];
     method?: "get" | "post" | "put" | "delete";
     apiType?: API_TYPES;

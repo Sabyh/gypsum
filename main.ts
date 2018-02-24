@@ -8,7 +8,7 @@ const safe = new Safe('main');
 /**
  * import default config and Server state
  */
-import { IServerConfigOptions, IAuthenticationConfigOptions, IGypsumConfigurations, IGypsumConfig } from './config';
+import { IServerConfigOptions, IGypsumConfigurations, IGypsumConfig } from './config';
 import { State, IMiddlewares } from './state';
 
 /**
@@ -29,7 +29,6 @@ import { Context } from './context';
 import { initMongo } from './database/mongo';
 import { initExpress } from './servers/express';
 import { initSocket } from './servers/io';
-import { initAuthentication } from './authentication';
 
 /**
  * Importing Server
@@ -87,7 +86,7 @@ export interface IGypsum {
   root: string;
   env: string;
   dev: boolean;
-  get: (name: keyof (IServerConfigOptions & IAuthenticationConfigOptions)) => any;
+  get: (name: keyof IServerConfigOptions) => any;
   configure: (userConfig?: IGypsumConfigurations) => IGypsum;
   use: (options: IGypsumUseOptions) => IGypsum;
   bootstrap: () => void;
@@ -144,9 +143,6 @@ export const Gypsum: IGypsum = {
       initializeWorkers(State.config.processes);
       return;
     }
-
-    if (State.config.authentication)
-      initAuthentication();
 
     logger.info('instantiating Models...');
     for (let i = 0; i < State.Models.length; i++) {

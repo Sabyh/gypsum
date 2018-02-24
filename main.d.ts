@@ -1,4 +1,4 @@
-import { IServerConfigOptions, IAuthenticationConfigOptions, IGypsumConfigurations } from './config';
+import { IServerConfigOptions, IGypsumConfigurations } from './config';
 import { IMiddlewares } from './state';
 import { Context } from './context';
 export { IGypsumConfigurations };
@@ -11,7 +11,7 @@ export interface IGypsum {
     root: string;
     env: string;
     dev: boolean;
-    get: (name: keyof (IServerConfigOptions & IAuthenticationConfigOptions)) => any;
+    get: (name: keyof IServerConfigOptions) => any;
     configure: (userConfig?: IGypsumConfigurations) => IGypsum;
     use: (options: IGypsumUseOptions) => IGypsum;
     bootstrap: () => void;

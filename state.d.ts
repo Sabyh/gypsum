@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { IGypsumConfig, IAuthenticationConfigOptions, IServerConfigOptions, IApp } from './config';
+import { IGypsumConfig, IServerConfigOptions, IApp } from './config';
 import { Context } from './context';
 import { Model } from './models';
 export interface IMiddleware {
@@ -18,12 +18,12 @@ export declare class AppState {
     readonly root: string;
     readonly env: string;
     config: IServerConfigOptions;
-    authConfig: IAuthenticationConfigOptions;
     apps: IApp[];
     models: Model[];
     Models: typeof Model[];
     middlewares: IMiddlewares;
     hooks: ((ctx: Context, ...args: any[]) => void)[];
+    getModelConstructor(name: string): typeof Model | undefined;
     getModel(name: string): Model | undefined;
     getHook(name: string): ((ctx: Context, ...args: any[]) => void) | undefined;
     getSocket(id: string): any;

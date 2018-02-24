@@ -1,20 +1,25 @@
 import { Gypsum } from '../main';
-import { MODEL, SERVICE } from '../decorators';
-import { FileModel } from '../models';
-import { Context } from '../context';
-import { RESPONSE_DOMAINS } from '../types';
+import { MODEL } from '../decorators';
+import { MongoModel } from '../models';
+import { AuthPlugin, IAuthenticationConfig } from '../plugins/auth';
 
 @MODEL({
   schema: {
-    name: 'string',
-    active: { $type: 'boolean', $default: false, $props: { constant: true } }
+    username: String,
+    email: String,
+    password: String,
+    passwordSalt: String,
+    active: { $type: Boolean, $default: false }
   }
 })
-class Users extends FileModel {}
+class Users extends MongoModel {}
 
-Gypsum
-  .configure()
-  .use({
-    models: [Users]
-  })
-  .bootstrap();
+
+Gypsum.configure();
+
+AuthPlugin({
+  usersModelConstructor: Users,
+  authorization: true
+});
+
+Gypsum.bootstrap();

@@ -9,20 +9,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const main_1 = require("../main");
 const decorators_1 = require("../decorators");
 const models_1 = require("../models");
-let Users = class Users extends models_1.FileModel {
+const auth_1 = require("../plugins/auth");
+let Users = class Users extends models_1.MongoModel {
 };
 Users = __decorate([
     decorators_1.MODEL({
         schema: {
-            name: 'string',
-            active: { $type: 'boolean', $default: false, $props: { constant: true } }
+            username: String,
+            email: String,
+            password: String,
+            passwordSalt: String,
+            active: { $type: Boolean, $default: false }
         }
     })
 ], Users);
-main_1.Gypsum
-    .configure()
-    .use({
-    models: [Users]
-})
-    .bootstrap();
+main_1.Gypsum.configure();
+auth_1.AuthPlugin({
+    usersModelConstructor: Users,
+    authorization: true
+});
+main_1.Gypsum.bootstrap();
 //# sourceMappingURL=index.js.map

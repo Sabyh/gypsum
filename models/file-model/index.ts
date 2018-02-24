@@ -2,11 +2,11 @@ import * as Validall from 'validall';
 import { FileCollection } from './collection';
 import { Model } from '../model';
 import { Context } from '../../context';
-import { IResponseError, RESPONSE_CODES } from '../../types';
+import { IResponseError, RESPONSE_CODES, IResponse } from '../../types';
 import { SERVICE } from '../../decorators';
 
 export class FileModel extends Model {
-  public collection: FileCollection;
+  protected collection: FileCollection;
 
   constructor() {
     super();
@@ -14,154 +14,201 @@ export class FileModel extends Model {
     this.type = 'File';
   }
 
-  @SERVICE()
-  find(ctx: Context) {
-    this.$logger.info('find service called');
-    this.$logger.debug('query:', ctx.query.query);
-    this.$logger.debug('projection:', ctx.query.projection);
-    this.$logger.debug('options:', ctx.query.options);
+  @SERVICE({
+    args: ['query.query', 'query.projections', 'query.options']
+  })
+  find(query: any = {}, projections: string, options: any): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('find service called');
+      this.$logger.debug('query:', query);
+      this.$logger.debug('projections:', projections);
+      this.$logger.debug('options:', options);
 
-    this.collection.find(ctx.query.query, ctx.query.projection, ctx.query.options)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+      this.collection.find(query, projections, options)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  findById(ctx: Context) {
-    this.$logger.info('findById service called');
-    this.$logger.debug('id:', ctx.params.id);
-    this.$logger.debug('projections:', ctx.query.projections);
+  @SERVICE({
+    args: ['params.id', 'query.projections']
+  })
+  findById(id: string, projections: string): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('findById service called');
+      this.$logger.debug('id:', id);
+      this.$logger.debug('projections:', projections);
 
-    this.collection.findById(ctx.params.id, ctx.query.projections)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+      this.collection.findById(id, projections)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  findOne(ctx: Context) {
-    this.$logger.info('findOne service called');
-    this.$logger.debug('query:', ctx.query.query);
-    this.$logger.debug('projections:', ctx.query.projections);
+  @SERVICE({
+    args: ['query.query', 'query.projections']
+  })
+  findOne(query: any, projections: string): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('findOne service called');
+      this.$logger.debug('query:', query);
+      this.$logger.debug('projections:', projections);
 
-    this.collection.findById(ctx.query.query, ctx.query.projections)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+      this.collection.findById(query, projections)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  count(ctx: Context) {
-    this.$logger.info('count service called');
-    this.$logger.debug('query:', ctx.query.query);
+  @SERVICE({
+    args: ['query.query']
+  })
+  count(query: any): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('count service called');
+      this.$logger.debug('query:', query);
 
-    this.collection.count(ctx.query.query)
-      .then(res => ctx.ok(res, res))
-      .catch((error: IResponseError) => ctx.next(error));
+      this.collection.count(query)
+        .then(res => resolve({ data: res, count: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  search(ctx: Context) {
-    this.$logger.info('search service called');
-    this.$logger.debug('query:', ctx.body.query);
-    this.$logger.debug('projections:', ctx.body.projections);
-    this.$logger.debug('options:', ctx.body.options);
-
-    this.collection.find(ctx.body.query, ctx.body.projections, ctx.body.option)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+  @SERVICE({
+    args: ['body.query', 'body.projections', 'body.options']
+  })
+  search(query: any, projections: string, options: any): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('search service called');
+      this.$logger.debug('query:', query);
+      this.$logger.debug('projections:', projections);
+      this.$logger.debug('options:', options);
+  
+      this.collection.find(query, projections, options)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  insert(ctx: Context) {
-    this.$logger.info('insert service called');
-    this.$logger.debug('documents:', ctx.body.documents);
+  @SERVICE({
+    args: ['body.documents']
+  })
+  insert(documents: any): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
 
-    this.collection.insert(ctx.body.documents)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+      this.$logger.info('insert service called');
+      this.$logger.debug('documents:', documents);
+
+      this.collection.insert(documents)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  update(ctx: Context) {
-    this.$logger.info('update service called');
-    this.$logger.debug('filter:', ctx.body.filter);
-    this.$logger.debug('update:', ctx.body.update);
-    this.$logger.debug('options:', ctx.body.options);
+  @SERVICE({
+    args: ['body.filter', 'body.update', 'body.options']
+  })
+  update(filter: any, update: any, options: any): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('update service called');
+      this.$logger.debug('filter:', filter);
+      this.$logger.debug('update:', update);
+      this.$logger.debug('options:', options);
 
-    this.collection.update(ctx.body.filter, ctx.body.update, ctx.body.options)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+      this.collection.update(filter, update, options)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  updateById(ctx: Context) {
-    this.$logger.info('update service called');
-    this.$logger.debug('id:', ctx.params.id);
-    this.$logger.debug('update:', ctx.body.update);
-    this.$logger.debug('options:', ctx.body.options);
+  @SERVICE({
+    args: ['params.id', 'body.update']
+  })
+  updateById(id: string, update: any): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('update service called');
+      this.$logger.debug('id:', id);
+      this.$logger.debug('update:', update);
 
-    this.collection.updateById(ctx.params.id, ctx.body.update)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+      this.collection.updateById(id, update)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  updateOne(ctx: Context) {
-    this.$logger.info('update service called');
-    this.$logger.debug('filter:', ctx.body.filter);
-    this.$logger.debug('update:', ctx.body.update);
-    this.$logger.debug('options:', ctx.body.options);
+  @SERVICE({
+    args: ['body.filter', 'body.update']
+  })
+  updateOne(filter: any, update: any): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('update service called');
+      this.$logger.debug('filter:', filter);
+      this.$logger.debug('update:', update);
 
-    this.collection.updateOne(ctx.body.filter, ctx.body.update)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+      this.collection.updateOne(filter, update)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  delete(ctx: Context) {
-    this.$logger.info('delete service called');
-    this.$logger.debug('filter:', ctx.body.filter);
-    this.$logger.debug('filter:', ctx.body.options);
+  @SERVICE({
+    args: ['body.filter', 'body.options']
+  })
+  delete(filter: any, options: any): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('delete service called');
+      this.$logger.debug('filter:', filter);
+      this.$logger.debug('filter:', options);
 
-    let nofilter = !Validall(ctx.body.filter, { $type: 'object', $keys: { $length: { $gt: 0 } }});
+      if (!Validall(filter, { $type: 'object', $keys: { $length: { $gt: 0 } } }))
+        return reject({
+          message: `[${this.$get('name')}] - delete: unsecure process rejection`,
+          code: RESPONSE_CODES.UNAUTHORIZED
+        });
 
-    if (nofilter)
-      return ctx.next({
-        message: `[${this.$get('name')}] - delete: unsecure process rejection`,
-        code: RESPONSE_CODES.UNAUTHORIZED
-      });
-
-    this.collection.delete(ctx.body.filter, ctx.body.options)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+      this.collection.delete(filter, options)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  deleteById(ctx: Context) {
-    this.$logger.info('deleteById service called');
-    this.$logger.debug('id:', ctx.params.id);
-    this.$logger.debug('filter:', ctx.body.options);
+  @SERVICE({
+    args: ['params.id']
+  })
+  deleteById(id: string): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('deleteById service called');
+      this.$logger.debug('id:', id);
 
-    this.collection.deleteById(ctx.params.id)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+      if (!id)
+        return reject({
+          message: `[${this.$get('name')}] - deleteById: document id is required.`,
+          code: RESPONSE_CODES.UNAUTHORIZED
+        });
+
+      this.collection.deleteById(id)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 
-  @SERVICE()
-  deleteOne(ctx: Context) {
-    this.$logger.info('deleteOne service called');
-    this.$logger.debug('filter:', ctx.body.filter);
-    this.$logger.debug('filter:', ctx.body.options);
-
-    let nofilter = !Validall(ctx.body.filter, { $type: 'object', $keys: { $length: { $gt: 0 } }});
-
-    if (nofilter)
-      return ctx.next({
-        message: `[${this.$get('name')}] - deleteOne: unsecure process rejection`,
-        code: RESPONSE_CODES.UNAUTHORIZED
-      });
-
-    this.collection.deleteById(ctx.body.filter)
-      .then(res => ctx.ok(res))
-      .catch((error: IResponseError) => ctx.next(error));
+  @SERVICE({
+    args: ['body.filter']
+  })
+  deleteOne(filter: any): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      this.$logger.info('deleteOne service called');
+      this.$logger.debug('filter:', filter);
+  
+      if (!Validall(filter, { $type: 'object', $keys: { $length: { $gt: 0 } } }))
+        return reject({
+          message: `[${this.$get('name')}] - deleteOne: unsecure process rejection`,
+          code: RESPONSE_CODES.UNAUTHORIZED
+        });
+  
+      this.collection.deleteById(filter)
+        .then(res => resolve({ data: res }))
+        .catch((error: IResponseError) => reject(error));
+    });
   }
 }

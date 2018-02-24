@@ -1,12 +1,15 @@
-import { RESPONSE_DOMAINS, API_TYPES } from '../types';
+import { RESPONSE_DOMAINS, API_TYPES, Response, ResponseError, IResponse } from '../types';
 import * as Validall from 'validall';
 import { IHookOptions } from './hook';
+import { stringUtil, objectUtil } from '../util';
+import { Context } from '../context';
 
 export interface IService {
   isService: boolean;
+  __name: string;
   secure: boolean;
   authorize: boolean | string[];
-  internal: boolean;
+  args: string[];
   name: string;
   method: "get" | "post" | "put" | "delete";
   apiType: API_TYPES;
@@ -20,8 +23,8 @@ export interface IService {
 }
 
 export interface IServiceOptions {
+  args?: string[];
   secure?: boolean;
-  internal?: boolean;
   authorize?: boolean | string[];
   method?: "get" | "post" | "put" | "delete";
   apiType?: API_TYPES;
@@ -36,37 +39,59 @@ export interface IServiceOptions {
 
 const defaultOptions: { [key: string]: IServiceOptions } = {
   find: { domain: RESPONSE_DOMAINS.SELF, method: 'get' },
-  findById: { domain: RESPONSE_DOMAINS.SELF, method: 'get', params: ['id']},
-  findOne: { domain: RESPONSE_DOMAINS.SELF, method: 'get'},
-  count: { domain: RESPONSE_DOMAINS.SELF, method: 'get'},
-  search: { domain: RESPONSE_DOMAINS.SELF, method: 'post'},
-  insert: { domain: RESPONSE_DOMAINS.ALL, method: 'post'},
-  update: { domain: RESPONSE_DOMAINS.ALL, method: 'put'},
-  updateById: { domain: RESPONSE_DOMAINS.ALL, method: 'put', params: ['id']},
-  updateOne: { domain: RESPONSE_DOMAINS.ALL, method: 'put'},
-  delete: { domain: RESPONSE_DOMAINS.ALL, method: 'delete'},
-  deleteById: { domain: RESPONSE_DOMAINS.ALL, method: 'delete', params: ['id']},
-  deleteOne: { domain: RESPONSE_DOMAINS.ALL, method: 'delete'},
+  findById: { domain: RESPONSE_DOMAINS.SELF, method: 'get', params: ['id'] },
+  findOne: { domain: RESPONSE_DOMAINS.SELF, method: 'get' },
+  count: { domain: RESPONSE_DOMAINS.SELF, method: 'get' },
+  search: { domain: RESPONSE_DOMAINS.SELF, method: 'post' },
+  insert: { domain: RESPONSE_DOMAINS.ALL, method: 'post' },
+  update: { domain: RESPONSE_DOMAINS.ALL, method: 'put' },
+  updateById: { domain: RESPONSE_DOMAINS.ALL, method: 'put', params: ['id'] },
+  updateOne: { domain: RESPONSE_DOMAINS.ALL, method: 'put' },
+  delete: { domain: RESPONSE_DOMAINS.ALL, method: 'delete' },
+  deleteById: { domain: RESPONSE_DOMAINS.ALL, method: 'delete', params: ['id'] },
+  deleteOne: { domain: RESPONSE_DOMAINS.ALL, method: 'delete' },
 };
 
 export function SERVICE(options?: IServiceOptions) {
 
   return function (target: any, key: string, descriptor: PropertyDescriptor) {
-    descriptor.enumerable = true;
-    descriptor.value.isService = options ? !options.internal : true;
-    descriptor.value.internal = options ? options.internal : false;
-    descriptor.value.secure = options && options.secure;
-    descriptor.value.authorize = options ? options.authorize : undefined;
-    descriptor.value.apiType = options && options.apiType ? options.apiType : API_TYPES.ALL;
-    descriptor.value.path = options && options.path ? options.path : '';
-    descriptor.value.event = options && options.event ? options.event : key;
-    descriptor.value.method = options && options.method ? options.method : (defaultOptions[key] ? defaultOptions[key].method : 'get');
-    descriptor.value.domain = options && options.domain ? options.domain : (defaultOptions[key] ? defaultOptions[key].domain : RESPONSE_DOMAINS.SELF);
-    descriptor.value.params = options && options.params ? options.params : (defaultOptions[key] ? defaultOptions[key].params || [] : []);
-    descriptor.value.before = options && options.before ? options.before : [];
-    descriptor.value.after = options && options.after ? options.after : [];
-    descriptor.value.validate = options ? options.validate : undefined;
+    let serviceName = stringUtil.capitalizeFirst(key);
+    
+    function service(ctx: Context) {
+      let args = [];
 
-    Object.defineProperty(target.constructor.prototype, key, descriptor);
+      if (options && options.args && options.args.length)
+        for (let i = 0; i < options.args.length; i++)
+          args.push(objectUtil.getValue(ctx, options.args[i]));
+
+      args.push(ctx);
+      this[key](...args)
+        .then((res: IResponse) => {
+          if (res)
+            ctx.ok(new Response(res));
+          else
+            ctx.ok(new Response({ data: res }));
+        })
+        .catch((error: ResponseError) => ctx.next(error));
+    }
+
+    (<any>service).isService = true;
+    (<any>service).__name = serviceName;
+    (<IServiceOptions>service).secure = options && options.secure;
+    (<IServiceOptions>service).authorize = options ? options.authorize : undefined;
+    (<IServiceOptions>service).apiType = options && options.apiType ? options.apiType : API_TYPES.ALL;
+    (<IServiceOptions>service).path = options && options.path ? options.path : '';
+    (<IServiceOptions>service).event = options && options.event ? options.event : key;
+    (<IServiceOptions>service).method = options && options.method ? options.method : (defaultOptions[key] ? defaultOptions[key].method : 'get');
+    (<IServiceOptions>service).domain = options && options.domain ? options.domain : (defaultOptions[key] ? defaultOptions[key].domain : RESPONSE_DOMAINS.SELF);
+    (<IServiceOptions>service).params = options && options.params ? options.params : (defaultOptions[key] ? defaultOptions[key].params || [] : []);
+    (<IServiceOptions>service).before = options && options.before ? options.before : [];
+    (<IServiceOptions>service).after = options && options.after ? options.after : [];
+    (<IServiceOptions>service).validate = options ? options.validate : undefined;
+
+    Object.defineProperty(target.constructor.prototype, serviceName, {
+      value: service,
+      enumerable: true
+    });
   }
 }
