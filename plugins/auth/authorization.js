@@ -14,6 +14,7 @@ const state_1 = require("../../state");
 const logger_1 = require("../../misc/logger");
 function initAuthorization(authConfig) {
     logger_1.Logger.Info('Initializing Authorization Layer...');
+    state_1.State.config.authorizationModelName = 'Authorization';
     let Authorization = Authorization_1 = class Authorization extends models_1.Model {
         _mGetUserRolesFromGroups(id) {
             return new Promise((resolve, reject) => {

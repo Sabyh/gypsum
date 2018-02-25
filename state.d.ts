@@ -1,7 +1,7 @@
 import * as express from 'express';
 import { IGypsumConfig, IServerConfigOptions, IApp } from './config';
-import { Context } from './context';
-import { Model } from './models';
+import { Model, MongoModel, FileModel } from './models';
+import { IHook } from './decorators';
 export interface IMiddleware {
     (app: express.Express): void;
 }
@@ -22,10 +22,10 @@ export declare class AppState {
     models: Model[];
     Models: typeof Model[];
     middlewares: IMiddlewares;
-    hooks: ((ctx: Context, ...args: any[]) => void)[];
-    getModelConstructor(name: string): typeof Model | undefined;
-    getModel(name: string): Model | undefined;
-    getHook(name: string): ((ctx: Context, ...args: any[]) => void) | undefined;
+    hooks: IHook[];
+    getModelConstructor(name: string): typeof Model | typeof MongoModel | typeof FileModel | undefined;
+    getModel(name: string): Model | MongoModel | FileModel | undefined;
+    getHook(name: string): IHook | undefined;
     getSocket(id: string): any;
     pushSocket(socket: any): void;
     deleteSocket(id: string): void;

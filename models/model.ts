@@ -1,6 +1,6 @@
 import { Logger } from '../misc/logger';
 import { API_TYPES } from '../types';
-import { FRIEND, IService, IHook, IHookOptions, IModelOptions } from '../decorators';
+import { FRIEND, IService, IModelHook, IHookOptions, IModelOptions } from '../decorators';
 import { Safe } from '../misc/safe';
 import { State } from '../state';
 
@@ -13,7 +13,7 @@ const skippedServicesNames = ['find', 'findById', 'insert', 'update', 'updateByI
 
 export class Model {
   private _servicesData: { [key: string]: IService };
-  private _hooksData: { [key: string]: IHook };
+  private _hooksData: { [key: string]: IModelHook };
 
   public type: 'Mongo' | 'File' | undefined;
   public $logger: Logger;
@@ -123,7 +123,7 @@ export class Model {
 
     for (let prop in this) {
       if (this[prop] && (<any>this[prop]).isHook) {
-        this._hooksData[prop] = <IHook>{};
+        this._hooksData[prop] = <IModelHook>{};
 
         for (let key in this[prop])
           (<any>this._hooksData[prop])[key] = this[prop][key];
@@ -154,7 +154,7 @@ export class Model {
     return this._servicesData[name];
   }
 
-  $getHooks(): { [key: string]: IHook } {
+  $getHooks(): { [key: string]: IModelHook } {
     return this._hooksData || this._mArrangeHooks();
   }
 

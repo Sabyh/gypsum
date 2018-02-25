@@ -1,5 +1,5 @@
 import { Logger } from '../misc/logger';
-import { IService, IHook, IModelOptions } from '../decorators';
+import { IService, IModelHook, IModelOptions } from '../decorators';
 export declare type ServiceOptions = {
     [key: string]: IService | boolean;
 };
@@ -19,7 +19,7 @@ export declare class Model {
     };
     $getService(name: string): IService;
     $getHooks(): {
-        [key: string]: IHook;
+        [key: string]: IModelHook;
     };
     $hasService(name: string): boolean;
     $hasHook(name: string): boolean;

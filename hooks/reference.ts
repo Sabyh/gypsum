@@ -26,13 +26,6 @@ export function reference (ctx: Context, options: IReferenceHookOptions) {
     logger.warn('undefined response!');
     return ctx.next();
   }
-
-  let id = objectUtil.getValue(response, options.path);
-
-  if (!id) {
-    logger.warn(`'${options.path}' was not found in response data`);
-    return ctx.next();
-  }
     
   let model = <MongoModel>State.getModel(options.model);
 
@@ -41,18 +34,38 @@ export function reference (ctx: Context, options: IReferenceHookOptions) {
     return ctx.next();
   }
 
-  model.findOne({ _id: new Mongodb.ObjectID(id) })
+  let ids: string[] = [];
+
+  if (Array.isArray(response) && response.length)
+    for (let i = 0; i < response.length; i++) {
+      let id = objectUtil.getValue(response[i], options.path);
+      if (id)
+        ids.push(id);
+    }      
+
+  if (!ids.length) {
+    logger.warn(`'${options.path}' was not found in response data`);
+    return ctx.next()
+  }
+
+  model.find({ _id: { $in: ids } })
     .then(res => {
       if (!res.data) {
-        logger.warn(`${options.model} with reference '${id}' was not found`);
+        logger.warn(`${options.model} references were not found`);
         ctx.next();
       } else {
-        objectUtil.setValue(response, options.path, res.data);
+        for (let i = 0; i < ids.length; i++)
+          for (let j = 0; j < res.data.length; j++) {
+            if (ids[i] === res.data[j]._id)
+              objectUtil.setValue(response[i], options.path, res.data[j]);
+
+          }
+
         ctx.next();
       }
     })
     .catch(error => ctx.next({
-      message: `error referencing ${options.model} with reference '${id}'`,
+      message: `error referencing ${options.model} with references '${ids}'`,
       original: error,
       code: RESPONSE_CODES.UNKNOWN_ERROR
     }));

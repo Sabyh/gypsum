@@ -19,6 +19,7 @@ const util_1 = require("../../util");
 function initAuthentication(authConfig, transporterOptions) {
     let UserConstructor = authConfig.usersModelConstructor || models_1.MongoModel;
     let modelName = UserConstructor.prototype.__name || UserConstructor.name;
+    state_1.State.config.authenticationModelName = modelName;
     let Authentication = class Authentication extends UserConstructor {
         constructor() {
             super();

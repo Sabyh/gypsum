@@ -15,7 +15,9 @@ import { IAuthenticationConfig, IEmailTransporter, IAuthenticationConfigOptions 
 export function initAuthentication(authConfig: IAuthenticationConfigOptions, transporterOptions?: IEmailTransporter) {
 
   let UserConstructor: typeof MongoModel = authConfig.usersModelConstructor || MongoModel;
-  let modelName = (<any>UserConstructor.prototype).__name || UserConstructor.name
+  let modelName = (<any>UserConstructor.prototype).__name || UserConstructor.name;
+
+  State.config.authenticationModelName = modelName;
 
   @MODEL({
     name: modelName,

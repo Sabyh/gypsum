@@ -12,11 +12,11 @@ export interface IServerConfigOptions {
     cookie_key: string;
     upload_size_limit_mb: number;
     logger_options: ILoggerOptions | null;
-    authentication: boolean;
-    authorization: boolean;
     mongodb_url: string;
     database_name: string;
     spa: string;
+    authenticationModelName: string;
+    authorizationModelName: string;
 }
 export declare type IServerConfig = {
     [key in keyof IServerConfigOptions]?: IServerConfigOptions[key];

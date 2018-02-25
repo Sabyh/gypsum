@@ -9,7 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const config_1 = require("./config");
 const string_1 = require("./util/string");
-const friend_1 = require("./decorators/friend");
+const decorators_1 = require("./decorators");
 const safe_1 = require("./misc/safe");
 const logger_1 = require("./misc/logger");
 let safe = new safe_1.Safe('state');
@@ -77,7 +77,7 @@ class AppState {
     }
 }
 __decorate([
-    friend_1.FRIEND(safe.set('State._io', ['ioServer', 'context']), true, true)
+    decorators_1.FRIEND(safe.set('State._io', ['ioServer', 'context']), true, true)
 ], AppState.prototype, "_io", void 0);
 exports.AppState = AppState;
 const State = new AppState();

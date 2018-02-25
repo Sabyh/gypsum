@@ -36,6 +36,8 @@ import { initSocket } from './servers/io';
 import { Server } from './servers/http';
 import { initializeWorkers } from './workers';
 import { generateClientGypsum } from './client/generate-client-gypsum';
+import { MongoModel, FileModel } from './models';
+import { IModelHook, IHook } from './decorators';
 
 /**
  * Instanciating Logger for gypsum
@@ -87,6 +89,10 @@ export interface IGypsum {
   env: string;
   dev: boolean;
   get: (name: keyof IServerConfigOptions) => any;
+  set: <T extends keyof IServerConfigOptions, U extends IServerConfigOptions[T]>(name: T, value: U) => IGypsum;
+  getModel: (name: string) => Model | MongoModel | FileModel | undefined;
+  getModelConstructor: (name: string) => typeof Model | typeof MongoModel | typeof FileModel | undefined;
+  getHook: (name: string) => IHook | undefined;
   configure: (userConfig?: IGypsumConfigurations) => IGypsum;
   use: (options: IGypsumUseOptions) => IGypsum;
   bootstrap: () => void;
@@ -99,6 +105,23 @@ export const Gypsum: IGypsum = {
 
   get(name: keyof (IServerConfigOptions)) {
     return State.config[name];
+  },
+
+  set<T extends keyof IServerConfigOptions, U extends IServerConfigOptions[T]>(name: T, value: U): IGypsum {
+    State.config[name] = value;
+    return this;
+  },
+
+  getModel(name: string): Model | MongoModel | FileModel | undefined {
+    return State.getModel(name);
+  },
+
+  getModelConstructor(name: string): typeof Model | typeof MongoModel | typeof FileModel | undefined {
+    return State.getModelConstructor(name);
+  },
+
+  getHook(name: string): IHook | undefined {
+    return State.getHook(name);
   },
 
   configure(userConfig: IGypsumConfigurations): IGypsum {

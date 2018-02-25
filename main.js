@@ -49,6 +49,19 @@ exports.Gypsum = {
     get(name) {
         return state_1.State.config[name];
     },
+    set(name, value) {
+        state_1.State.config[name] = value;
+        return this;
+    },
+    getModel(name) {
+        return state_1.State.getModel(name);
+    },
+    getModelConstructor(name) {
+        return state_1.State.getModelConstructor(name);
+    },
+    getHook(name) {
+        return state_1.State.getHook(name);
+    },
     configure(userConfig) {
         logger_1.Logger.Info('Configuring Gypsum..');
         state_1.State.setConfiguration(userConfig ? userConfig : {});

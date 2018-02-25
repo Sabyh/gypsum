@@ -16,11 +16,11 @@ export interface IServerConfigOptions {
   cookie_key: string;
   upload_size_limit_mb: number;
   logger_options: ILoggerOptions | null;
-  authentication: boolean;
-  authorization: boolean;
   mongodb_url: string;
   database_name: string;
   spa: string;
+  authenticationModelName: string;
+  authorizationModelName: string;
 }
 
 export type IServerConfig = {
@@ -65,11 +65,11 @@ export const Config: IGypsumConfig = {
       cookie_key: 'kdu8v9qwem8hqe',
       upload_size_limit_mb: 10,
       logger_options: { all: 'debug' },
-      authentication: false,
-      authorization: false,
       mongodb_url: 'mongodb://localhost:27017',
       database_name: 'gypsum_dev_db',
-      spa: ''
+      spa: '',
+      authenticationModelName: '',
+      authorizationModelName: ''
     }
   },
 

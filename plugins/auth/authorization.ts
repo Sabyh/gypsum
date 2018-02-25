@@ -25,6 +25,8 @@ export interface IPermission {
 export function initAuthorization(authConfig: IAuthenticationConfigOptions) {
   Logger.Info('Initializing Authorization Layer...');
 
+  State.config.authorizationModelName = 'Authorization';
+
   /** 
    * Authorization
    * ====================================================================================================================================

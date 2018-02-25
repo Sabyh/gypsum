@@ -4,9 +4,9 @@ import * as express from 'express';
 import * as IO from 'socket.io';
 import { Config, IConfig, IGypsumConfig, IServerConfigOptions, IApp } from './config';
 import { Context } from './context';
-import { Model } from './models';
+import { Model, MongoModel, FileModel } from './models';
 import { stringUtil } from './util/string';
-import { FRIEND } from './decorators/friend';
+import { FRIEND, IHook } from './decorators';
 import { Safe } from './misc/safe';
 import { Logger } from './misc/logger';
 
@@ -35,17 +35,17 @@ export class AppState {
   models: Model[] = [];
   Models: typeof Model[] = [];
   middlewares: IMiddlewares = {};
-  hooks: ((ctx: Context, ...args: any[]) => void)[] = [];
+  hooks: IHook[] = [];
 
-  getModelConstructor(name: string) {
+  getModelConstructor(name: string): typeof Model | typeof MongoModel | typeof FileModel | undefined {
     return this.Models.find(Model => Model.name === name) || undefined;
   }
 
-  getModel(name: string) {
+  getModel(name: string): Model | MongoModel | FileModel | undefined {
     return this.models.find(model => model.$get('name') === name) || undefined;
   }
 
-  getHook(name: string) {
+  getHook(name: string): IHook | undefined {
     return this.hooks.find(hook => (<any>hook).__name === name) || undefined;
   }
 

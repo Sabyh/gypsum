@@ -75,13 +75,15 @@ class Context {
         }
     }
     _mInit(hooks = 'both', extraHooks) {
-        if (this.service.secure) {
-            let Authentication = state_1.State.getModel('Authentication');
-            this._stack.push({ handler: Authentication.secure.bind(Authentication), args: [] });
+        if (this.service.secure !== undefined && state_1.State.config.authenticationModelName) {
+            let Authentication = state_1.State.getModel(state_1.State.config.authenticationModelName);
+            if (Authentication)
+                this._stack.push({ handler: Authentication.secure.bind(Authentication), args: [] });
         }
-        if (this.service.authorize) {
-            let Authorization = state_1.State.getModel('Authorization');
-            this._stack.push({ handler: Authorization.authorize.bind(Authorization), args: [this.service.authorize] });
+        if (this.service.authorize !== undefined && state_1.State.config.authorizationModelName) {
+            let Authorization = state_1.State.getModel(state_1.State.config.authorizationModelName);
+            if (Authorization)
+                this._stack.push({ handler: Authorization.authorize.bind(Authorization), args: [this.service.authorize] });
         }
         if (this.service.validate)
             this._stack.push({ handler: state_1.State.getHook('validate'), args: [this.service.validate] });

@@ -125,14 +125,16 @@ export class Context {
 
   private _mInit(hooks: 'before' | 'after' | 'both' | 'none' = 'both', extraHooks?: any[]): void {
     // Authentication Layer
-    if (this.service.secure) {
-      let Authentication = State.getModel('Authentication');
-      this._stack.push({ handler: (<any>Authentication).secure.bind(Authentication), args: [] });
+    if (this.service.secure !== undefined && State.config.authenticationModelName) {
+      let Authentication = State.getModel(State.config.authenticationModelName);
+      if (Authentication)
+        this._stack.push({ handler: (<any>Authentication).secure.bind(Authentication), args: [] });
     }
 
-    if (this.service.authorize) {
-      let Authorization = State.getModel('Authorization');
-      this._stack.push({ handler: (<any>Authorization).authorize.bind(Authorization), args: [this.service.authorize] });
+    if (this.service.authorize !== undefined && State.config.authorizationModelName) {
+      let Authorization = State.getModel(State.config.authorizationModelName);
+      if (Authorization)
+        this._stack.push({ handler: (<any>Authorization).authorize.bind(Authorization), args: [this.service.authorize] });
     }
 
     if (this.service.validate)

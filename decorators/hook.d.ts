@@ -1,6 +1,8 @@
 import { Context } from "../context";
 export interface IHook {
     (ctx: Context, ...args: any[]): void;
+}
+export interface IModelHook extends IHook {
     isHook: boolean;
     name: string;
     private: boolean;

@@ -4,6 +4,9 @@ import { ResponseError } from "../types";
 
 export interface IHook {
   (ctx: Context, ...args: any[]): void;
+}
+
+export interface IModelHook extends IHook {
   isHook: boolean;
   name: string;
   private: boolean;
@@ -24,8 +27,8 @@ export function HOOK(options: { private: boolean } = { private: false }) {
     }
 
     (<any>hook).__name = hookName;
-    (<IHook>hook).isHook = true;
-    (<IHook>hook).private = options.private;
+    (<IModelHook>hook).isHook = true;
+    (<IModelHook>hook).private = options.private;
 
     Object.defineProperty(target.constructor.prototype, hookName, {
       value: hook,
