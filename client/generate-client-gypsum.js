@@ -48,7 +48,7 @@ function generateClientGypsum() {
     }
     let template = fs.readFileSync(path.join(__dirname, 'template.js'));
     template = template.toString().replace(/\{\}\/\/\{\}/, JSON.stringify(configurations));
-    fs.writeFileSync(path.join(__dirname, 'client.js'), template);
+    fs.writeFileSync(path.join(__dirname, 'index.js'), template);
 }
 exports.generateClientGypsum = generateClientGypsum;
 //# sourceMappingURL=generate-client-gypsum.js.map

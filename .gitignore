@@ -2,3 +2,7 @@
 node_modules
 npm-debug.log*
 /.data
+*.js
+*.map.js
+!/client/index.js
+!/client/template.js

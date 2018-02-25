@@ -56,5 +56,5 @@ export function generateClientGypsum() {
 
   let template: any = fs.readFileSync(path.join(__dirname, 'template.js'));
   template = template.toString().replace(/\{\}\/\/\{\}/, JSON.stringify(configurations));
-  fs.writeFileSync(path.join(__dirname, 'client.js'), template);
+  fs.writeFileSync(path.join(__dirname, 'index.js'), template);
 }
