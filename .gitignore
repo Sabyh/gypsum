@@ -1,8 +1,9 @@
 .vscode
 node_modules
-npm-debug.log*
+npm-debug.log
 /.data
 *.js
 *.map.js
+*.d.ts
 !/client/index.js
 !/client/template.js
