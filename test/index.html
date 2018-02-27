@@ -34,37 +34,59 @@
   <textarea id="bodyArea" cols="30" rows="10">{
     "documents": [
       {
-        "name": "doc01"
+        "username": "Ghassen"
       }
     ]
   }</textarea>
   <br>
   <br>
-  <button id="sendButton">Send</button>
+  <button id="sendButton">Insert</button>
+  <button id="getButton">Get</button>
 
+  <script src="./../node_modules/axios/dist/axios.min.js"></script>
   <script src="http://localhost:7771/socket.io/socket.io.js"></script>
+  <script src="http://localhost:7771/gypsum-client.js"></script>
   <script>
-    const socket = io('http://localhost:7771', { forceNew: true });
+    // const socket = io('http://localhost:7771', { forceNew: true });
 
     let eventInput = document.getElementById("eventInput");
     let roomInput = document.getElementById("roomInput");
     let queryInput = document.getElementById("queryInput");
     let bodyArea = document.getElementById("bodyArea");
     let sendButton = document.getElementById("sendButton");
+    let getButton = document.getElementById("getButton");
+
+    let App = gypsumClient.getApp();
+
+    console.log(App);
 
     sendButton.addEventListener('click', e => {
-      socket.emit(eventInput.value, {
-        room: roomInput.value,
-        query: JSON.parse(queryInput.value),
+      App.users.dispatch('insert', {
         body: JSON.parse(bodyArea.value)
       });
-
     });
 
-    socket.on(eventInput.value, data => {
-      console.log(data);
-    });
-    
+    getButton.addEventListener('click', () => {
+      App.users
+        .dispatch('find', {})
+        .then(res => {
+          console.log('find results:');
+          console.log(res);
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    })
+
+    App.users
+      .on('insert', res => {
+        console.log('insert results:');
+        console.log(res);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+
   </script>
 </body>
 

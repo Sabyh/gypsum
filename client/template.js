@@ -1,9 +1,9 @@
 ((global, factory) => {
-  if (module && module.exports) {
+  if (typeof module !== 'undefined' && typeof exports === 'object') {
     const io = require('socket.io-client');
     const axios = require('axios');
     module.exports = factory(io, axios);
-  } else if (global.document) {
+  } else if (global !== undefined) {
     global.gypsumClient = factory(global.axios, global.io);
   }
 })(this, (axios, io) => {
@@ -12,13 +12,22 @@
   const configurations = {}//{};
   const apps = {};
   const models = {};
+  const defaults = {
+    timeout: 10000,
+    withCredentials: false
+  }
   let socket;
 
   if (io) {
     socket = io(configurations.origin);
   }
 
-  gypsumClient.app = function (name) {
+  gypsumClient.config = function (options) {
+    defaults.timeout = options.timeout || 10000;
+    defaults.withCredentials = options.withCredentials !== undefined ? !!options.withCredentials : true;
+  }
+
+  gypsumClient.getApp = function (name) {
     return apps[name] || apps.default;
   }
 
@@ -213,9 +222,9 @@
       return this.on(serviceName, callback, true);
     }
 
-    then(callback, once) {
+    then(callback) {
       if (this.lastEvent)
-        return this.on(this.lastEvent, callback, once);
+        return this.on(this.lastEvent, callback, true);
 
       console.warn('cannot call then without a dispatch!');
       return this;
@@ -248,7 +257,7 @@
       return this;
     }
 
-    dispatch(serviceName, data) {
+    dispatch(serviceName, data, options) {
       if (!serviceName) {
         console.warn('service name was not defined');
         return this;
@@ -265,16 +274,20 @@
         socket.emit(this.services[serviceName].event, data);
       } else if (axios && this.services[serviceName].path) {
         let service = this.services[serviceName];
-        axios[service.method]({
+        options = options || {};
+        axios({
+          method: service.method,
           url: generateServiceUrl(service.path, data.params, data.query),
-          body: data.body,
-          headers: data.headers
+          data: data.body,
+          headers: data.headers,
+          withCredentials: options.withCredentials !== undefined ? !!options.withCredentials : defaults.withCredentials,
+          timeout: options.timeout || defaults.timeout
         })
           .then(res => {
-            respond.call(this, serviceName, res);
+            respond.call(this, serviceName, res ? res.data : res);
           })
           .catch(err => {
-            respond.call(this, serviceName, res);
+            respond.call(this, serviceName, err);
           });
       } else {
         if (this.services[serviceName].event && !socket) {

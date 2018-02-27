@@ -79,8 +79,10 @@ export const objectUtil = {
         temp = temp[parts[j]];
 
         if (j === parts.length - 2 && value !== undefined) {
-          if (inject || obj.hasOwnProperty(parts[j + 1])) return !!(temp[parts[j + 1]] = value);
-          else return false;
+          if (inject || obj.hasOwnProperty(parts[j + 1]))
+            return !!(temp[parts[j + 1]] = value);
+          else
+            return undefined;
 
         }
 
@@ -90,7 +92,7 @@ export const objectUtil = {
       } else if (inject) {
         temp[parts[j--]] = {};
       } else {
-        return false;
+        return undefined;
       }
     }
   },

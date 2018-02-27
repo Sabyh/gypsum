@@ -33,7 +33,7 @@ export class Model {
       }
     }
 
-    path += service.path.toLowerCase() || (skippedServicesNames.indexOf(service.__name.toLowerCase()) > -1 ? '' : service.__name.toLowerCase());
+    path += skippedServicesNames.indexOf(service.__name.toLowerCase()) > -1 ? '' : service.__name.toLowerCase();
 
     if (service.params.length)
       for (let i = 0; i < service.params.length; i++)

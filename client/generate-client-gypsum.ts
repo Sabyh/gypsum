@@ -29,7 +29,7 @@ export function generateClientGypsum() {
       
       if (service.apiType !== API_TYPES.SOCKET) {
         path = 'http' + (isSecure ? 's' : '') + '://';
-        path += (isSubdomain ? (modelApp + '.') : '') + State.config.host;
+        path += (isSubdomain ? (modelApp.toLowerCase() + '.') : '') + State.config.host;
         path += (State.env !== 'production') ? ':' + State.config.port : '';
         path += '/' + (State.config.services_prefix ? State.config.services_prefix : '');
         path += service.path;      
@@ -39,8 +39,8 @@ export function generateClientGypsum() {
       if (service.apiType !== API_TYPES.REST)
         event = service.event;
 
-      services[service.name.toLowerCase()] = {
-        name: service.name,
+      services[service.__name.toLowerCase()] = {
+        name: service.__name.toLowerCase(),
         event: event,
         method: service.method,
         path: path
@@ -48,8 +48,8 @@ export function generateClientGypsum() {
     }
 
     configurations.models.push({
-      app: model.$get('app'),
-      name: model.$get('name'),
+      app: modelApp.toLowerCase(),
+      name: model.$get('name').toLowerCase(),
       services: services
     });
   }

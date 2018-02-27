@@ -3,7 +3,7 @@ node_modules
 npm-debug.log
 /.data
 *.js
-*.map.js
+*.js.map
 *.d.ts
 !/client/index.js
 !/client/template.js

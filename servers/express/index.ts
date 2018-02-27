@@ -23,7 +23,7 @@ export function initExpress(app: express.Express) {
   }
 
   app.get('/gypsum-client.js', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/client.js'));
+    res.sendFile(path.join(__dirname, '../../client/index.js'));
   });
 
   let subDomains = State.apps.filter(app => app.subdomain).map(app => ({ name: app.name, spa: app.spa }));

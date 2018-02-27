@@ -160,14 +160,14 @@ export class Context {
   private _mRespond(): void {
     this._response.apiType = this.apiType;
     this._response.code = this._response.code || RESPONSE_CODES.UNKNOWN_ERROR;
-
+    this._response.domain = this._response.domain || this.service.domain || RESPONSE_DOMAINS.SELF;
+    
     if (this.apiType === API_TYPES.REST && this._res) {
       this._res.status(this._response.code).json(this._response);
 
     } else if (this._socket) {
       let event = this.service.event;
-
-      if (this._response.code < 200 && this._response.code >= 300 ) {
+      if (this._response.code < 200 || this._response.code >= 300 ) {
         this._socket.emit(event, this._response);
 
       } else {
@@ -177,26 +177,26 @@ export class Context {
         if (this._response.domain === RESPONSE_DOMAINS.ROOM && this._response.room) {
           if (process && process.send)
             (<any>process).send({ data: this._response, target: 'others', action: 'response' })
-          this._socket.to(this._response.room).emit(this._response.event, this._response);
+          this._socket.to(this._response.room).emit(event, this._response);
 
         } else if (this._response.domain === RESPONSE_DOMAINS.ALL_ROOM && this._response.room) {
           if (process && process.send)
             (<any>process).send({ data: this._response, target: 'others', action: 'response' })
-          this._socket.broadcast.to(this._response.room).emit(this._response.event, this._response);
+          this._socket.broadcast.to(this._response.room).emit(event, this._response);
 
         } else if (this._response.domain === RESPONSE_DOMAINS.OTHERS) {
           if (process && process.send)
             (<any>process).send({ data: this._response, target: 'others', action: 'response' })
-          this._socket.broadcast.emit(this._response.event, this._response);
+          this._socket.broadcast.emit(event, this._response);
 
         } else if (this._response.domain === RESPONSE_DOMAINS.ALL) {
           if (process && process.send)
             (<any>process).send({ data: this._response, target: 'others', action: 'response' })
           let io: any = State[safe.get<'_io'>('State._io')];
-          io.sockets.emit(this._response.event, this._response);
+          io.sockets.emit(event, this._response);
 
         } else {
-          this._socket.emit(this._response.event, this._response);
+          this._socket.emit(event, this._response);
         }
       }
     }

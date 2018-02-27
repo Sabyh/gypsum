@@ -192,7 +192,8 @@ export class MongoModel extends Model {
   })
   insert(documents: any, writeConcern: any = {}): Promise<IResponse> {
     this.$logger.info('insert service called');
-    this.$logger.debug('documents:', documents);
+    this.$logger.debug('documents:')
+    this.$logger.debug(documents);
     this.$logger.debug('writeConcern:', writeConcern);
 
     return new Promise((resolve, reject) => {

@@ -3,6 +3,7 @@ import * as compress from 'compression';
 import * as cookieParser from 'cookie-parser';
 import * as bodyParser from 'body-parser';
 import * as methodOverride from 'method-override';
+import * as cors from 'cors';
 import { State } from '../../state';
 import { searchQuery } from '../../middlewares/search-query';
 import { Logger } from '../../misc/logger';
@@ -20,6 +21,7 @@ export function configure(app: express.Express, appName: string, logger?: Logger
   if (State.env === 'production')
     app.use(compress());
 
+  app.use(cors());
   app.use(cookieParser(State.config.cookie_key));
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json({ limit: `${State.config.upload_size_limit_mb}mb` }));

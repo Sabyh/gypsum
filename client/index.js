@@ -1,24 +1,33 @@
 ((global, factory) => {
-  if (module && module.exports) {
+  if (typeof module !== 'undefined' && typeof exports === 'object') {
     const io = require('socket.io-client');
     const axios = require('axios');
     module.exports = factory(io, axios);
-  } else if (global.document) {
+  } else if (global !== undefined) {
     global.gypsumClient = factory(global.axios, global.io);
   }
 })(this, (axios, io) => {
 
   const gypsumClient = {};
-  const configurations = {"origin":"http://localhost:7771","models":[{"app":null,"name":"Users","services":{"service":{"name":"service","event":"users deletebyid","method":"delete","path":"http://localhost:7771/apis/users/deletebyid/:id"}}},{"app":null,"name":"Authorization","services":{}},{"app":null,"name":"Permissions","services":{"service":{"name":"service","event":"permissions find","method":"get","path":"http://localhost:7771/apis/permissions"}}},{"app":null,"name":"AuthRoles","services":{"service":{"name":"service","event":"authroles deletebyid","method":"delete","path":"http://localhost:7771/apis/authroles/deletebyid/:id"}}},{"app":null,"name":"AuthGroups","services":{"service":{"name":"service","event":"authgroups deletebyid","method":"delete","path":"http://localhost:7771/apis/authgroups/deletebyid/:id"}}}]};
+  const configurations = {"origin":"http://localhost:7771","models":[{"app":"default","name":"users","services":{"count":{"name":"count","event":null,"method":"get","path":"http://localhost:7771/apis/users/count"},"find":{"name":"find","event":null,"method":"get","path":"http://localhost:7771/apis/users"},"findone":{"name":"findone","event":null,"method":"get","path":"http://localhost:7771/apis/users/findone"},"findbyid":{"name":"findbyid","event":null,"method":"get","path":"http://localhost:7771/apis/users/findbyid/:id"},"insert":{"name":"insert","event":null,"method":"post","path":"http://localhost:7771/apis/users"},"search":{"name":"search","event":null,"method":"post","path":"http://localhost:7771/apis/users/search"},"update":{"name":"update","event":null,"method":"put","path":"http://localhost:7771/apis/users"},"updateone":{"name":"updateone","event":null,"method":"put","path":"http://localhost:7771/apis/users/updateone"},"updatebyid":{"name":"updatebyid","event":null,"method":"put","path":"http://localhost:7771/apis/users/updatebyid/:id"},"delete":{"name":"delete","event":null,"method":"delete","path":"http://localhost:7771/apis/users"},"deleteone":{"name":"deleteone","event":null,"method":"delete","path":"http://localhost:7771/apis/users/deleteone"},"deletebyid":{"name":"deletebyid","event":null,"method":"delete","path":"http://localhost:7771/apis/users/deletebyid/:id"}}}]};
   const apps = {};
   const models = {};
+  const defaults = {
+    timeout: 10000,
+    withCredentials: false
+  }
   let socket;
 
   if (io) {
     socket = io(configurations.origin);
   }
 
-  gypsumClient.app = function (name) {
+  gypsumClient.config = function (options) {
+    defaults.timeout = options.timeout || 10000;
+    defaults.withCredentials = options.withCredentials !== undefined ? !!options.withCredentials : true;
+  }
+
+  gypsumClient.getApp = function (name) {
     return apps[name] || apps.default;
   }
 
@@ -213,9 +222,9 @@
       return this.on(serviceName, callback, true);
     }
 
-    then(callback, once) {
+    then(callback) {
       if (this.lastEvent)
-        return this.on(this.lastEvent, callback, once);
+        return this.on(this.lastEvent, callback, true);
 
       console.warn('cannot call then without a dispatch!');
       return this;
@@ -248,7 +257,7 @@
       return this;
     }
 
-    dispatch(serviceName, data) {
+    dispatch(serviceName, data, options) {
       if (!serviceName) {
         console.warn('service name was not defined');
         return this;
@@ -265,16 +274,20 @@
         socket.emit(this.services[serviceName].event, data);
       } else if (axios && this.services[serviceName].path) {
         let service = this.services[serviceName];
-        axios[service.method]({
+        options = options || {};
+        axios({
+          method: service.method,
           url: generateServiceUrl(service.path, data.params, data.query),
-          body: data.body,
-          headers: data.headers
+          data: data.body,
+          headers: data.headers,
+          withCredentials: options.withCredentials !== undefined ? !!options.withCredentials : defaults.withCredentials,
+          timeout: options.timeout || defaults.timeout
         })
           .then(res => {
-            respond.call(this, serviceName, res);
+            respond.call(this, serviceName, res ? res.data : res);
           })
           .catch(err => {
-            respond.call(this, serviceName, res);
+            respond.call(this, serviceName, err);
           });
       } else {
         if (this.services[serviceName].event && !socket) {

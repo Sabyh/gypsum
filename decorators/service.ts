@@ -29,8 +29,6 @@ export interface IServiceOptions {
   method?: "get" | "post" | "put" | "delete";
   apiType?: API_TYPES;
   domain?: RESPONSE_DOMAINS;
-  path?: string;
-  event?: string;
   params?: string[];
   before?: IHookOptions[];
   after?: IHookOptions[];
@@ -80,8 +78,6 @@ export function SERVICE(options?: IServiceOptions) {
     (<IServiceOptions>service).secure = options && options.secure;
     (<IServiceOptions>service).authorize = options ? options.authorize : undefined;
     (<IServiceOptions>service).apiType = options && options.apiType ? options.apiType : API_TYPES.ALL;
-    (<IServiceOptions>service).path = options && options.path ? options.path : '';
-    (<IServiceOptions>service).event = options && options.event ? options.event : key;
     (<IServiceOptions>service).method = options && options.method ? options.method : (defaultOptions[key] ? defaultOptions[key].method : 'get');
     (<IServiceOptions>service).domain = options && options.domain ? options.domain : (defaultOptions[key] ? defaultOptions[key].domain : RESPONSE_DOMAINS.SELF);
     (<IServiceOptions>service).params = options && options.params ? options.params : (defaultOptions[key] ? defaultOptions[key].params || [] : []);
