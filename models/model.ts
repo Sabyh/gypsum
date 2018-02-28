@@ -74,14 +74,15 @@ export class Model {
           authorize: service.authorize,
           apiType: this.$get('apiType') === API_TYPES.ALL ? service.apiType : this.$get('apiType'),
           name: service.name,
-          event: `${appName ? appName.toLowerCase() : ''} ${this.$get('name').toLowerCase()} ${service.event.toLowerCase()}`.trim(),
+          event: `${appName ? appName.toLowerCase() : ''} ${this.$get('name').toLowerCase()} ${service.__name.toLowerCase()}`.trim(),
           method: service.method,
           path: Model.createPath(service, this),
           params: service.params,
           domain: (!this.$get('domain') || this.$get('domain') > service.domain) ? service.domain : this.$get('domain'),
           before: [],
           after: [],
-          validate: service.validate || null
+          validate: service.validate || null,
+          cors: service.cors
         };
 
         if (this.$get('before') && this.$get('before').length)

@@ -300,12 +300,12 @@ export class FileCollection {
             if (Validall(data.documents[i], filter)) {
               result++;
               let updatedDoc = <FileCollection.Document>{};
-              objectUtil.merge(updatedDoc, data.documents[i], true, true);
+              objectUtil.extend(updatedDoc, data.documents[i]);
 
               if (Validall.Types.primitive(data.documents[i]))
                 updatedDoc = update;
               else
-                objectUtil.merge(updatedDoc, update, true, true);
+                objectUtil.extend(updatedDoc, update);
 
               if (this.schema) {
                 if (!this.schema.test(updatedDoc))

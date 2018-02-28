@@ -26,16 +26,19 @@ export function initExpress(app: express.Express) {
     res.sendFile(path.join(__dirname, '../../client/index.js'));
   });
 
-  let subDomains = State.apps.filter(app => app.subdomain).map(app => ({ name: app.name, spa: app.spa }));
+  let apps = State.apps.filter(app => app.subdomain).map(app => ({ name: app.name, spa: app.spa }));
 
-  if (subDomains.length) {
-    for (let i = 0; i < subDomains.length; i++) {
+  if (apps.length) {
+    for (let i = 0; i < State.apps.length; i++) {
+      if (!State.apps[i].subdomain)
+        continue;
+
       let subApp = express();
-      configure(subApp, subDomains[i].name);
-      pushApis(subApp, subDomains[i].name, true, subDomains[i].spa);
-      app.use(vhost(`${subDomains[i].name}.${State.config.host}`, subApp))
+      configure(subApp, State.apps[i].name);
+      pushApis(subApp, State.apps[i]);
+      app.use(vhost(`${State.apps[i].name}.${State.config.host}`, subApp))
     }
   }
 
-  pushApis(app, 'default', false, State.config.spa, logger);
+  pushApis(app);
 }

@@ -9,6 +9,7 @@ import { stringUtil } from './util/string';
 import { FRIEND, IHook } from './decorators';
 import { Safe } from './misc/safe';
 import { Logger } from './misc/logger';
+import { objectUtil } from './util';
 
 let safe = new Safe('state');
 
@@ -64,34 +65,15 @@ export class AppState {
 
   public setConfiguration(userConfig: IGypsumConfig = <IGypsumConfig>{}) {
     
-    if (userConfig.dev) {
+    objectUtil.extend(this.config, Config.dev);
 
-      if (userConfig.dev.server)
-        Object.assign(this.config, (<any>Config).dev.server, userConfig.dev.server);
-      else        
-        Object.assign(this.config, (<any>Config).dev.server);
+    if (userConfig.dev)
+      objectUtil.extend(this.config, userConfig.dev);
 
-    } else {
-      Object.assign(this.config, (<any>Config).dev.server);
-    }
+    if (this.env === 'production' && userConfig.prod)
+      objectUtil.extend(this.config, userConfig.prod);
 
-    if (this.env === 'production') {
-
-      if (userConfig.prod) {
-        if (userConfig.prod.server)
-          Object.assign(this.config, (<any>Config).prod.server, userConfig.prod.server);
-        else
-          Object.assign(this.config, (<any>Config).prod.server);
-
-        if (userConfig.prod.apps && userConfig.prod.apps.length)
-          this.apps = userConfig.prod.apps;
-
-      } else {
-        Object.assign(this.config, (<any>Config).prod.server);
-      }
-    } else if (userConfig.dev && userConfig.dev.apps && userConfig.dev.apps.length) {
-      this.apps = userConfig.dev.apps;
-    }
+    this.apps = this.config.apps || [];
 
     if (this.config.services_prefix)
       this.config.services_prefix = '/' + stringUtil.cleanPath(this.config.services_prefix);

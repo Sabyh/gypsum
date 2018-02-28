@@ -1,5 +1,6 @@
-import { RESPONSE_DOMAINS, API_TYPES, Response, ResponseError, IResponse } from '../types';
 import * as Validall from 'validall';
+import { CorsOptions } from 'cors';
+import { RESPONSE_DOMAINS, API_TYPES, Response, ResponseError, IResponse } from '../types';
 import { IHookOptions } from './hook';
 import { stringUtil, objectUtil } from '../util';
 import { Context } from '../context';
@@ -20,6 +21,7 @@ export interface IService {
   before: IHookOptions[];
   after: IHookOptions[];
   validate: { query?: Validall.ISchema, body?: Validall.ISchema, user?: Validall.ISchema }
+  cors: CorsOptions;
 }
 
 export interface IServiceOptions {
@@ -32,7 +34,8 @@ export interface IServiceOptions {
   params?: string[];
   before?: IHookOptions[];
   after?: IHookOptions[];
-  validate?: { query?: Validall.ISchema, body?: Validall.ISchema, user?: Validall.ISchema }
+  validate?: { query?: Validall.ISchema, body?: Validall.ISchema, user?: Validall.ISchema };
+  cors?: CorsOptions;
 }
 
 const defaultOptions: { [key: string]: IServiceOptions } = {

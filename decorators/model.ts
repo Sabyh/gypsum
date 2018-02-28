@@ -1,5 +1,6 @@
 import * as MongoDB from 'mongodb';
 import * as Validall from 'validall';
+import { CorsOptions } from 'cors';
 import { API_TYPES, RESPONSE_DOMAINS } from '../types';
 import { IHookOptions } from './hook';
 
@@ -18,6 +19,7 @@ export interface IModelOptions {
   schema?: Validall.Schema | Validall.ISchema;
   schemaOptions?: Validall.ISchemaOptions;
   indexes?: { name: string, options?: MongoDB.IndexOptions }[];
+  cors?: CorsOptions;
 }
 
 const defaults: IModelOptions = {

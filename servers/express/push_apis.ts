@@ -1,13 +1,17 @@
 import * as path from 'path';
 import * as express from 'express';
+import * as cors from 'cors';
 import { Model } from '../../models';
 import { API_TYPES, RESPONSE_CODES, ResponseError, Response } from '../../types';
 import { Logger } from '../../misc/logger';
 import { Context } from '../../context';
 import { State } from '../../state';
+import { objectUtil } from '../../util';
+import { IApp } from '../../config';
 
-export function pushApis(app: express.Express, appName: string = 'default', isSubDomain?: boolean, spa: string = '', logger?: Logger) {
-  logger = logger || new Logger(appName);
+export function pushApis(app: express.Express, appOptions?: IApp) {
+  let appName = appOptions ? appOptions.name : 'default';
+  const logger = new Logger(appName);
 
   logger.info('Implementing before middlwares for', appName, 'app..');
   if (State.middlewares && State.middlewares[appName] && State.middlewares[appName].before && State.middlewares[appName].before.length)
@@ -19,8 +23,12 @@ export function pushApis(app: express.Express, appName: string = 'default', isSu
   for (let i = 0; i < State.models.length; i++) {
     let model: Model = State.models[i];
     let modelAppName = model.$get('app');
+    logger.info(`Implementing ${model.$get('name')} model services`);
 
-    if (isSubDomain) {
+    if (model.$get('apiType') === API_TYPES.SOCKET)
+      continue;
+
+    if (appOptions) {
       if (modelAppName !== appName)
         continue;
     } else if (modelAppName !== appName) {
@@ -28,8 +36,16 @@ export function pushApis(app: express.Express, appName: string = 'default', isSu
         continue;
     }
 
-    if (model.$get('apiType') === API_TYPES.SOCKET)
-      continue;
+    let corsOptions: cors.CorsOptions = {};
+
+    if (appName === 'default')
+      objectUtil.extend(corsOptions, State.config.cors);
+    else
+      objectUtil.extend(corsOptions, appOptions!.cors || {});
+
+    let modelCors = model.$get('cors');
+    if (modelCors)
+      objectUtil.extend(corsOptions, modelCors);
 
     let services = model.$getServices();
 
@@ -37,8 +53,12 @@ export function pushApis(app: express.Express, appName: string = 'default', isSu
       if (services[service].apiType === API_TYPES.SOCKET)
         continue;
 
+      let serviceCors = services[service].cors;
+      if (serviceCors)
+        objectUtil.extend(corsOptions, serviceCors);
+
       logger.info(`adding service for ${appName} app: (${services[service].method}) - ${services[service].path}`);
-      router[services[service].method](services[service].path, Context.Rest(model, services[service]));
+      router[services[service].method](services[service].path, cors(corsOptions), Context.Rest(model, services[service]));
     }
   }
 
@@ -64,8 +84,10 @@ export function pushApis(app: express.Express, appName: string = 'default', isSu
     }
   });
 
+  let spa = appOptions ? appOptions.spa : State.config.spa;
+
   if (spa && spa.trim())
     app.get('*', (req, res) => {
-      res.sendFile(path.join(State.root, spa));
+      res.sendFile(path.join(State.root, <string>spa));
     });
 }

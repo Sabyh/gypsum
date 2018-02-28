@@ -30,35 +30,23 @@ export const objectUtil = {
     return count;
   },
 
-  merge(dest: IObject, src: IObject, overwrite: boolean, deep: boolean): IObject {
+  extend(dest: any, src: any, overwrite: boolean = true) {
+    var prop;
     dest = dest || {};
-
-    if (!Array.isArray(src)) src = [src];
-
-    for (var i = 0; i < src.length; i++) {
-
-      if (!this.isObject(src[i]))
-        continue;
-
-      for (let prop in src[i]) {
-
-        if (src[i].hasOwnProperty(prop)) {
-
-          if (dest.hasOwnProperty(prop)) {
-
-            if (deep && this.isObject(dest[prop])) {
-              this.merge(dest[prop], src[i][prop], overwrite, true);
-            } else if (overwrite) {
-              dest[prop] = src[i][prop];
-            }
-
-          } else {
-            dest[prop] = src[i][prop];
+    for (prop in src) {
+      if (src.hasOwnProperty(prop)) {
+        if (dest.hasOwnProperty(prop)) {
+          if (Object.prototype.toString.call(dest[prop]) === "[object Object]") {
+            this.extend(dest[prop], src[prop], overwrite, true);
+          } else if (overwrite) {
+            dest[prop] = src[prop];
           }
+        } else {
+          dest[prop] = src[prop];
         }
       }
     }
-
+  
     return dest;
   },
 
