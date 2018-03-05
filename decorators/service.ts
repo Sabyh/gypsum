@@ -24,17 +24,24 @@ export interface IService {
   cors: CorsOptions;
 }
 
+export interface IValidateOptions {
+  query?: Validall.ISchema;
+  body?: Validall.ISchema;
+  user?: Validall.ISchema;
+  params?: Validall.ISchema;
+}
+
 export interface IServiceOptions {
   args?: string[];
-  secure?: boolean;
-  authorize?: boolean | string[];
-  method?: "get" | "post" | "put" | "delete";
+  secure?: any;
+  authorize?: any;
+  method?: "get" | "post" | "put" | "delete" | "patch";
   apiType?: API_TYPES;
   domain?: RESPONSE_DOMAINS;
   params?: string[];
   before?: IHookOptions[];
   after?: IHookOptions[];
-  validate?: { query?: Validall.ISchema, body?: Validall.ISchema, user?: Validall.ISchema };
+  validate?: IValidateOptions | { $or: IValidateOptions[] } | { $and: IValidateOptions[] } | { $nor: IValidateOptions[] } | { $xor: IValidateOptions[] };
   cors?: CorsOptions;
 }
 

@@ -7,8 +7,8 @@ import { IHookOptions } from './hook';
 export interface IModelOptions {
   name?: string;
   app?: string;
-  secure?: boolean;
-  authorize?: boolean;
+  secure?: any;
+  authorize?: any;
   accessable?: boolean | string[];
   internal?: boolean;
   eliminate?: string[];

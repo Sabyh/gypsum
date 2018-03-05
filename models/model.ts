@@ -142,7 +142,7 @@ export class Model {
 
   $get(prop: getOptions) {
     if (prop === 'name')
-      return (<any>this)['__name'] || this.constructor.name;
+      return (<any>this)['__name'] ? (<any>this)['__name'].toLowerCase() : this.constructor.name.toLowerCase();
     else
       return (<any>this)[`__${prop}`] === undefined ? null : (<any>this)[`__${prop}`];
   }

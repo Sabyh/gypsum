@@ -43,7 +43,7 @@ export class AppState {
   }
 
   getModel(name: string): Model | MongoModel | FileModel | undefined {
-    return this.models.find(model => model.$get('name') === name) || undefined;
+    return this.models.find(model => model.$get('name') === name.toLowerCase()) || undefined;
   }
 
   getHook(name: string): IHook | undefined {
