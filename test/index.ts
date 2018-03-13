@@ -17,7 +17,11 @@ import { API_TYPES } from '../types';
 class Users extends MongoModel {}
 
 
-Gypsum.configure();
+Gypsum.configure({
+  dev: {
+    logger_options: { all: { level: ['all'], log: ['all'] } }
+  }
+});
 
 // AuthPlugin({
 //   usersModelConstructor: Users,

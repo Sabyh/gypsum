@@ -5,7 +5,8 @@ import { ILoggerOptions } from './misc/logger';
 
 export interface IApp {
   name: string;
-  database?: string;
+  mongodb_url?: string;
+  database_name?: string;
   subdomain?: boolean;
   secure?: boolean;
   cors?: CorsOptions;
@@ -26,6 +27,7 @@ export interface IServerConfigOptions {
   cookie_key: string;
   upload_size_limit_mb: number;
   logger_options: ILoggerOptions | null;
+  logger_out_dir: string;
   mongodb_url: string;
   database_name: string;
   spa: string;
@@ -50,8 +52,8 @@ export interface IGypsumConfig {
 }
 
 export interface IGypsumConfigurations {
-  dev?: IConfig,
-  prod?: IConfig
+  dev?: IServerConfig,
+  prod?: IServerConfig
 }
 
 export const Config: IGypsumConfig = {
@@ -67,7 +69,8 @@ export const Config: IGypsumConfig = {
     processes: 1,
     cookie_key: 'kdu8v9qwem8hqe',
     upload_size_limit_mb: 10,
-    logger_options: { all: 'debug' },
+    logger_options: { all: { level: ['debug'] } },
+    logger_out_dir: 'logs',
     mongodb_url: 'mongodb://localhost:27017',
     database_name: 'gypsum_dev_db',
     spa: '',
@@ -85,7 +88,7 @@ export const Config: IGypsumConfig = {
     secure: true,
     origin: "https://localhost",
     processes: 'max',
-    logger_options: { all: "error" },
+    logger_options: { all: { level: ['warn'], log: ['error', 'warn'] } },
     database_name: 'gypsum_db'
   }
 }

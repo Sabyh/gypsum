@@ -7,3 +7,5 @@ npm-debug.log
 *.d.ts
 !/client/index.js
 !/client/template.js
+/logs
+/server_logs

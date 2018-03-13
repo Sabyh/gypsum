@@ -8,7 +8,7 @@ const safe = new Safe('main');
 /**
  * import default config and Server state
  */
-import { IServerConfigOptions, IGypsumConfigurations, IGypsumConfig } from './config';
+import { IServerConfigOptions, IGypsumConfig, IServerConfig, IGypsumConfigurations } from './config';
 import { State, IMiddlewares } from './state';
 
 /**
@@ -79,6 +79,9 @@ function useModels(models: typeof Model[]) {
 export { IGypsumConfigurations };
 
 export interface IGypsumUseOptions {
+  handShake?: (socket: any, next: Function) => void;
+  onConnect?: (socket: any) => void;
+  onDisconnect?: (socket: any) => void;
   models?: any[];
   middlewares?: IMiddlewares;
   hooks?: ((ctx: Context, ...args: any[]) => void)[];
@@ -134,7 +137,7 @@ export const Gypsum: IGypsum = {
     /**
      * Setting up Logger options
      */
-    Logger.SetOptions(State.config.logger_options);
+    Logger.SetOptions(State.config.logger_options, State.config.logger_out_dir);
     logger = new Logger('gypsum');
 
     return this;
@@ -146,14 +149,25 @@ export const Gypsum: IGypsum = {
       logger.info('using hooks..');
       useHooks(options.hooks);
     }
+
     if (options.middlewares) {
       logger.info('using middlwares..');
       useMiddlewares(options.middlewares);
     }
+
     if (options.models) {
       logger.info('using models..');
       useModels(options.models);
     }
+
+    if (options.handShake)
+      State.handShake = options.handShake;
+
+    if (options.onConnect)
+      State.onConnect = options.onConnect;
+
+    if (options.onDisconnect)
+      State.onDisconnect = options.onDisconnect;
 
     return this;
   },

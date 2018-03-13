@@ -11,29 +11,88 @@ export function initMongo(): Promise<boolean> {
 
   return new Promise((resolve, reject) => {
     let apps = State.apps;
-    let connectionURL = State.config.mongodb_url;
+    let connections: any = [{ apps: [{ name: 'default', database_name: State.config.database_name }], url: State.config.mongodb_url }];
+    let usedUrls: any[] = [State.config.mongodb_url];
 
-    MongoClient.connect(connectionURL, (err, client) => {
+    if (apps.length > 0) {
+      for (let i = 0; i < apps.length; i++) {
+        if (!apps[i].mongodb_url) {
+          connections[0].apps.push({
+            name: apps[0].name,
+            database_name: apps[0].database_name || State.config.database_name
+          });
+
+        } else {
+          let urlIndex = usedUrls.indexOf(apps[i].mongodb_url);
+
+          if (urlIndex === -1) {
+            usedUrls.push(apps[i].mongodb_url);
+            connections.push({
+              apps: [{
+                name: apps[0].name,
+                database_name: apps[0].database_name || State.config.database_name
+              }],
+              url: apps[i].mongodb_url
+            });
+
+          } else {
+            connections[urlIndex].apps.push({
+              name: apps[0].name,
+              database_name: apps[0].database_name || State.config.database_name
+            });
+          }
+        }
+      }
+    }
+
+    let connectionsDone = 0;
+    let connectionsFailed = 0;
+
+    for (let i = 0; i < connections.length; i++)
+      Connect(connections[i], logger)
+        .then(state => {          
+          connectionsDone++;
+
+          if (connectionsDone + connectionsFailed === connections.length)
+            resolve(true);
+        })
+        .catch(err => {
+          connectionsFailed++;
+          if (connectionsDone + connectionsFailed === connections.length)
+            resolve(true);
+        });
+  });
+
+}
+
+function Connect(connection: any, logger: Logger) {
+
+  return new Promise((resolve, reject) => {
+
+    MongoClient.connect(connection.mongodb_url, (err, client) => {
+
       if (err) {
         logger.error('mongodb connection error:', err);
         return reject(err);
       }
 
       logger.info('mongodb connected successfully.');
+      for (let i = 0; i < connection.apps.length; i++) {
+        let currentApp = connection.apps[i];
+        let db: Db = client.db(currentApp[i].database_name);
 
-      let db: Db = client.db(State.config.database_name);
+        for (let prop in State.models) {
+          let model = State.models[prop];
 
-      for (let model in State.models)
-        if (State.models[model].type === 'Mongo')
-          (<MongoModel>State.models[model])[<'setCollection'>safe.get('MongoModel.setCollection')](db.collection(State.models[model].$get('name')));
+          if (model.type === 'Mongo')
+            continue;
 
-      if (apps.length > 0) {
-        for (let i = 0; i < apps.length; i++) {
-          let db: Db = client.db(apps[i].database || apps[i].name);
+          let modelAppName = model.$get('app') || 'default';
 
-          for (let model in State.models)
-            if (State.models[model].type === 'Mongo' && State.models[model].$get('app') === apps[i].name)
-              (<MongoModel>State.models[model])[<'setCollection'>safe.get('MongoModel.setCollection')](db.collection(State.models[model].$get('name')));
+          if (currentApp.name !== modelAppName)
+            continue;
+
+            (<MongoModel>model)[<'setCollection'>safe.get('MongoModel.setCollection')](db.collection(model.$get('name')));
         }
       }
 
@@ -44,7 +103,6 @@ export function initMongo(): Promise<boolean> {
       resolve(true);
     });
   });
-
 }
 
 function cleanup(client: MongoClient) {

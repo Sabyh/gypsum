@@ -37,6 +37,9 @@ export class AppState {
   Models: typeof Model[] = [];
   middlewares: IMiddlewares = {};
   hooks: IHook[] = [];
+  handShake: (socket: any, next: Function) => void;
+  onConnect: (socket: any) => void;
+  onDisconnect: (socket: any) => void;
 
   getModelConstructor(name: string): typeof Model | typeof MongoModel | typeof FileModel | undefined {
     return this.Models.find(Model => Model.name === name) || undefined;

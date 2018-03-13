@@ -1,31 +1,52 @@
+import * as path from 'path';
+import * as fs from 'fs';
 import * as chalk from 'chalk';
 
-export type LoggerLevels = "error" | "warn" | "info" | "debug";
-export interface ILoggerOptions { [key: string]: LoggerLevels; };
+export type LoggerLevels = "error" | "warn" | "info" | "debug" | "all";
+export interface ILoggerOptions {
+  [key: string]: { level: LoggerLevels[]; log?: LoggerLevels[] }
+}
 
 let options: ILoggerOptions | null | undefined = null;
+let outDir: string;
 
 export class Logger {
   private _ns: string;
-  private _level: LoggerLevels;
-  private _canLog: boolean = false;
+  private _logFile: string;
+  private _levels: LoggerLevels[];
+  private _logOptions: LoggerLevels[] | undefined;
+  private _active: boolean = false;
 
   constructor(ns: string) {
     this._ns = ns;
 
     if (options) {
-      this._level = options[this._ns] || options.all || 'warn';
 
-      if (options.hasOwnProperty('all') || options.hasOwnProperty(this._ns))
-        this._canLog = true;
-      else
-        this._canLog = false;
+      if (options.hasOwnProperty('all') || options.hasOwnProperty(this._ns)) {
+        this._levels = options[this._ns] ? options[this._ns].level : options.all.level;
+        this._active = true;
+
+        if (outDir) {
+          this._logOptions = options[this._ns] ? options[this._ns].log : options.all.log;
+          this._logFile = this._logOptions && this._logOptions.length ? path.join(outDir, this._ns) : '';
+
+
+          if (this._logFile)
+            if (!fs.existsSync(outDir))
+              fs.mkdirSync(outDir);
+        }
+        
+      } else {
+        this._active = false;
+      }
+
     } else {
-      this._canLog = false;
+      this._active = false;
     }
   }
 
-  static SetOptions(opt?: ILoggerOptions | null): void {
+  static SetOptions(opt?: ILoggerOptions | null, logOutPath: string = 'server_logs'): void {
+    outDir = path.join(process.cwd(), logOutPath);
     options = opt || null;
   }
 
@@ -46,22 +67,50 @@ export class Logger {
   }
 
   error(...args: any[]): void {
-    if (this._canLog)
+    if (this._active && (this._levels.indexOf('error') > -1 || this._levels.indexOf('all') > -1)) {
       console.trace(chalk.default.red.bold(`[error] ->`, ...args));
+
+      if (this._logOptions && (this._logOptions.indexOf('error') > -1 || this._logOptions.indexOf('all') > -1))
+        this._log('error', ...args);
+    }
   }
 
   warn(...args: any[]): void {
-    if (this._canLog && this._level !== 'error')
+    if (this._active && (this._levels.indexOf('warn') > -1 || this._levels.indexOf('all') > -1)) {
       console.log(chalk.default.yellow(`${this._ns}: [warn] ->`, ...args));
+
+      if (this._logOptions && (this._logOptions.indexOf('warn') > -1 || this._logOptions.indexOf('all') > -1))
+        this._log('warn', ...args);
+    }
   }
 
   info(...args: any[]): void {
-    if (this._canLog && (this._level === 'info' || this._level === 'debug'))
+    if (this._active && (this._levels.indexOf('info') > -1 || this._levels.indexOf('all') > -1)) {
       console.log(chalk.default.blue(`${this._ns}: [info] ->`, ...args));
+
+      if (this._logOptions && (this._logOptions.indexOf('info') > -1 || this._logOptions.indexOf('all') > -1))
+        this._log('info', ...args);
+    }
   }
 
   debug(...args: any[]): void {
-    if (this._canLog && this._level === 'debug')
+    if (this._active && (this._levels.indexOf('debug') > -1 || this._levels.indexOf('all') > -1)) {
       console.log(chalk.default.gray(`${this._ns}: [debug] ->`, ...args));
+
+      if (this._logOptions && (this._logOptions.indexOf('debug') > -1 || this._logOptions.indexOf('all') > -1))
+        this._log('debug', ...args);
+    }
+  }
+
+  private _log(level: string = 'error', ...args: any[]) {
+    args.unshift(new Date());
+    args.push('\n');
+    let result = args.join(", ");
+    fs.appendFile(this._logFile + '_' + level, result, err => {
+      if (err) {
+        console.log('error logging in:', this._ns);
+        console.log(err);
+      }
+    });
   }
 }

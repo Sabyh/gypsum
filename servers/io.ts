@@ -12,8 +12,18 @@ export function initSocket(io: any) {
 
   State[<'_io'>safe.get('State._io')] = io;
 
+  io.use((socket: any, next: Function) => {
+    if (State.handShake)
+      State.handShake(socket, next);
+    else
+      next();
+  });
+
   io.on('connection', (socket: any) => {
     const logger = new Logger('ioServer');
+
+    if (State.onConnect)
+      State.onConnect(socket);
 
     State.pushSocket(socket);
 
@@ -41,6 +51,9 @@ export function initSocket(io: any) {
     }
 
     socket.on('disconnect', () => {
+      if (State.onDisconnect)
+        State.onDisconnect(socket);
+
       Context.deleteContextsOf('socket', socket.id);
       State.deleteSocket(socket.id);
       io.emit('user disconnected');
