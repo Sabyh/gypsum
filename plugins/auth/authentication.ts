@@ -8,9 +8,10 @@ import { State } from '../../state';
 import { Model, MongoModel } from '../../models';
 import { Context } from '../../context';
 import { RESPONSE_CODES, API_TYPES, IResponse } from '../../types';
-import { SERVICE, MODEL, HOOK } from '../../decorators';
+import { SERVICE, MODEL, HOOK, IModelOptions } from '../../decorators';
 import { toRegExp, verify, hash, stringUtil } from '../../util';
 import { IAuthenticationConfig, IEmailTransporter, IAuthenticationConfigOptions } from './config';
+export type getOptions = keyof IModelOptions | 'name';
 
 export function initAuthentication(authConfig: IAuthenticationConfigOptions, transporterOptions?: IEmailTransporter) {
 
@@ -20,7 +21,6 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
   State.config.authenticationModelName = modelName;
 
   @MODEL({
-    name: modelName,
     accessable: false
   })
   class Authentication extends UserConstructor {
@@ -49,6 +49,13 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
           });
         });
       }
+    }
+
+    $get(prop: getOptions) {
+      if (prop === 'name')
+        return UserConstructor.name;
+
+      return super.$get(prop);
     }
 
     getRootUser(): Promise<any> {
@@ -97,7 +104,6 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
         responseData[authConfig.tokenFieldName] = jwt.sign({ id: responseData._id }, authConfig.tokenSecret);
         resolve();
       });
-
     }
 
     @HOOK()

@@ -40,5 +40,8 @@ export function initExpress(app: express.Express) {
     }
   }
 
-  pushApis(app);
+  let defaultApp = State.apps.find(_app => _app.name === 'default');
+  
+  if (defaultApp)
+    pushApis(app, defaultApp);
 }

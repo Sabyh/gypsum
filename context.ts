@@ -283,6 +283,16 @@ export class Context {
     return false;
   }
 
+  leaveRoom(room: string): boolean {
+    if (this.apiType === API_TYPES.SOCKET && this._socket)
+      if (room) {
+        this._socket.leave(room);
+        return true;
+      }
+
+    return false;
+  }
+ 
   next(err?: IResponseError): void {
     if (err) {
       console.trace(err);

@@ -5,7 +5,8 @@ import { ILoggerOptions } from './misc/logger';
 
 export interface IApp {
   name: string;
-  database?: string;
+  mongodb_url?: string;
+  database_name?: string;
   subdomain?: boolean;
   secure?: boolean;
   cors?: CorsOptions;
@@ -15,23 +16,24 @@ export interface IApp {
 // Server Configurations Interface
 export interface IServerConfigOptions {
   server_name: string;
-  secure: boolean;
   origin: string;
   port: number;
   host: string;
+  secure: boolean;
+  mongodb_url: string;
+  database_name: string;
+  cors?: CorsOptions;
   services_prefix: string;
   statics: string[];
+  spa: string;
   files_data_dir: string;
   processes: number | 'max';
   cookie_key: string;
   upload_size_limit_mb: number;
   logger_options: ILoggerOptions | null;
-  mongodb_url: string;
-  database_name: string;
-  spa: string;
+  logger_out_dir: string;
   authenticationModelName: string;
   authorizationModelName: string;
-  cors: CorsOptions;
   apps: IApp[];
 }
 
@@ -50,27 +52,28 @@ export interface IGypsumConfig {
 }
 
 export interface IGypsumConfigurations {
-  dev?: IConfig,
-  prod?: IConfig
+  dev?: IServerConfig,
+  prod?: IServerConfig
 }
 
 export const Config: IGypsumConfig = {
   dev: {
     server_name: 'gypsum',
-    secure: false,
     origin: "http://localhost:7771",
     port: 7771,
     host: "localhost",
+    secure: false,
+    mongodb_url: "mongodb://localhost:27017",
+    database_name: 'gypsum_dev_db',
     services_prefix: "apis",
     statics: ['static'],
+    spa: 'public',
     files_data_dir: ".data",
     processes: 1,
     cookie_key: 'kdu8v9qwem8hqe',
     upload_size_limit_mb: 10,
-    logger_options: { all: 'debug' },
-    mongodb_url: 'mongodb://localhost:27017',
-    database_name: 'gypsum_dev_db',
-    spa: '',
+    logger_options: { all: { level: ['debug'] } },
+    logger_out_dir: 'logs',
     authenticationModelName: '',
     authorizationModelName: '',
     cors: {
@@ -78,14 +81,24 @@ export const Config: IGypsumConfig = {
       methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
       preflightContinue: false,
       optionsSuccessStatus: 204
-    }
+    },
+    apps: [{
+      name: 'default',
+      subdomain: false
+    }]
   },
 
   prod: {
-    secure: true,
     origin: "https://localhost",
+    mongodb_url: "mongodb://localhost:27017",
+    database_name: 'gypsum_db',
+    secure: true,
     processes: 'max',
-    logger_options: { all: "error" },
-    database_name: 'gypsum_db'
+    logger_options: { all: { level: ['warn'] } },
+    apps: [{
+      name: 'default',
+      subdomain: false,
+      spa: 'public'
+    }]
   }
 }

@@ -16,10 +16,12 @@
     timeout: 10000,
     withCredentials: false
   }
+
   let socket;
 
-  if (io) {
-    socket = io(configurations.origin);
+  gypsumClient.connect = function (query) {
+    if (io)
+      socket = io(configurations.origin, { query: query });
   }
 
   gypsumClient.config = function (options) {

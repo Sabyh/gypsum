@@ -158,21 +158,25 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions) {
     @SERVICE()
     find(): Promise<IResponse> {
       return new Promise((resolve, reject) => {
-
-        let models = State.models;
+        
         let result: any = [];
 
-        for (let i = 0; i < models.length; i++) {
-          let modelName = models[i].$get('name');
-          let record: { model: string; services: string[] } = { model: modelName, services: [] };
+        for (let j = 0; j < State.apps.length; j++) {
+          if (State.apps[j].models && State.apps[j].models!.length) {
 
-          let services = models[i].$getServices();
+            for (let i = 0; i < State.apps[i].models!.length; i++) {
+              let model = State.apps[i].models![i];
+              let modelName = model.$get('name');
+              let record: { model: string; services: string[] } = { model: modelName, services: [] };
+              let services = model.$getServices();
 
-          if (Object.keys(services).length)
-            for (let prop in services)
-              record.services.push(prop);
-
-          result.push(record);
+              if (Object.keys(services).length)
+                for (let prop in services)
+                  record.services.push(prop);
+    
+              result.push(record);
+            }
+          }
         }
 
         resolve({ data: result });

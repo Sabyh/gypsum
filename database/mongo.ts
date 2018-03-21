@@ -10,30 +10,84 @@ export function initMongo(): Promise<boolean> {
   const logger = new Logger('initMongo');
 
   return new Promise((resolve, reject) => {
-    let apps = State.apps;
-    let connectionURL = State.config.mongodb_url;
+    let connections: any = [];
+    let usedUrls: any[] = [];
 
-    MongoClient.connect(connectionURL, (err, client) => {
+    for (let i = 0; i < State.apps.length; i++) {
+      let app = State.apps[i];
+
+      app.mongodb_url = app.mongodb_url || State.config.mongodb_url;
+      app.database_name = app.database_name || State.config.database_name;
+      app.secure = app.secure === undefined ? app.subdomain ? false : State.config.secure : !!app.secure;
+
+      let urlIndex = usedUrls.indexOf(app.mongodb_url);
+
+      if (urlIndex === -1) {
+        usedUrls.push(app.mongodb_url);
+        connections.push({
+          apps: [{
+            name: app.name,
+            database_name: app.database_name,
+            models: app.models
+          }],
+          url: app.mongodb_url
+        });
+
+      } else {
+        connections[urlIndex].apps.push({
+          name: app.name,
+          database_name: app.database_name,
+          models: app.models
+        });
+      }
+    }
+
+    let connectionsDone = 0;
+    let connectionsFailed = 0;
+
+    for (let i = 0; i < connections.length; i++)
+      Connect(connections[i], logger)
+        .then(state => {
+          connectionsDone++;
+
+          if (connectionsDone + connectionsFailed === connections.length)
+            resolve(true);
+        })
+        .catch(err => {
+          connectionsFailed++;
+          if (connectionsDone + connectionsFailed === connections.length)
+            resolve(true);
+        });
+  });
+
+}
+
+function Connect(connection: any, logger: Logger) {
+
+  return new Promise((resolve, reject) => {
+
+    MongoClient.connect(connection.mongodb_url, (err, client) => {
+
       if (err) {
         logger.error('mongodb connection error:', err);
         return reject(err);
       }
 
       logger.info('mongodb connected successfully.');
+      for (let j = 0; j < connection.apps.length; j++) {
+        let currentApp = connection.apps[j];
+        let db: Db = client.db(currentApp.database_name);
 
-      let db: Db = client.db(State.config.database_name);
+        if (currentApp.models && currentApp.models.length) {
 
-      for (let model in State.models)
-        if (State.models[model].type === 'Mongo')
-          (<MongoModel>State.models[model])[<'setCollection'>safe.get('MongoModel.setCollection')](db.collection(State.models[model].$get('name')));
-
-      if (apps.length > 0) {
-        for (let i = 0; i < apps.length; i++) {
-          let db: Db = client.db(apps[i].database || apps[i].name);
-
-          for (let model in State.models)
-            if (State.models[model].type === 'Mongo' && State.models[model].$get('app') === apps[i].name)
-              (<MongoModel>State.models[model])[<'setCollection'>safe.get('MongoModel.setCollection')](db.collection(State.models[model].$get('name')));
+          for (let i = 0; i < currentApp.models.length; i++) {
+            let model = currentApp.models[i];
+  
+            if (model.type === 'Mongo')
+              continue;
+  
+            (<MongoModel>model)[<'setCollection'>safe.get('MongoModel.setCollection')](db.collection(model.$get('name')));
+          }
         }
       }
 
@@ -44,7 +98,6 @@ export function initMongo(): Promise<boolean> {
       resolve(true);
     });
   });
-
 }
 
 function cleanup(client: MongoClient) {

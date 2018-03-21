@@ -17,6 +17,10 @@ export interface IMiddleware {
   (app: express.Express): void;
 }
 
+export interface IApplication extends IApp {
+  models?: Model[]
+}
+
 export interface IMiddlewares {
   [key: string]: { before: IMiddleware[], after: IMiddleware[] }
 }
@@ -32,18 +36,45 @@ export class AppState {
   readonly env: string = process.env.NODE_ENV || 'developemt';
 
   config = <IServerConfigOptions>{};
-  apps = <IApp[]>[];
-  models: Model[] = [];
+  apps = <IApplication[]>[];
   Models: typeof Model[] = [];
   middlewares: IMiddlewares = {};
   hooks: IHook[] = [];
+  handShake: (socket: any, next: Function) => void;
+  onConnect: (socket: any) => void;
+  onDisconnect: (socket: any) => void;
 
   getModelConstructor(name: string): typeof Model | typeof MongoModel | typeof FileModel | undefined {
     return this.Models.find(Model => Model.name === name) || undefined;
   }
 
-  getModel(name: string): Model | MongoModel | FileModel | undefined {
-    return this.models.find(model => model.$get('name') === name.toLowerCase()) || undefined;
+  getModel(name: string, appName: string = 'default'): Model | MongoModel | FileModel | undefined {
+    let app = this.apps.find(_app => _app.name === appName);
+
+    if (app && app.models)
+      return app.models.find(model => model.$get('name') === name.toLowerCase()) || undefined;
+
+    return undefined;
+  }
+
+  pushModel(model: Model) {
+    let appName = model.$get('app');
+    let app = this.apps.find(_app => _app.name === appName);
+
+    if (app) {
+      if (app.models)
+        app.models.push(model);
+      else
+        app.models = [model];
+    } else {
+      app = this.apps.find(_app => _app.name === 'default');
+
+      if (app)
+        if (app.models)
+          app.models.push(model);
+        else
+          app.models = [model];
+    }
   }
 
   getHook(name: string): IHook | undefined {
@@ -64,7 +95,7 @@ export class AppState {
   }
 
   public setConfiguration(userConfig: IGypsumConfig = <IGypsumConfig>{}) {
-    
+
     objectUtil.extend(this.config, Config.dev);
 
     if (userConfig.dev)

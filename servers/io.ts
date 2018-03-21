@@ -12,35 +12,50 @@ export function initSocket(io: any) {
 
   State[<'_io'>safe.get('State._io')] = io;
 
+  io.use((socket: any, next: Function) => {
+    if (State.handShake)
+      State.handShake(socket, next);
+    else
+      next();
+  });
+
   io.on('connection', (socket: any) => {
     const logger = new Logger('ioServer');
+
+    if (State.onConnect)
+      State.onConnect(socket);
 
     State.pushSocket(socket);
 
     logger.info(`socket connected: { socketId: ${socket.id}, pid: ${process.pid} }`);
 
     logger.info('Implementing socket web services');
-    if (State.models && State.models.length) {
-      let models = State.models;
+    for (let j = 0; j < State.apps.length; j++) {
 
-      for (let i = 0; i < models.length; i++) {
-        let model: Model = models[i];
-
-        if (model.$get('apiType') === API_TYPES.REST)
-          continue;
-
-        let services = model.$getServices();
-
-        for (let service in services) {
-          if (services[service].apiType === API_TYPES.REST)
+      if (State.apps[j].models && State.apps[j].models!.length) {
+  
+        for (let i = 0; i < State.apps[j].models!.length; i++) {
+          let model: Model = State.apps[j].models![i];
+  
+          if (model.$get('apiType') === API_TYPES.REST)
             continue;
-
-          socket.on(services[service].event, Context.Socket(socket, model, services[service]));
+  
+          let services = model.$getServices();
+  
+          for (let service in services) {
+            if (services[service].apiType === API_TYPES.REST)
+              continue;
+  
+            socket.on(services[service].event, Context.Socket(socket, model, services[service]));
+          }
         }
       }
     }
 
     socket.on('disconnect', () => {
+      if (State.onDisconnect)
+        State.onDisconnect(socket);
+
       Context.deleteContextsOf('socket', socket.id);
       State.deleteSocket(socket.id);
       io.emit('user disconnected');

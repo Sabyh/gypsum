@@ -8,3 +8,5 @@ npm-debug.log
 !/client/index.js
 !/client/template.js
 /logs/*
+/logs
+/server_logs
