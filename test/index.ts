@@ -19,7 +19,7 @@ class Users extends MongoModel {}
 
 Gypsum.configure({
   dev: {
-    logger_options: { all: { level: ['all'], log: ['all'] } }
+    logger_options: { all: { level: ['all'] } }
   }
 });
 

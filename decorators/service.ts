@@ -35,7 +35,7 @@ export interface IServiceOptions {
   args?: string[];
   secure?: any;
   authorize?: any;
-  method?: "get" | "post" | "put" | "delete" | "patch";
+  method?: "get" | "post" | "put" | "delete" | "patch" | "options" | "head";
   apiType?: API_TYPES;
   domain?: RESPONSE_DOMAINS;
   params?: string[];

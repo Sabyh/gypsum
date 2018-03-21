@@ -7,7 +7,7 @@ import { State } from '../state';
 const safe = new Safe('model');
 
 export type ServiceOptions = { [key: string]: IService | boolean };
-export type getOptions = keyof IModelOptions;
+export type getOptions = keyof IModelOptions | 'name';
 
 const skippedServicesNames = ['find', 'findById', 'insert', 'update', 'updateById', 'delete', 'deleteById'];
 
@@ -26,7 +26,7 @@ export class Model {
 
       let modelApp = model.$get('app');
 
-      if (modelApp) {
+      if (modelApp && modelApp !== 'default') {
         let appConf = State.apps.find(app => app.name === modelApp);
         if (!appConf || !appConf.subdomain)
           path = modelApp.toLowerCase() + '/' + path;
@@ -142,7 +142,9 @@ export class Model {
 
   $get(prop: getOptions) {
     if (prop === 'name')
-      return (<any>this)['__name'] ? (<any>this)['__name'].toLowerCase() : this.constructor.name.toLowerCase();
+      return this.constructor.name.toLowerCase();
+    else if (prop === 'app')
+      return (<any>this)[`__${prop}`] || 'default';
     else
       return (<any>this)[`__${prop}`] === undefined ? null : (<any>this)[`__${prop}`];
   }

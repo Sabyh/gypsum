@@ -185,7 +185,7 @@ export const Gypsum: IGypsum = {
     for (let i = 0; i < State.Models.length; i++) {
       let model = new State.Models[i]();
       model[<'init'>safe.get('model.init')]();
-      State.models.push(model);
+      State.pushModel(model);
     }
 
     logger.info('generating gypsum-client.js');

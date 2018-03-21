@@ -12,46 +12,49 @@ export function generateClientGypsum() {
   };
 
   let apps = State.apps;
-  let subDomains = apps.filter(app => app.subdomain).map(app => app.name);
 
-  for (let i = 0; i < State.models.length; i++) {
-    let model = State.models[i];
-    let modelApp = model.$get('app') || 'default';
-    let isSubdomain = subDomains.indexOf(modelApp) > -1;
-    let isSecure = State.apps.filter(app => (app.name === modelApp && app.secure)).length;
-    let modelServices = model.$getServices();
-    let services: any = {};
+  for (let j = 0; j < State.apps.length; j++) {
+    let app = State.apps[j];
 
-    for (let prop in modelServices) {
-      let service = modelServices[prop];
-      let path = null;
-      let event = null;
-      
-      if (service.apiType !== API_TYPES.SOCKET) {
-        path = 'http' + (isSecure ? 's' : '') + '://';
-        path += (isSubdomain ? (modelApp.toLowerCase() + '.') : '') + State.config.host;
-        path += (State.env !== 'production') ? ':' + State.config.port : '';
-        path += '/' + (State.config.services_prefix ? State.config.services_prefix : '');
-        path += service.path;      
-        path = stringUtil.cleanPath(path);
+    if (app.models && app.models.length) {
+
+      for (let i = 0; i < app.models.length; i++) {
+        let model = app.models[i];
+        let modelServices = model.$getServices();
+        let services: any = {};
+
+        for (let prop in modelServices) {
+          let service = modelServices[prop];
+          let path = null;
+          let event = null;
+          
+          if (service.apiType !== API_TYPES.SOCKET) {
+            path = 'http' + (app.secure ? 's' : '') + '://';
+            path += (app.subdomain ? (app.name.toLowerCase() + '.') : '') + State.config.host;
+            path += (State.env !== 'production') ? ':' + State.config.port : '';
+            path += '/' + (State.config.services_prefix ? State.config.services_prefix : '');
+            path += service.path;      
+            path = stringUtil.cleanPath(path);
+          }
+    
+          if (service.apiType !== API_TYPES.REST)
+            event = service.event;
+    
+          services[service.__name.toLowerCase()] = {
+            name: service.__name.toLowerCase(),
+            event: event,
+            method: service.method,
+            path: path
+          };
+        }
+    
+        configurations.models.push({
+          app: app.name.toLowerCase(),
+          name: model.$get('name').toLowerCase(),
+          services: services
+        });
       }
-
-      if (service.apiType !== API_TYPES.REST)
-        event = service.event;
-
-      services[service.__name.toLowerCase()] = {
-        name: service.__name.toLowerCase(),
-        event: event,
-        method: service.method,
-        path: path
-      };
     }
-
-    configurations.models.push({
-      app: modelApp.toLowerCase(),
-      name: model.$get('name').toLowerCase(),
-      services: services
-    });
   }
 
   let template: any = fs.readFileSync(path.join(__dirname, 'template.js'));

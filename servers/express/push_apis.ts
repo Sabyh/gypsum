@@ -5,71 +5,64 @@ import { Model } from '../../models';
 import { API_TYPES, RESPONSE_CODES, ResponseError, Response } from '../../types';
 import { Logger } from '../../misc/logger';
 import { Context } from '../../context';
-import { State } from '../../state';
+import { State, IApplication } from '../../state';
 import { objectUtil } from '../../util';
 import { IApp } from '../../config';
 
-export function pushApis(app: express.Express, appOptions?: IApp) {
-  let appName = appOptions ? appOptions.name : 'default';
-  const logger = new Logger(appName);
+export function pushApis(expressApp: express.Express, app: IApplication) {
+  const logger = new Logger(app.name);
 
-  logger.info('Implementing before middlwares for', appName, 'app..');
-  if (State.middlewares && State.middlewares[appName] && State.middlewares[appName].before && State.middlewares[appName].before.length)
-    for (let i = 0; i < State.middlewares[appName].before.length; i++)
-      State.middlewares[appName].before[i](app);
+  logger.info('Implementing before middlwares for', app.name, 'app..');
+  if (State.middlewares && State.middlewares[app.name] && State.middlewares[app.name].before && State.middlewares[app.name].before.length)
+    for (let i = 0; i < State.middlewares[app.name].before.length; i++)
+      State.middlewares[app.name].before[i](expressApp);
 
   const router = express.Router();
 
-  for (let i = 0; i < State.models.length; i++) {
-    let model: Model = State.models[i];
-    let modelAppName = model.$get('app');
-    logger.info(`Implementing ${model.$get('name')} model services`);
+  if (app.models) {
 
-    if (model.$get('apiType') === API_TYPES.SOCKET)
-      continue;
+    for (let i = 0; i < app.models.length; i++) {
+      let model: Model = app.models[i];
 
-    if (appOptions) {
-      if (modelAppName !== appName)
+      logger.info(`Implementing ${model.$get('name')} model services`);  
+      if (model.$get('apiType') === API_TYPES.SOCKET)
         continue;
-    } else if (modelAppName !== appName) {
-      if (State.apps.filter(app => (app.name === modelAppName && app.subdomain)).length > 0)
-        continue;
-    }
+  
+      let corsOptions: cors.CorsOptions = {};
 
-    let corsOptions: cors.CorsOptions = {};
+      app.cors = app.cors ? objectUtil.extend(app.cors, State.config.cors) : State.config.cors;
+      objectUtil.extend(corsOptions, app.cors)
+  
+      let modelCors = model.$get('cors');
 
-    if (appName === 'default')
-      objectUtil.extend(corsOptions, State.config.cors);
-    else
-      objectUtil.extend(corsOptions, appOptions!.cors || {});
+      if (modelCors)
+        objectUtil.extend(corsOptions, modelCors);
+  
+      let services = model.$getServices();
+  
+      for (let service in services) {
+        if (services[service].apiType === API_TYPES.SOCKET)
+          continue;
+  
+        let serviceCors = services[service].cors;
 
-    let modelCors = model.$get('cors');
-    if (modelCors)
-      objectUtil.extend(corsOptions, modelCors);
-
-    let services = model.$getServices();
-
-    for (let service in services) {
-      if (services[service].apiType === API_TYPES.SOCKET)
-        continue;
-
-      let serviceCors = services[service].cors;
-      if (serviceCors)
-        objectUtil.extend(corsOptions, serviceCors);
-
-      logger.info(`adding service for ${appName} app: (${services[service].method}) - ${services[service].path}`);
-      router[services[service].method](services[service].path, cors(corsOptions), Context.Rest(model, services[service]));
+        if (serviceCors)
+          objectUtil.extend(corsOptions, serviceCors);
+  
+        logger.info(`adding service for ${app.name} app: (${services[service].method}) - ${services[service].path}`);
+        router[services[service].method](services[service].path, cors(corsOptions), Context.Rest(model, services[service]));
+      }
     }
   }
 
-  app.use(State.config.services_prefix, router);
+  expressApp.use(State.config.services_prefix, router);
 
   logger.info('Implementing after middlwares..');
-  if (State.middlewares && State.middlewares[appName] && State.middlewares[appName].after && State.middlewares[appName].after.length)
-    for (let i = 0; i < State.middlewares[appName].after.length; i++)
-      State.middlewares[appName].after[i](app);
+  if (State.middlewares && State.middlewares[app.name] && State.middlewares[app.name].after && State.middlewares[app.name].after.length)
+    for (let i = 0; i < State.middlewares[app.name].after.length; i++)
+      State.middlewares[app.name].after[i](expressApp);
 
-  app.use((err: express.ErrorRequestHandler, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  expressApp.use((err: express.ErrorRequestHandler, req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger!.error(err);
     console.trace(err)
 
@@ -84,10 +77,10 @@ export function pushApis(app: express.Express, appOptions?: IApp) {
     }
   });
 
-  let spa = appOptions ? appOptions.spa : State.config.spa;
+  let spa = app ? app.spa : State.config.spa;
 
   if (spa && spa.trim())
-    app.get('*', (req, res) => {
+    expressApp.get('*', (req, res) => {
       res.sendFile(path.join(State.root, <string>spa));
     });
 }
