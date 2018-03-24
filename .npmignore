@@ -6,6 +6,9 @@ node_modules
 /tsconfig.json
 /nodemon.json
 npm-debug.log*
+/logs/*
+/logs
+/server_logs
 *.ts
 !*.d.ts
 *.map.js

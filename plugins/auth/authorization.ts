@@ -170,7 +170,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
               let record: { model: string; services: string[] } = { model: modelName, services: [] };
               let services = model.$getServices();
 
-              if (Object.keys(services).length)
+              if (Object.keys(services).length) 
                 for (let prop in services)
                   record.services.push(prop);
     

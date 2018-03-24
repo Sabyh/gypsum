@@ -56,7 +56,7 @@ export const Config: IGypsumConfig = {
     processes: 1,
     cookie_key: 'kdu8v9qwem8hqe',
     upload_size_limit_mb: 10,
-    logger_options: { all: { level: ['debug'] } },
+    logger_options: { all: { level: ['all'] } },
     logger_out_dir: 'logs',
     authenticationModelName: '',
     authorizationModelName: '',
@@ -65,6 +65,6 @@ export const Config: IGypsumConfig = {
   prod: {
     secure: true,
     processes: 'max',
-    logger_options: { all: { level: ['warn'] } }
+    logger_options: { all: { level: ['error', 'warn'] } }
   }
 }

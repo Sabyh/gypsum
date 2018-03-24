@@ -11,7 +11,7 @@ import { RESPONSE_CODES, API_TYPES, IResponse } from '../../types';
 import { SERVICE, MODEL, HOOK, IModelOptions } from '../../decorators';
 import { toRegExp, verify, hash, stringUtil } from '../../util';
 import { IAuthenticationConfig, IEmailTransporter, IAuthenticationConfigOptions } from './config';
-export type getOptions = keyof IModelOptions | 'name';
+export type getOptions = keyof IModelOptions;
 
 export class Authentication {};
 
@@ -30,6 +30,8 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
 
     constructor() {
       super();
+
+      this.name = UserConstructor.name.toLowerCase();
 
       if (transporterOptions) {
         this.transporter = createTransport(transporterOptions);
@@ -51,13 +53,6 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
           });
         });
       }
-    }
-
-    $get(prop: getOptions) {
-      if (prop === 'name')
-        return UserConstructor.name;
-
-      return super.$get(prop);
     }
 
     getRootUser(): Promise<any> {
@@ -143,7 +138,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
             resolve();
           })
           .catch(error => reject({
-            message: `${this.$get('name')}: Error finding user`,
+            message: `${this.name}: Error finding user`,
             original: error,
             code: RESPONSE_CODES.UNKNOWN_ERROR
           }));
@@ -290,7 +285,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
               }));
           })
           .catch(error => reject({
-            message: `[${this.$get('name')}] - findOne: unknown error`,
+            message: `[${this.name}] - findOne: unknown error`,
             original: error,
             code: RESPONSE_CODES.UNKNOWN_ERROR
           }));
