@@ -87,7 +87,7 @@ function Connect(connection: any, logger: Logger) {
             if (model.type === 'Mongo')
               continue;
 
-            (<MongoModel>model)[<'setCollection'>safe.get('MongoModel.setCollection')](db.collection(model.$get('name')));
+            (<MongoModel>model)[<'setCollection'>safe.get('MongoModel.setCollection')](db.collection(model.name));
           }
         }
       }
