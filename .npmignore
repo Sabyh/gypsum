@@ -1,7 +1,7 @@
 .vscode
 /test
 /prebuild.js
-/client
+/client/index.js
 node_modules
 /tsconfig.json
 /nodemon.json
