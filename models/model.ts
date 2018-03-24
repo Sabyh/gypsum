@@ -7,40 +7,18 @@ import { State } from '../state';
 const safe = new Safe('model');
 
 export type ServiceOptions = { [key: string]: IService | boolean };
-export type getOptions = keyof IModelOptions | 'name';
+export type getOptions = keyof IModelOptions;
 
 const skippedServicesNames = ['find', 'findById', 'insert', 'update', 'updateById', 'delete', 'deleteById'];
 
 export class Model {
   private _servicesData: { [key: string]: IService };
   private _hooksData: { [key: string]: IModelHook };
-
+  
+  public app: string;
   public type: 'Mongo' | 'File' | undefined;
   public $logger: Logger;
-
-  static createPath(service: IService, model?: Model): string {
-    let path = '';
-
-    if (model) {
-      path += model.$get('name').toLowerCase() + '/';
-
-      let modelApp = model.$get('app');
-
-      if (modelApp && modelApp !== 'default') {
-        let appConf = State.apps.find(app => app.name === modelApp);
-        if (!appConf || !appConf.subdomain)
-          path = modelApp.toLowerCase() + '/' + path;
-      }
-    }
-
-    path += skippedServicesNames.indexOf(service.__name.toLowerCase()) > -1 ? '' : service.__name.toLowerCase();
-
-    if (service.params.length)
-      for (let i = 0; i < service.params.length; i++)
-        path += `/:${service.params[i]}`;
-
-    return '/' + path.replace(/\/{2,}/g, '/').replace(/\/$/, '');
-  }
+  public name = this.constructor.name.toLowerCase();
 
   private _mArrangeServices() {
     this._servicesData = {};
@@ -64,8 +42,6 @@ export class Model {
           if (service.authorize || this.$get('secure') || this.$get('authorize'))
             service.secure = true;
 
-        let appName = this.$get('app');
-
         this._servicesData[prop] = {
           __name: service.__name, 
           isService: isService,
@@ -73,10 +49,10 @@ export class Model {
           secure: service.secure,
           authorize: service.authorize,
           apiType: this.$get('apiType') === API_TYPES.ALL ? service.apiType : this.$get('apiType'),
-          name: service.name,
-          event: `${appName ? appName.toLowerCase() : ''} ${this.$get('name').toLowerCase()} ${service.__name.toLowerCase()}`.trim(),
+          name: service.__name,
+          event: this.name + ' ' + service.__name,
           method: service.method,
-          path: Model.createPath(service, this),
+          path: this.name + (skippedServicesNames.indexOf(service.__name.toLowerCase()) > -1 ? '' : '/' + service.__name.toLowerCase()),
           params: service.params,
           domain: (!this.$get('domain') || this.$get('domain') > service.domain) ? service.domain : this.$get('domain'),
           before: [],
@@ -132,21 +108,19 @@ export class Model {
     }
   }
 
-  @FRIEND(safe.set('model.init', ['main']))
-  protected init() {
-    this.$logger = new Logger(this.$get('name'));
+  @FRIEND(safe.set('model.init', ['app']))
+  protected init(appName: string) {
+    let modelName = this.name;
+
+    this.app = appName;
+    this.$logger = new Logger(modelName);
 
     this._mArrangeServices();
     this._mArrangeHooks();
   }
 
   $get(prop: getOptions) {
-    if (prop === 'name')
-      return this.constructor.name.toLowerCase();
-    else if (prop === 'app')
-      return (<any>this)[`__${prop}`] || 'default';
-    else
-      return (<any>this)[`__${prop}`] === undefined ? null : (<any>this)[`__${prop}`];
+    return (<any>this)[`__${prop}`] === undefined ? null : (<any>this)[`__${prop}`];
   }
 
   $getServices(): { [key: string]: IService } {

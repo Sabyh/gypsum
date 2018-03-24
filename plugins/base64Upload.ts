@@ -5,24 +5,24 @@ import { Context } from '../context';
 import { Logger } from '../misc/logger';
 import { State } from '../state';
 import { RESPONSE_CODES } from '../types';
+import { IHook } from '../decorators';
 
 export interface IGypsumBase64UploadOptions {
   uploadsDir: string;
-  uploadsPath: string;
+  uploadsURL: string;
 }
 
-export function gypsumBase64Upload(options: IGypsumBase64UploadOptions) {
+export function gypsumBase64Upload(options: IGypsumBase64UploadOptions): IHook {
   const logger = new Logger('base64Upload');
 
   options.uploadsDir = options.uploadsDir || 'uploads';
-  options.uploadsPath = options.uploadsPath || `${State.config.origin}/${options.uploadsDir}`;
 
   function base64Upload(ctx: Context, filePath: string, field: string, isUpdate: boolean) {
     let outDir = path.join(State.root, options.uploadsDir, filePath),
       data = ctx.body.data.indexOf('base64') > -1 ? ctx.body.data.split(',')[1] : ctx.body.data,
       fileName = `${Date.now()}.${ctx.body.fileType}`;
 
-    filePath = `${options.uploadsPath}/${filePath}/${fileName}`;
+    filePath = `${options.uploadsURL}/${filePath}/${fileName}`;
 
     fs.writeFile(path.join(outDir, fileName), data, 'base64', err => {
       if (err) {
@@ -39,7 +39,5 @@ export function gypsumBase64Upload(options: IGypsumBase64UploadOptions) {
     });
   }
 
-  Gypsum.use({
-    hooks: [base64Upload]
-  });
+  return base64Upload;
 }

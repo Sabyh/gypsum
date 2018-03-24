@@ -7,14 +7,18 @@ import { RESPONSE_DOMAINS, API_TYPES } from '../types';
 export function generateClientGypsum() {
   
   let configurations: any = {
-    origin: State.config.origin,
-    models: []
+    hostName: State.config.hostName,
+    origin: 'http' + (State.config.secure ? 's' : '') + '://' + State.config.hostName + (State.env !== 'production') ? ':' + State.config.port : '',
+    models: [],
+    apps: []
   };
 
   let apps = State.apps;
 
   for (let j = 0; j < State.apps.length; j++) {
     let app = State.apps[j];
+
+    let models: any[] = [];
 
     if (app.models && app.models.length) {
 
@@ -29,11 +33,10 @@ export function generateClientGypsum() {
           let event = null;
           
           if (service.apiType !== API_TYPES.SOCKET) {
-            path = 'http' + (app.secure ? 's' : '') + '://';
-            path += (app.subdomain ? (app.name.toLowerCase() + '.') : '') + State.config.host;
+            path = 'http' + (State.config.secure ? 's' : '') + '://';
+            path += app.name.toLowerCase() + '.' + State.config.hostName;
             path += (State.env !== 'production') ? ':' + State.config.port : '';
-            path += '/' + (State.config.services_prefix ? State.config.services_prefix : '');
-            path += service.path;      
+            path += '/' + service.path;      
             path = stringUtil.cleanPath(path);
           }
     
@@ -48,12 +51,18 @@ export function generateClientGypsum() {
           };
         }
     
-        configurations.models.push({
-          app: app.name.toLowerCase(),
-          name: model.$get('name').toLowerCase(),
+        models.push({
+          name: model.name.toLowerCase(),
           services: services
         });
       }
+
+      configurations.apps.push({
+        name: app.name.toLowerCase(),
+        apiType: app.$get('apiType'),
+        namespaces: app.$get('namespaces'),
+        models: models
+      });
     }
   }
 

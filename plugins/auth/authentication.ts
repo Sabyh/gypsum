@@ -13,10 +13,12 @@ import { toRegExp, verify, hash, stringUtil } from '../../util';
 import { IAuthenticationConfig, IEmailTransporter, IAuthenticationConfigOptions } from './config';
 export type getOptions = keyof IModelOptions | 'name';
 
-export function initAuthentication(authConfig: IAuthenticationConfigOptions, transporterOptions?: IEmailTransporter) {
+export class Authentication {};
+
+export function initAuthentication(authConfig: IAuthenticationConfigOptions, transporterOptions?: IEmailTransporter): any {
 
   let UserConstructor: typeof MongoModel = authConfig.usersModelConstructor || MongoModel;
-  let modelName = (<any>UserConstructor.prototype).__name || UserConstructor.name;
+  let modelName = UserConstructor.name;
 
   State.config.authenticationModelName = modelName;
 
@@ -169,7 +171,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
             });
 
           let token = jwt.sign({ id: user._id }, authConfig.tokenSecret);
-          let activationLink = stringUtil.cleanPath(`${State.config.host}/${State.config.services_prefix}/authentication/activateUser?${authConfig.tokenFieldName}=${token}`);
+          let activationLink = stringUtil.cleanPath(`${State.config.hostName}/authentication/activateUser?${authConfig.tokenFieldName}=${token}`);
 
           let emailOptions: SendMailOptions = {
             from: authConfig.activationMailSubject,
@@ -346,7 +348,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     }
   }
 
-  State.Models.push(Authentication);
+  return Authentication;
 }
 
 

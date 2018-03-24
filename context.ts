@@ -20,6 +20,7 @@ export interface IContext {
   req?: express.Request;
   res?: express.Response;
   socket?: any;
+  appName?: any;
   domain?: RESPONSE_DOMAINS;
   room?: string;
 }
@@ -29,8 +30,6 @@ interface IStack {
   args: any[];
 }
 
-const contexts: Context[] = [];
-
 export class Context {
   private _response: Response = <Response>{};
   private _socket: any | undefined;
@@ -39,6 +38,7 @@ export class Context {
   private _cookies: any;
   private _domain: RESPONSE_DOMAINS | undefined;
   private _room: string;
+  private _appName: string;
   
   readonly _req: express.Request | undefined;
   readonly _res: express.Response | undefined;
@@ -59,6 +59,7 @@ export class Context {
     this._res = data.res || undefined;
     this._cookies = data.cookies;
     this._domain = data.domain;
+    this._appName = data.appName;
     this._room = data.room || '';
     this.apiType = type;
     this.headers = data.headers;
@@ -77,7 +78,7 @@ export class Context {
     : (req: express.Request, res: express.Response, next: express.NextFunction) => void {
 
     return function (req: express.Request, res: express.Response, next: express.NextFunction) {
-      contexts.push(new Context(API_TYPES.REST, {
+      new Context(API_TYPES.REST, {
         headers: req.headers,
         query: req.query,
         body: req.body,
@@ -87,14 +88,14 @@ export class Context {
         res: res,
         model: model,
         service: service
-      }));
+      });
     }
   }
 
-  static Socket(socket: any, model: Model, service: IService): (data: any) => void {
+  static Socket(appName: string, socket: any, model: Model, service: IService): (data: any) => void {
     return function (data: any) {
-      contexts.push(new Context(API_TYPES.SOCKET, {
-        headers: data.headers,
+      new Context(API_TYPES.SOCKET, {
+        headers: socket.handshake.headers,
         query: data.query,
         body: data.body,
         params: data.params,
@@ -102,24 +103,9 @@ export class Context {
         domain: data.domain,
         room: data.room,
         model: model,
-        service: service
-      }));
-    }
-  }
-
-  static deleteContextsOf(type: string, identifier: string) {
-    Logger.Info('Deleteing context of type:', type, ', identifier:', identifier);
-    if (type === 'socket') {
-      if (identifier)
-        for (let i = 0; i < contexts.length; i++)
-          if (contexts[i]._socket && contexts[i]._socket!.id === identifier)
-            contexts.splice(i--, 1);
-
-    } else if (type === 'model') {
-      if (identifier)
-        for (let i = 0; i < contexts.length; i++)
-          if ((<any>contexts[i].model).__name === identifier)
-            contexts.splice(i--, 1);
+        service: service,
+        appName: appName || 'default'
+      });
     }
   }
 
@@ -191,9 +177,12 @@ export class Context {
 
         } else if (this._response.domain === RESPONSE_DOMAINS.ALL) {
           if (process && process.send)
-            (<any>process).send({ data: this._response, target: 'others', action: 'response' })
-          let io: any = State[safe.get<'_io'>('State._io')];
-          io.sockets.emit(event, this._response);
+            (<any>process).send({ data: this._response, target: 'others', action: 'response', appName: this._appName })
+          
+          let io: any = State.ioNamespaces[this._appName];
+
+          if (io)
+            io.sockets.emit(event, this._response);
 
         } else {
           this._socket.emit(event, this._response);
@@ -388,7 +377,7 @@ function* getHooks(context: Context, list: IHookOptions[]) {
 
         if (model) {
           if (model.$hasHook(modelHook))
-            if ((<any>model)[modelHook].private && modelName !== context.model.$get('name'))
+            if ((<any>model)[modelHook].private && modelName !== context.model.name)
               yield null;
             else
               handler = (<any>model)[modelHook].bind(model);

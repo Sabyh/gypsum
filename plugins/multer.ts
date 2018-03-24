@@ -4,6 +4,7 @@ import { Gypsum } from '../main';
 import { Context } from '../context';
 import { Logger } from '../misc/logger';
 import { State } from '../state';
+import { IHook } from '../decorators';
 
 export interface IGypsumMulterConfig {
   uploadsURL: string;
@@ -12,11 +13,10 @@ export interface IGypsumMulterConfig {
   limits?: any;
 }
 
-export function gypsumMulter(config: IGypsumMulterConfig) {
+export function gypsumMulter(config: IGypsumMulterConfig): IHook {
   const logger = new Logger('multer');
 
   config.uploadsDir = config.uploadsDir || 'uploads';
-  config.uploadsURL = config.uploadsURL || `${State.config.origin}/${config.uploadsDir}`;
 
   const storage = Multer.diskStorage({
     destination: path.join(State.root, config.uploadsDir || 'uploads'),
@@ -87,7 +87,5 @@ export function gypsumMulter(config: IGypsumMulterConfig) {
     ctx.next();
   }
 
-  Gypsum.use({
-    hooks: [multer]
-  });
+  return multer;
 }

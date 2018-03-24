@@ -8,7 +8,8 @@ const grantListStatus: any = {
   ioServer: false,
   mongoModel: false,
   fileModel: false,
-  main: false
+  main: false,
+  app: false
 };
 
 export class Safe {

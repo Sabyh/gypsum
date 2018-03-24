@@ -9,19 +9,11 @@
 })(this, (axios, io) => {
 
   const gypsumClient = {};
-  const configurations = {"origin":"http://localhost:7771","models":[{"app":"default","name":"users","services":{"count":{"name":"count","event":null,"method":"get","path":"http://localhost:7771/apis/users/count"},"find":{"name":"find","event":null,"method":"get","path":"http://localhost:7771/apis/users"},"findone":{"name":"findone","event":null,"method":"get","path":"http://localhost:7771/apis/users/findone"},"findbyid":{"name":"findbyid","event":null,"method":"get","path":"http://localhost:7771/apis/users/findbyid/:id"},"insert":{"name":"insert","event":null,"method":"post","path":"http://localhost:7771/apis/users"},"search":{"name":"search","event":null,"method":"post","path":"http://localhost:7771/apis/users/search"},"update":{"name":"update","event":null,"method":"put","path":"http://localhost:7771/apis/users"},"updateone":{"name":"updateone","event":null,"method":"put","path":"http://localhost:7771/apis/users/updateone"},"updatebyid":{"name":"updatebyid","event":null,"method":"put","path":"http://localhost:7771/apis/users/updatebyid/:id"},"delete":{"name":"delete","event":null,"method":"delete","path":"http://localhost:7771/apis/users"},"deleteone":{"name":"deleteone","event":null,"method":"delete","path":"http://localhost:7771/apis/users/deleteone"},"deletebyid":{"name":"deletebyid","event":null,"method":"delete","path":"http://localhost:7771/apis/users/deletebyid/:id"}}}]};
-  const apps = {};
-  const models = {};
+  const configurations = {"hostName":"localhost","origin":":7771","models":[],"apps":[{"name":"api","apiType":3,"models":[{"name":"users","services":{"count":{"name":"count","event":null,"method":"get","path":"http://api.localhost:7771/users/count"},"find":{"name":"find","event":null,"method":"get","path":"http://api.localhost:7771/users"},"findone":{"name":"findone","event":null,"method":"get","path":"http://api.localhost:7771/users/findone"},"findbyid":{"name":"findbyid","event":null,"method":"get","path":"http://api.localhost:7771/users/findbyid"},"insert":{"name":"insert","event":null,"method":"post","path":"http://api.localhost:7771/users"},"search":{"name":"search","event":null,"method":"post","path":"http://api.localhost:7771/users/search"},"update":{"name":"update","event":null,"method":"put","path":"http://api.localhost:7771/users"},"updateone":{"name":"updateone","event":null,"method":"put","path":"http://api.localhost:7771/users/updateone"},"updatebyid":{"name":"updatebyid","event":null,"method":"put","path":"http://api.localhost:7771/users/updatebyid"},"delete":{"name":"delete","event":null,"method":"delete","path":"http://api.localhost:7771/users"},"deleteone":{"name":"deleteone","event":null,"method":"delete","path":"http://api.localhost:7771/users/deleteone"},"deletebyid":{"name":"deletebyid","event":null,"method":"delete","path":"http://api.localhost:7771/users/deletebyid"}}}]}]};
+  const apps = [];
   const defaults = {
     timeout: 10000,
     withCredentials: false
-  }
-
-  let socket;
-
-  gypsumClient.connect = function (query) {
-    if (io)
-      socket = io(configurations.origin, { query: query });
   }
 
   gypsumClient.config = function (options) {
@@ -29,8 +21,9 @@
     defaults.withCredentials = options.withCredentials !== undefined ? !!options.withCredentials : true;
   }
 
-  gypsumClient.getApp = function (name) {
-    return apps[name] || apps.default;
+  gypsumClient.getApp = function (name, headers) {
+    let app = apps.find(app => app.name === name);
+    return app ? app.init(headers) : undefined;
   }
 
   /**
@@ -115,6 +108,66 @@
   }
 
   /**
+   * App Class
+   * ============================================================================================================================
+   */
+  class App {
+
+    constructor(name, apiType, namespaces) {
+      this.name = name;
+      this.apiType = apiType;
+      this.namespaces = ns;
+      this.socket;
+      this.headers;
+    }
+
+    init(headers) {
+      if (this.apiType === 1)
+        return this;
+
+      if (!headers && this.socket && this.socket.connected)
+        return;
+
+      this.headers = Object.assign(this.headers || {}, headers || {});
+
+      if (this.socket)
+        this.socket.disconnect();
+
+      if (io) {
+        this.socket = io(configurations.origin + '/' + this.name, {
+          reconnection: true,
+          query: { app: this.name },
+          transportOptions: {
+            polling: {
+              extraHeaders: this.headers
+            }
+          },
+          forceNew: true
+        });
+      }
+
+      return this;
+    }
+
+    namespace(nsName) {
+      if (this.namespaces && this.namespaces.indexOf(nsName) === -1)
+        return;
+
+      let app = new App(this.name + '/' + nsName, this.apiType);
+      let appOptions = configurations.apps.find(_app => _app.name === this.name);
+      
+      if (!appOptions.models || !appOptions.models.length)
+        return;
+        
+      for (let i = 0; i < appOptions.models.length; i++)
+        app[appOptions.models[i].name] = new Model(appOptions.models[i].name, appOptions.models[i].services, app);
+
+      return app;
+    }
+  }
+
+
+  /**
    * Model Class
    * ============================================================================================================================
    */
@@ -167,11 +220,12 @@
   class Model {
     // Constructor
     // ----------------------------------------------------------------------------------------------------------------------
-    constructor(name, services) {
+    constructor(name, services, app) {
       this.name = name;
       this.services = services;
       this.listeners = {};
       this.lastEvent = '';
+      this.app = app;
     }
 
     // Public Methods
@@ -210,8 +264,8 @@
 
       this.listeners[serviceName] = { res: null, handlers: [callback], errorHandlers: [] };
 
-      if (socket && this.services[serviceName].event) {
-        socket.on(this.services[serviceName].event, res => {
+      if (this.app.socket && this.services[serviceName].event) {
+        this.app.socket.on(this.services[serviceName].event, res => {
           respond.call(this, serviceName, res);
         });
       }
@@ -242,8 +296,8 @@
 
       if (!handler && serviceName) {
         delete this.listeners[serviceName];
-        if (socket)
-          socket.off(serviceName);
+        if (this.app.socket)
+          this.app.socket.off(serviceName);
 
       } else if (serviceName) {
         for (let i = 0; i < this.listeners[serviceName].handlers.length; i++)
@@ -272,8 +326,8 @@
         return this;
       }
 
-      if (socket && this.services[serviceName].event) {
-        socket.emit(this.services[serviceName].event, data);
+      if (this.app.socket && this.services[serviceName].event) {
+        this.app.socket.emit(this.services[serviceName].event, data);
       } else if (axios && this.services[serviceName].path) {
         let service = this.services[serviceName];
         options = options || {};
@@ -292,7 +346,7 @@
             respond.call(this, serviceName, err);
           });
       } else {
-        if (this.services[serviceName].event && !socket) {
+        if (this.services[serviceName].event && !this.app.socket) {
           console.error('socket is required to dispatch', this.name, serviceName, 'service!');
         } else {
           console.error('axios is required to dispatch', this.name, serviceName, 'service!');
@@ -316,10 +370,15 @@
    * Instantiating Models
    * ============================================================================================================================
    */
-  for (let i = 0; i < configurations.models.length; i++) {
-    let model = configurations.models[i];
-    apps[model.app] = apps[model.app] || {};
-    apps[model.app][model.name] = new Model(model.name, model.services);
+  for (let i = 0; i < configurations.apps.length; i++) {
+    let app = new App(configurations.apps[i].name, configurations.apps[i].apiType, configurations.apps[i].namespaces);
+
+    for (let j = 0; j < configurations.apps[i].models; j++) {
+      let model = configurations.apps[i].models[j];
+      app[model.name] = new Model(model.name, model.services, app);
+    }
+
+    apps.push(app);
   }
 
   return gypsumClient;

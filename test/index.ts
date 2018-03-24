@@ -1,7 +1,8 @@
 import { Gypsum } from '../main';
-import { MODEL } from '../decorators';
+import { MODEL, APP } from '../decorators';
 import { MongoModel } from '../models';
 import { API_TYPES } from '../types';
+import { App } from '../app';
 // import { AuthPlugin, IAuthenticationConfig } from '../plugins/auth';
 
 @MODEL({
@@ -14,18 +15,27 @@ import { API_TYPES } from '../types';
     active: { $type: Boolean, $default: false }
   }
 })
-class Users extends MongoModel {}
+class Users extends MongoModel { }
 
-
-Gypsum.configure({
+@APP({
   dev: {
-    logger_options: { all: { level: ['all'] } }
+    mongodb_url: 'mongodb://localhost:27017',
+    database_name: 'gypsym_dev',
+    models: [Users],
   }
-});
+})
+class Api extends App {}
 
 // AuthPlugin({
 //   usersModelConstructor: Users,
 //   authorization: true
 // });
-Gypsum.use({ models: [Users] })
-Gypsum.bootstrap();
+
+Gypsum.bootstrap({
+  config: {
+    dev: {
+      logger_options: { all: { level: ['all'] } }
+    }
+  },
+  apps: [Api]
+});

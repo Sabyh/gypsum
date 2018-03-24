@@ -10,7 +10,7 @@ export class FileModel extends Model {
 
   constructor() {
     super();
-    this.collection = new FileCollection(this.$get('name'), this.$get('schema'));
+    this.collection = new FileCollection(this.name, this.$get('schema'));
     this.type = 'File';
   }
 
@@ -162,7 +162,7 @@ export class FileModel extends Model {
 
       if (!Validall(filter, { $type: 'object', $keys: { $length: { $gt: 0 } } }))
         return reject({
-          message: `[${this.$get('name')}] - delete: unsecure process rejection`,
+          message: `[${this.name}] - delete: unsecure process rejection`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
 
@@ -182,7 +182,7 @@ export class FileModel extends Model {
 
       if (!id)
         return reject({
-          message: `[${this.$get('name')}] - deleteById: document id is required.`,
+          message: `[${this.name}] - deleteById: document id is required.`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
 
@@ -202,7 +202,7 @@ export class FileModel extends Model {
   
       if (!Validall(filter, { $type: 'object', $keys: { $length: { $gt: 0 } } }))
         return reject({
-          message: `[${this.$get('name')}] - deleteOne: unsecure process rejection`,
+          message: `[${this.name}] - deleteOne: unsecure process rejection`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
   

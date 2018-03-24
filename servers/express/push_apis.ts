@@ -5,17 +5,13 @@ import { Model } from '../../models';
 import { API_TYPES, RESPONSE_CODES, ResponseError, Response } from '../../types';
 import { Logger } from '../../misc/logger';
 import { Context } from '../../context';
-import { State, IApplication } from '../../state';
+import { State } from '../../state';
 import { objectUtil } from '../../util';
 import { IApp } from '../../config';
+import { App } from '../../app';
 
-export function pushApis(expressApp: express.Express, app: IApplication) {
+export function pushApis(expressApp: express.Express, app: App) {
   const logger = new Logger(app.name);
-
-  logger.info('Implementing before middlwares for', app.name, 'app..');
-  if (State.middlewares && State.middlewares[app.name] && State.middlewares[app.name].before && State.middlewares[app.name].before.length)
-    for (let i = 0; i < State.middlewares[app.name].before.length; i++)
-      State.middlewares[app.name].before[i](expressApp);
 
   const router = express.Router();
 
@@ -24,14 +20,12 @@ export function pushApis(expressApp: express.Express, app: IApplication) {
     for (let i = 0; i < app.models.length; i++) {
       let model: Model = app.models[i];
 
-      logger.info(`Implementing ${model.$get('name')} model services`);  
+      logger.info(`Implementing ${model.name} model services`);  
       if (model.$get('apiType') === API_TYPES.SOCKET)
         continue;
   
       let corsOptions: cors.CorsOptions = {};
-
-      app.cors = app.cors ? objectUtil.extend(app.cors, State.config.cors) : State.config.cors;
-      objectUtil.extend(corsOptions, app.cors)
+      let appCors = app.$get('cors');
   
       let modelCors = model.$get('cors');
 
@@ -55,12 +49,7 @@ export function pushApis(expressApp: express.Express, app: IApplication) {
     }
   }
 
-  expressApp.use(State.config.services_prefix, router);
-
-  logger.info('Implementing after middlwares..');
-  if (State.middlewares && State.middlewares[app.name] && State.middlewares[app.name].after && State.middlewares[app.name].after.length)
-    for (let i = 0; i < State.middlewares[app.name].after.length; i++)
-      State.middlewares[app.name].after[i](expressApp);
+  expressApp.use(router);
 
   expressApp.use((err: express.ErrorRequestHandler, req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger!.error(err);
@@ -76,11 +65,4 @@ export function pushApis(expressApp: express.Express, app: IApplication) {
       }));
     }
   });
-
-  let spa = app ? app.spa : State.config.spa;
-
-  if (spa && spa.trim())
-    expressApp.get('*', (req, res) => {
-      res.sendFile(path.join(State.root, <string>spa));
-    });
 }

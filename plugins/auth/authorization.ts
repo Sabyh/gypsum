@@ -22,7 +22,7 @@ export interface IPermission {
   services: string[];
 }
 
-export function initAuthorization(authConfig: IAuthenticationConfigOptions) {
+export function initAuthorization(authConfig: IAuthenticationConfigOptions): any[] {
   Logger.Info('Initializing Authorization Layer...');
 
   State.config.authorizationModelName = 'Authorization';
@@ -79,7 +79,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions) {
             code: RESPONSE_CODES.UNAUTHORIZED
           });
 
-        let modelName = ctx.model.$get('name').toLowerCase();
+        let modelName = ctx.model.name.toLowerCase();
         let serviceName = ctx.service.name.toLowerCase();
 
         this._mGetUserRolesFromGroups(ctx.user._id)
@@ -166,7 +166,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions) {
 
             for (let i = 0; i < State.apps[i].models!.length; i++) {
               let model = State.apps[i].models![i];
-              let modelName = model.$get('name');
+              let modelName = model.name;
               let record: { model: string; services: string[] } = { model: modelName, services: [] };
               let services = model.$getServices();
 
@@ -284,5 +284,5 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions) {
     }
   }
 
-  State.Models.push(Authorization, Permissions, AuthRoles, AuthGroups);
+  return [Authorization, Permissions, AuthRoles, AuthGroups];
 }

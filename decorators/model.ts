@@ -5,7 +5,6 @@ import { API_TYPES, RESPONSE_DOMAINS } from '../types';
 import { IHookOptions } from './hook';
 
 export interface IModelOptions {
-  app?: string;
   secure?: any;
   authorize?: any;
   accessable?: boolean | string[];
@@ -28,7 +27,7 @@ const defaults: IModelOptions = {
   internal: false,
   eliminate: [],
   apiType: API_TYPES.ALL,
-  domain: 0,
+  domain: 1,
   before: [],
   after: []
 };

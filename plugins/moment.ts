@@ -4,8 +4,9 @@ import { Gypsum } from '../main';
 import { Context } from '../context';
 import { objectUtil } from '../util';
 import { Logger } from '../misc/logger';
+import { IHook } from '../decorators';
 
-export function gypsumMoment() {
+export function gypsumMoment(): IHook {
 
   const logger = new Logger('moment');
 
@@ -52,7 +53,5 @@ export function gypsumMoment() {
     ctx.next();
   }
 
-  Gypsum.use({
-    hooks: [moment]
-  });
+  return moment;
 }

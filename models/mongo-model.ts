@@ -51,7 +51,7 @@ export class MongoModel extends Model {
           resolve({ data: count, count: count });
         })
         .catch(error => reject({
-          message: `[${this.$get('name')}] - count: unknown error`,
+          message: `[${this.name}] - count: unknown error`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
@@ -100,7 +100,7 @@ export class MongoModel extends Model {
           resolve({ data: docs });
         })
         .catch(error => reject({
-          message: `[${this.$get('name')}] - find: unkown error`,
+          message: `[${this.name}] - find: unkown error`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
@@ -141,7 +141,7 @@ export class MongoModel extends Model {
           resolve({ data: doc });
         })
         .catch(error => reject({
-          message: `[${this.$get('name')}] - findOne: unknown error`,
+          message: `[${this.name}] - findOne: unknown error`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
@@ -180,7 +180,7 @@ export class MongoModel extends Model {
           resolve({ data: doc });
         })
         .catch(error => reject({
-          message: `[${this.$get('name')}] - findById: unknown error`,
+          message: `[${this.name}] - findById: unknown error`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
@@ -229,12 +229,12 @@ export class MongoModel extends Model {
               if (schema.defaults[internals[i]] !== undefined)
                 if (objectUtil.getValue(document, internals[i]) !== schema.defaults[internals[i]])
                   return reject({
-                    message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
+                    message: `[${this.name}]: '${internals[i]}' cannot be set externaly!`,
                     code: RESPONSE_CODES.UNAUTHORIZED
                   });
                 else if (objectUtil.getValue(document, internals[i]) !== undefined)
                   return reject({
-                    message: `[${this.$get('name')}]: '${internals[i]}' cannot be set externaly!`,
+                    message: `[${this.name}]: '${internals[i]}' cannot be set externaly!`,
                     code: RESPONSE_CODES.UNAUTHORIZED
                   });
           }
@@ -261,7 +261,7 @@ export class MongoModel extends Model {
           resolve({ data: documents.length === 1 ? res.ops[0] : res.ops });
         })
         .catch(error => reject({
-          message: `[${this.$get('name')}] - insert: unknown error`,
+          message: `[${this.name}] - insert: unknown error`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
@@ -307,7 +307,7 @@ export class MongoModel extends Model {
           resolve({ data: docs });
         })
         .catch(error => reject({
-          message: `[${this.$get('name')}] - search: unknown error`,
+          message: `[${this.name}] - search: unknown error`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
@@ -345,7 +345,7 @@ export class MongoModel extends Model {
           resolve({ data: res.result.nModified, count: res.result.nModified });
         })
         .catch(error => reject({
-          message: `[${this.$get('name')}] - update: unknown error`,
+          message: `[${this.name}] - update: unknown error`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
@@ -387,7 +387,7 @@ export class MongoModel extends Model {
           resolve(res.value);
         })
           .catch(error => reject({
-            message: `[${this.$get('name')}] - updateOne: unknown error`,
+            message: `[${this.name}] - updateOne: unknown error`,
             original: error,
             code: RESPONSE_CODES.UNKNOWN_ERROR
           }));
@@ -436,7 +436,7 @@ export class MongoModel extends Model {
                     let changedField = objectUtil.compareValues(constants, preUpdatedDoc, updatedDoc);
                     if (changedField)
                       errObj = {
-                        message: `[${this.$get('name')}]: '${changedField}' is a constant field that cannot be changed!`,
+                        message: `[${this.name}]: '${changedField}' is a constant field that cannot be changed!`,
                         code: RESPONSE_CODES.UNAUTHORIZED
                       }
                   }
@@ -445,7 +445,7 @@ export class MongoModel extends Model {
                     let changedField = objectUtil.compareValues(internals, preUpdatedDoc, updatedDoc);
                     if (changedField)
                       errObj = {
-                        message: `[${this.$get('name')}]: '${changedField}' cannot be modified externaly!`,
+                        message: `[${this.name}]: '${changedField}' cannot be modified externaly!`,
                         code: RESPONSE_CODES.UNAUTHORIZED
                       }
                   }
@@ -483,13 +483,13 @@ export class MongoModel extends Model {
 
             })
               .catch(error => reject({
-                message: `[${this.$get('name')}] - updateOne: unknown error`,
+                message: `[${this.name}] - updateOne: unknown error`,
                 original: error,
                 code: RESPONSE_CODES.UNKNOWN_ERROR
               }));
           })
           .catch(error => reject({
-            message: `[${this.$get('name')}] - findOne: unknown error`,
+            message: `[${this.name}] - findOne: unknown error`,
             original: error,
             code: RESPONSE_CODES.UNKNOWN_ERROR
           }));
@@ -528,7 +528,7 @@ export class MongoModel extends Model {
           resolve(res.value);
         })
           .catch(error => reject({
-            message: `[${this.$get('name')}] - updateById: unknown error`,
+            message: `[${this.name}] - updateById: unknown error`,
             original: error,
             code: RESPONSE_CODES.UNKNOWN_ERROR
           }));
@@ -576,7 +576,7 @@ export class MongoModel extends Model {
                     let changedField = objectUtil.compareValues(constants, preUpdatedDoc, updatedDoc);
                     if (changedField)
                       errObj = {
-                        message: `[${this.$get('name')}]: '${changedField}' is a constant field that cannot be changed!`,
+                        message: `[${this.name}]: '${changedField}' is a constant field that cannot be changed!`,
                         code: RESPONSE_CODES.UNAUTHORIZED
                       }
                   }
@@ -585,7 +585,7 @@ export class MongoModel extends Model {
                     let changedField = objectUtil.compareValues(internals, preUpdatedDoc, updatedDoc);
                     if (changedField)
                       errObj = {
-                        message: `[${this.$get('name')}]: '${changedField}' cannot be modified externaly!`,
+                        message: `[${this.name}]: '${changedField}' cannot be modified externaly!`,
                         code: RESPONSE_CODES.UNAUTHORIZED
                       }
                   }
@@ -622,13 +622,13 @@ export class MongoModel extends Model {
 
             })
               .catch(error => reject({
-                message: `[${this.$get('name')}] - updateOne: unknown error`,
+                message: `[${this.name}] - updateOne: unknown error`,
                 original: error,
                 code: RESPONSE_CODES.UNKNOWN_ERROR
               }));
           })
           .catch(error => reject({
-            message: `[${this.$get('name')}] - findOne: unknown error`,
+            message: `[${this.name}] - findOne: unknown error`,
             original: error,
             code: RESPONSE_CODES.UNKNOWN_ERROR
           }));
@@ -648,7 +648,7 @@ export class MongoModel extends Model {
 
       if (!Validall(filter, { $type: 'object', $keys: { $length: { $gt: 0 } } }))
         return reject({
-          message: `[${this.$get('name')}] - delete: unsecure process rejection`,
+          message: `[${this.name}] - delete: unsecure process rejection`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
 
@@ -658,7 +658,7 @@ export class MongoModel extends Model {
           resolve({ data: res.result.n, count: res.result.n });
         })
         .catch(error => reject({
-          message: `[${this.$get('name')}] - delete: unknown error`,
+          message: `[${this.name}] - delete: unknown error`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
@@ -677,7 +677,7 @@ export class MongoModel extends Model {
 
       if (!Validall(filter, { $type: 'object', $keys: { $length: { $gt: 0 } } }))
         return reject({
-          message: `[${this.$get('name')}] - deleteOne: unsecure process rejection`,
+          message: `[${this.name}] - deleteOne: unsecure process rejection`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
 
@@ -690,7 +690,7 @@ export class MongoModel extends Model {
           resolve({ data: res.result.n, count: res.result.n });
         })
         .catch(error => reject({
-          message: `[${this.$get('name')}] - deleteOne: unknown error`,
+          message: `[${this.name}] - deleteOne: unknown error`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
@@ -716,7 +716,7 @@ export class MongoModel extends Model {
           resolve({ data: res.result.n, count: res.result.n });
         })
         .catch(error => reject({
-          message: `[${this.$get('name')}] - deleteById: unknown error`,
+          message: `[${this.name}] - deleteById: unknown error`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));

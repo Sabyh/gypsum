@@ -4,10 +4,12 @@ import { exists } from './exists';
 import { filter } from './filter';
 import { hash } from './hash';
 import { validate } from './validate';
+import { reference } from './reference';
 
 export const hooks = [
   exists,
   filter,
   hash,
-  validate
+  validate,
+  reference
 ];

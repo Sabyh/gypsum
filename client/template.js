@@ -10,18 +10,10 @@
 
   const gypsumClient = {};
   const configurations = {}//{};
-  const apps = {};
-  const models = {};
+  const apps = [];
   const defaults = {
     timeout: 10000,
     withCredentials: false
-  }
-
-  let socket;
-
-  gypsumClient.connect = function (query) {
-    if (io)
-      socket = io(configurations.origin, { query: query });
   }
 
   gypsumClient.config = function (options) {
@@ -29,8 +21,9 @@
     defaults.withCredentials = options.withCredentials !== undefined ? !!options.withCredentials : true;
   }
 
-  gypsumClient.getApp = function (name) {
-    return apps[name] || apps.default;
+  gypsumClient.getApp = function (name, headers) {
+    let app = apps.find(app => app.name === name);
+    return app ? app.init(headers) : undefined;
   }
 
   /**
@@ -115,6 +108,66 @@
   }
 
   /**
+   * App Class
+   * ============================================================================================================================
+   */
+  class App {
+
+    constructor(name, apiType, namespaces) {
+      this.name = name;
+      this.apiType = apiType;
+      this.namespaces = ns;
+      this.socket;
+      this.headers;
+    }
+
+    init(headers) {
+      if (this.apiType === 1)
+        return this;
+
+      if (!headers && this.socket && this.socket.connected)
+        return;
+
+      this.headers = Object.assign(this.headers || {}, headers || {});
+
+      if (this.socket)
+        this.socket.disconnect();
+
+      if (io) {
+        this.socket = io(configurations.origin + '/' + this.name, {
+          reconnection: true,
+          query: { app: this.name },
+          transportOptions: {
+            polling: {
+              extraHeaders: this.headers
+            }
+          },
+          forceNew: true
+        });
+      }
+
+      return this;
+    }
+
+    namespace(nsName) {
+      if (this.namespaces && this.namespaces.indexOf(nsName) === -1)
+        return;
+
+      let app = new App(this.name + '/' + nsName, this.apiType);
+      let appOptions = configurations.apps.find(_app => _app.name === this.name);
+      
+      if (!appOptions.models || !appOptions.models.length)
+        return;
+        
+      for (let i = 0; i < appOptions.models.length; i++)
+        app[appOptions.models[i].name] = new Model(appOptions.models[i].name, appOptions.models[i].services, app);
+
+      return app;
+    }
+  }
+
+
+  /**
    * Model Class
    * ============================================================================================================================
    */
@@ -167,11 +220,12 @@
   class Model {
     // Constructor
     // ----------------------------------------------------------------------------------------------------------------------
-    constructor(name, services) {
+    constructor(name, services, app) {
       this.name = name;
       this.services = services;
       this.listeners = {};
       this.lastEvent = '';
+      this.app = app;
     }
 
     // Public Methods
@@ -210,8 +264,8 @@
 
       this.listeners[serviceName] = { res: null, handlers: [callback], errorHandlers: [] };
 
-      if (socket && this.services[serviceName].event) {
-        socket.on(this.services[serviceName].event, res => {
+      if (this.app.socket && this.services[serviceName].event) {
+        this.app.socket.on(this.services[serviceName].event, res => {
           respond.call(this, serviceName, res);
         });
       }
@@ -242,8 +296,8 @@
 
       if (!handler && serviceName) {
         delete this.listeners[serviceName];
-        if (socket)
-          socket.off(serviceName);
+        if (this.app.socket)
+          this.app.socket.off(serviceName);
 
       } else if (serviceName) {
         for (let i = 0; i < this.listeners[serviceName].handlers.length; i++)
@@ -272,8 +326,8 @@
         return this;
       }
 
-      if (socket && this.services[serviceName].event) {
-        socket.emit(this.services[serviceName].event, data);
+      if (this.app.socket && this.services[serviceName].event) {
+        this.app.socket.emit(this.services[serviceName].event, data);
       } else if (axios && this.services[serviceName].path) {
         let service = this.services[serviceName];
         options = options || {};
@@ -292,7 +346,7 @@
             respond.call(this, serviceName, err);
           });
       } else {
-        if (this.services[serviceName].event && !socket) {
+        if (this.services[serviceName].event && !this.app.socket) {
           console.error('socket is required to dispatch', this.name, serviceName, 'service!');
         } else {
           console.error('axios is required to dispatch', this.name, serviceName, 'service!');
@@ -316,10 +370,15 @@
    * Instantiating Models
    * ============================================================================================================================
    */
-  for (let i = 0; i < configurations.models.length; i++) {
-    let model = configurations.models[i];
-    apps[model.app] = apps[model.app] || {};
-    apps[model.app][model.name] = new Model(model.name, model.services);
+  for (let i = 0; i < configurations.apps.length; i++) {
+    let app = new App(configurations.apps[i].name, configurations.apps[i].apiType, configurations.apps[i].namespaces);
+
+    for (let j = 0; j < configurations.apps[i].models; j++) {
+      let model = configurations.apps[i].models[j];
+      app[model.name] = new Model(model.name, model.services, app);
+    }
+
+    apps.push(app);
   }
 
   return gypsumClient;

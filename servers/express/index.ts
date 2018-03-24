@@ -4,14 +4,15 @@ import { State } from '../../state';
 import { Logger } from '../../misc/logger';
 import { configure } from './configure_app';
 import { pushApis } from './push_apis';
+import { App } from '../../app';
+import { API_TYPES } from '../../types';
 const vhost = require('vhost');
 
 export function initExpress(app: express.Express) {
   const logger: Logger = new Logger('express');
   
-  configure(app, 'express', logger);
-
-  logger.info('Implementing statics..');
+  configure(app);
+  
   if (State.config.statics && State.config.statics.length) {
     for (let i = 0; i < State.config.statics.length; i++) {
       let parts = State.config.statics[i].split(',');
@@ -22,26 +23,18 @@ export function initExpress(app: express.Express) {
     }
   }
 
-  app.get('/gypsum-client.js', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/index.js'));
-  });
-
-  let apps = State.apps.filter(app => app.subdomain).map(app => ({ name: app.name, spa: app.spa }));
-
-  if (apps.length) {
-    for (let i = 0; i < State.apps.length; i++) {
-      if (!State.apps[i].subdomain)
-        continue;
-
-      let subApp = express();
-      configure(subApp, State.apps[i].name);
-      pushApis(subApp, State.apps[i]);
-      app.use(vhost(`${State.apps[i].name}.${State.config.host}`, subApp))
-    }
+  for (let i = 0; i < State.apps.length; i++) {
+    if (State.apps[i].$get('apiType') === API_TYPES.SOCKET)
+      continue;
+      
+    let subApp = express();
+    configure(subApp, State.apps[i]);
+    pushApis(subApp, State.apps[i]);
+    app.use(vhost(`${State.apps[i].name}.${State.config.hostName}`, subApp))
   }
 
-  let defaultApp = State.apps.find(_app => _app.name === 'default');
-  
-  if (defaultApp)
-    pushApis(app, defaultApp);
+  if (State.config.spa && State.config.spa.trim())
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(State.root, <string>State.config.spa));
+    });
 }

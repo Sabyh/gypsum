@@ -1,4 +1,4 @@
-import * as Mongodb from 'mongodb'; 
+import * as Mongodb from 'mongodb';
 import { Context } from '../context';
 import { Logger } from '../misc/logger';
 import { MongoModel, FileModel } from '../models';
@@ -9,10 +9,11 @@ import { RESPONSE_CODES } from '../types';
 export interface IReferenceHookOptions {
   path: string,
   model: string,
+  app?: string
   projections?: { [key: string]: any };
 }
 
-export function reference (ctx: Context, options: IReferenceHookOptions) {
+export function reference(ctx: Context, options: IReferenceHookOptions) {
   const logger = new Logger('referenceHook');
 
   if (!options) {
@@ -26,8 +27,8 @@ export function reference (ctx: Context, options: IReferenceHookOptions) {
     logger.warn('undefined response!');
     return ctx.next();
   }
-    
-  let model = <MongoModel>State.getModel(options.model);
+
+  let model = <MongoModel>State.getModel(options.model, options.app);
 
   if (!model) {
     logger.warn(`'${options.model}' was not found`);
@@ -35,13 +36,16 @@ export function reference (ctx: Context, options: IReferenceHookOptions) {
   }
 
   let ids: string[] = [];
+  let lookup: { [key: string]: any } = {};
 
   if (Array.isArray(response) && response.length)
     for (let i = 0; i < response.length; i++) {
       let id = objectUtil.getValue(response[i], options.path);
-      if (id)
+      if (id) {
         ids.push(id);
-    }      
+        lookup[id] = response[i];
+      }
+    }
 
   if (!ids.length) {
     logger.warn(`'${options.path}' was not found in response data`);
@@ -54,12 +58,10 @@ export function reference (ctx: Context, options: IReferenceHookOptions) {
         logger.warn(`${options.model} references were not found`);
         ctx.next();
       } else {
-        for (let i = 0; i < ids.length; i++)
-          for (let j = 0; j < res.data.length; j++) {
-            if (ids[i] === res.data[j]._id)
-              objectUtil.setValue(response[i], options.path, res.data[j]);
-
-          }
+        for (let i = 0; i < res.data.length; i++) {
+          let currentId: string = res.data[i]._id;
+          objectUtil.setValue(lookup[currentId], options.path, res.data[i]);
+        }
 
         ctx.next();
       }
