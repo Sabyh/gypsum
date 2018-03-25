@@ -200,7 +200,6 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
     schemaOptions: { required: true }
   })
   class AuthRoles extends MongoModel {
-    authenticationModel: MongoModel;
 
     private _mCreateRootRole(user: any): Promise<any> {
       this.$logger.info('creating default role');
@@ -220,21 +219,18 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
         .catch(error => { throw 'Unable to create root user role: ' + error; });
     }
 
-    constructor() {
-      super();
-
-      this.authenticationModel = <MongoModel>State.getModel((<any>authConfig.usersModelConstructor.prototype).__name || authConfig.usersModelConstructor.name);
-    }
-
     onCollection() {
-      (<Authorization>State.getModel('Authorization')).roles = this.collection;
+      console.log('searching for:', authConfig.usersModelConstructor.name);
+      let authenticationModel = <MongoModel>State.getModel(authConfig.usersModelConstructor.name, this.app);
+
+      (<Authorization>State.getModel('authorization', this.app)).roles = this.collection;
       this.$logger.info('checking roles collection');
       this.collection.find({})
         .toArray()
         .then(docs => {
           if (!docs || !docs.length) {
             this.$logger.info('no roles found');
-            (<any>this.authenticationModel).getRootUser()
+            (<any>authenticationModel).getRootUser()
               .then((user: any) => {
                 if (user)
                   this._mCreateRootRole(user)
@@ -243,7 +239,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
                       throw error;
                     });
                 else
-                  (<any>this.authenticationModel).createRootUser()
+                  (<any>authenticationModel).createRootUser()
                     .then((user: any) => this._mCreateRootRole(user))
                     .then((role: any) => this._mInsertRootRole(role))
                     .catch((error: any) => {
@@ -280,7 +276,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
   class AuthGroups extends MongoModel {
 
     onCollection() {
-      (<Authorization>State.getModel('Authorization')).groups = this.collection;
+      (<Authorization>State.getModel('Authorization', this.app)).groups = this.collection;
     }
   }
 

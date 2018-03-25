@@ -112,13 +112,13 @@ export class Context {
   private _mInit(hooks: 'before' | 'after' | 'both' | 'none' = 'both', extraHooks?: any[]): void {
     // Authentication Layer
     if (this.service.secure !== undefined && State.config.authenticationModelName) {
-      let Authentication = State.getModel(State.config.authenticationModelName);
+      let Authentication = State.getModel(State.config.authenticationModelName, this.model.app);
       if (Authentication)
         this._stack.push({ handler: (<any>Authentication).secure.bind(Authentication), args: [] });
     }
 
     if (this.service.authorize !== undefined && State.config.authorizationModelName) {
-      let Authorization = State.getModel(State.config.authorizationModelName);
+      let Authorization = State.getModel(State.config.authorizationModelName, this.model.app);
       if (Authorization)
         this._stack.push({ handler: (<any>Authorization).authorize.bind(Authorization), args: [this.service.authorize] });
     }
@@ -370,10 +370,10 @@ function* getHooks(context: Context, list: IHookOptions[]) {
 
     if (hookName) {
       if (hookName.indexOf('.') > -1) {
-        let modelName, modelHook;
-        [modelName, modelHook] = hookName.split('.');
+        let appName, modelName, modelHook;
+        [appName, modelName, modelHook] = hookName.split('.');
 
-        let model = State.getModel(modelName);
+        let model = State.getModel(modelName, appName);
 
         if (model) {
           if (model.$hasHook(modelHook))
@@ -422,11 +422,12 @@ function getReference(ctx: Context, name: string, hookName: string) {
 
   // if referencing a model
   if (name.charAt(0) === '@') {
-    let model = State.getModel(name.slice(1));
-    name = name.slice(1);
+    let app, modelName;
+    [app, modelName] = name.split('.');
+    let model = State.getModel(modelName, app.slice(1));
 
     if (!model) {
-      ctx.logger.warn(`${hookName} hook: model '${name}' is not found`);
+      ctx.logger.warn(`${hookName} hook: model '${modelName}' is not found`);
       return undefined;
     }
 
@@ -434,7 +435,7 @@ function getReference(ctx: Context, name: string, hookName: string) {
     let isAccessable = typeof accessable === 'boolean' ? accessable : accessable.indexOf(hookName) > -1;
 
     if (!isAccessable) {
-      ctx.logger.warn(`model '${name}' is not accessable from '${hookName}' hook`)
+      ctx.logger.warn(`model '${modelName}' is not accessable from '${hookName}' hook`)
       return undefined;
     }
 

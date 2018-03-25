@@ -84,10 +84,10 @@ function Connect(connection: any, logger: Logger) {
           for (let i = 0; i < currentApp.models.length; i++) {
             let model = currentApp.models[i];
 
-            if (model.type === 'Mongo')
+            if (model.type !== 'Mongo')
               continue;
 
-            (<MongoModel>model)[<'setCollection'>safe.get('MongoModel.setCollection')](db.collection(model.name));
+            (<MongoModel>model).$setCollection(db.collection(model.name));
           }
         }
       }

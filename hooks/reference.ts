@@ -9,7 +9,7 @@ import { RESPONSE_CODES } from '../types';
 export interface IReferenceHookOptions {
   path: string,
   model: string,
-  app?: string
+  app: string
   projections?: { [key: string]: any };
 }
 

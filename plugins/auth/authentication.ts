@@ -13,14 +13,12 @@ import { toRegExp, verify, hash, stringUtil } from '../../util';
 import { IAuthenticationConfig, IEmailTransporter, IAuthenticationConfigOptions } from './config';
 export type getOptions = keyof IModelOptions;
 
-export class Authentication {};
+export class Authentication { };
 
 export function initAuthentication(authConfig: IAuthenticationConfigOptions, transporterOptions?: IEmailTransporter): any {
 
   let UserConstructor: typeof MongoModel = authConfig.usersModelConstructor || MongoModel;
-  let modelName = UserConstructor.name;
-
-  State.config.authenticationModelName = modelName;
+  let modelName = UserConstructor.name.toLowerCase();
 
   @MODEL({
     accessable: false
@@ -31,7 +29,8 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     constructor() {
       super();
 
-      this.name = UserConstructor.name.toLowerCase();
+      this.name = modelName;
+      State.config.authenticationModelName = this.app + '/' + this.name;
 
       if (transporterOptions) {
         this.transporter = createTransport(transporterOptions);
@@ -231,16 +230,16 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     }
 
     @SERVICE({
-      args: ['body.userId', 'body.password'],
+      args: ['body.email', 'body.password'],
       method: 'post',
       after: ['Authentication.pushToken']
     })
-    signin(userId: string, password: string, ctx: Context): Promise<IResponse> {
+    signin(email: string, password: string, ctx: Context): Promise<IResponse> {
       return new Promise((resolve, reject) => {
 
-        if (!userId && !userId.trim())
+        if (!email && !email.trim())
           return reject({
-            message: 'username or email is required',
+            message: 'email is required',
             code: RESPONSE_CODES.BAD_REQUEST
           });
 
@@ -252,10 +251,13 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
 
         let query: any = {};
 
-        if (Validall.Is.email(userId))
-          query[authConfig.userEmailField] = userId;
+        if (Validall.Is.email(email))
+          query[authConfig.userEmailField] = email;
         else
-          query[authConfig.usernameField] = userId;
+          return reject({
+            message: 'invalid email',
+            code: RESPONSE_CODES.BAD_REQUEST
+          });
 
         this.collection
           .findOne(query)
@@ -295,7 +297,6 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     @SERVICE({
       args: ['body.documents'],
       method: 'post',
-      before: [`exists:@${modelName}:documents.email`, `exists:@${modelName}:documents.username`],
       after: ['Authentication.pushToken', 'Authentication.activationEmail']
     })
     signup(documents: any, ctx: Context): Promise<IResponse> {
@@ -303,7 +304,6 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
 
         try {
           let state = Validall(documents, {
-            [authConfig.usernameField]: { $type: 'string', $regex: toRegExp(authConfig.usernamePattern), $message: 'invalid username' },
             [authConfig.userEmailField]: { $type: 'string', $is: 'email', $message: 'invalid email' },
             [authConfig.passwordField]: { $required: true, $type: 'string', $regex: toRegExp(authConfig.passwordpattern), $message: 'invalid password' }
           });
@@ -314,31 +314,47 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
               original: Validall.error,
               code: RESPONSE_CODES.BAD_REQUEST
             });
+
+          this.collection.count({ email: documents[0].email })
+            .then(count => {
+              if (count)
+                return reject({
+                  message: 'document with same email already exists!',
+                  code: RESPONSE_CODES.BAD_REQUEST
+                });
+
+              hash(documents[authConfig.passwordField])
+                .then(results => {
+                  if (results && results.length) {
+                    documents[authConfig.passwordField] = results[0];
+                    documents[authConfig.passwordSaltField] = results[1];
+                    ctx.useService(this, 'insert');
+                  } else {
+                    reject({
+                      message: 'Error hashing password',
+                      code: RESPONSE_CODES.UNKNOWN_ERROR
+                    })
+                  }
+                })
+                .catch(error => {
+                  reject({
+                    message: 'Error hashing password',
+                    original: error,
+                    code: RESPONSE_CODES.UNKNOWN_ERROR
+                  });
+                });
+
+            })
+            .catch(err => reject({
+              message: 'error checking email existance!',
+              original: err,
+              code: RESPONSE_CODES.BAD_REQUEST
+            }));
+
         } catch (e) {
           console.trace(e);
         }
 
-        hash(documents[authConfig.passwordField])
-          .then(results => {
-            if (results && results.length) {
-              documents[authConfig.passwordField] = results[0];
-              documents[authConfig.passwordSaltField] = results[1];
-              console.log(results);
-              ctx.useService(this, 'insert');
-            } else {
-              reject({
-                message: 'Error hashing password',
-                code: RESPONSE_CODES.UNKNOWN_ERROR
-              })
-            }
-          })
-          .catch(error => {
-            reject({
-              message: 'Error hashing password',
-              original: error,
-              code: RESPONSE_CODES.UNKNOWN_ERROR
-            });
-          });
       });
     }
   }

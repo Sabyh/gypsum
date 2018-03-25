@@ -37,11 +37,14 @@ export class AppState {
   middlewares: Function;
   hooks: IHook[] = [];
 
-  getModel(name: string, appName: string = 'default'): Model | MongoModel | FileModel | undefined {
+  getModel(name: string, appName: string): Model | MongoModel | FileModel | undefined {
     let app = this.apps.find(_app => _app.name === appName);
 
     if (app && app.models)
-      return app.models.find(model => model.name === name.toLowerCase()) || undefined;
+      return app.models.find(model => {
+        console.log(model.name, name.toLowerCase())
+        return model.name === name.toLowerCase()
+      }) || undefined;
 
     return undefined;
   }

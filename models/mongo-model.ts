@@ -17,9 +17,8 @@ export class MongoModel extends Model {
 
     this.type = 'Mongo';
   }
-
-  @FRIEND(safe.set('MongoModel.setCollection', ['mongo']))
-  protected setCollection(collection: MongoDB.Collection) {
+  
+  $setCollection(collection: MongoDB.Collection) {
     this.collection = collection;
 
     if (this.$get('indexes') && this.$get('indexes').length)
