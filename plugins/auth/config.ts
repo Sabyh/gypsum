@@ -31,6 +31,7 @@ export interface IAuthenticationConfigOptions {
   activationMailFrom: string;
   activationMailSubject: string;
   activationMailTemplatePath: string;
+  forgetPasswordMailTemplatePath: string;
   activationPage: string;
   authorization: boolean;
 }
@@ -58,5 +59,6 @@ export const defaultConfig = {
   activationMailSubject: 'Gypsum Activation Email',
   activationPage: path.join(__dirname, '../templates/activation-page-template.html'),
   activationMailTemplatePath: path.join(__dirname, '../templates/activation-email-template.html'),
+  forgetPasswordMailTemplatePath: path.join(__dirname, '../templates/forget-password-email-template.html'),
   authorization: false
 }

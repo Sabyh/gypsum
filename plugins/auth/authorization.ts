@@ -162,10 +162,10 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
         let result: any = [];
 
         for (let j = 0; j < State.apps.length; j++) {
-          if (State.apps[j].models && State.apps[j].models!.length) {
+          if (State.apps[j].models && State.apps[j].models.length) {
 
-            for (let i = 0; i < State.apps[i].models!.length; i++) {
-              let model = State.apps[i].models![i];
+            for (let i = 0; i < State.apps[i].models.length; i++) {
+              let model = State.apps[i].models[i];
               let modelName = model.name;
               let record: { model: string; services: string[] } = { model: modelName, services: [] };
               let services = model.$getServices();

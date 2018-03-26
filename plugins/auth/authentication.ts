@@ -9,7 +9,7 @@ import { Model, MongoModel } from '../../models';
 import { Context } from '../../context';
 import { RESPONSE_CODES, API_TYPES, IResponse } from '../../types';
 import { SERVICE, MODEL, HOOK, IModelOptions } from '../../decorators';
-import { toRegExp, verify, hash, stringUtil } from '../../util';
+import { toRegExp, verify, hash, stringUtil, random } from '../../util';
 import { IAuthenticationConfig, IEmailTransporter, IAuthenticationConfigOptions } from './config';
 export type getOptions = keyof IModelOptions;
 
@@ -224,6 +224,86 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
           .catch(error => reject({
             message: 'error activating user account',
             original: error,
+            code: RESPONSE_CODES.UNKNOWN_ERROR
+          }));
+      });
+    }
+
+    @SERVICE()
+    forgetPassword(ctx: Context) {
+      return new Promise((resolve, reject) => {
+        let email = ctx.body.email;
+
+        this.collection.findOne({ email: email })
+          .then(user => {
+            if (!user)
+              return reject({
+                message: 'email is not registered',
+                code: RESPONSE_CODES.BAD_REQUEST
+              });
+
+            let newPassword = random(19);
+            let hashedPassword;
+            let passwordSalt;
+
+            hash(newPassword)
+              .then((result: [string, string]) => {
+                let hashedPassword = result[0];
+                let passwordSalt = result[1];
+
+                this.collection.findOneAndUpdate({ _id: user._id }, {
+                  $set: {
+                    [authConfig.passwordField]: hashedPassword,
+                    [authConfig.passwordSaltField]: passwordSalt,
+                  }
+                }, {
+                    returnOriginal: false
+                  })
+                  .then(doc => {
+
+                    fs.readFile(authConfig.forgetPasswordMailTemplatePath, (err, template) => {
+                      if (err)
+                        return reject({
+                          message: 'error reading forget password email template',
+                          original: err,
+                          code: RESPONSE_CODES.UNKNOWN_ERROR
+                        });
+
+                      let emailOptions: SendMailOptions = {
+                        from: authConfig.activationMailSubject,
+                        to: user[authConfig.userEmailField],
+                        subject: authConfig.activationMailSubject,
+                        html: stringUtil.compile(template.toString('utf-8'), { username: user[authConfig.usernameField], password: newPassword })
+                      };
+
+                      this.transporter.sendMail(emailOptions, (sendEmailError: any, info: any) => {
+                        if (sendEmailError)
+                          return reject({
+                            message: `error sending forget password email`,
+                            original: sendEmailError,
+                            code: RESPONSE_CODES.UNKNOWN_ERROR
+                          });
+
+                        this.$logger.info('Message %s sent: %s', info.messageId, info.response);
+                        resolve(true);
+                      });
+                    });
+                  })
+                  .catch(err => reject({
+                    message: 'error updaring user password',
+                    original: err,
+                    code: RESPONSE_CODES.UNKNOWN_ERROR
+                  }));
+              })
+              .catch(err => reject({
+                message: 'error hashing new password',
+                original: err,
+                code: RESPONSE_CODES.UNKNOWN_ERROR
+              }));
+          })
+          .catch(err => reject({
+            message: 'error finding user',
+            original: err,
             code: RESPONSE_CODES.UNKNOWN_ERROR
           }));
       });
