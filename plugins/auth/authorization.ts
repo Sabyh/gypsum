@@ -1,4 +1,5 @@
-import { Collection } from 'mongodb';
+import * as Validall from 'validall';
+import * as MongoDB from 'mongodb';
 import { Model, MongoModel } from '../../models';
 import { Context } from '../../context';
 import { MODEL, HOOK, SERVICE } from '../../decorators';
@@ -25,16 +26,20 @@ export interface IPermission {
 export function initAuthorization(authConfig: IAuthenticationConfigOptions): any[] {
   Logger.Info('Initializing Authorization Layer...');
 
-  State.config.authorizationModelPath = 'Authorization';
-
   /** 
    * Authorization
    * ====================================================================================================================================
   */
   @MODEL()
   class Authorization extends Model {
-    roles: Collection;
-    groups: Collection;
+    roles: MongoDB.Collection;
+    groups: MongoDB.Collection;
+
+    constructor(appName: string) {
+      super(appName);
+
+      State.config.authorizationModelPath = appName + '/' + this.name;
+    }
 
     private _mGetUserRolesFromGroups(id: string): Promise<string[]> {
       return new Promise((resolve, reject) => {
@@ -69,8 +74,59 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
       });
     }
 
+    private _mFetchData(appName: string, modelName: string, options: { find: any, field: string, match: string }, ctx: Context): Promise<void> {
+      return new Promise((resolve, reject) => {
+        if (!options)
+          return reject({
+            message: 'invalid options',
+            code: RESPONSE_CODES.BAD_REQUEST
+          });
+
+        let model: any = State.getModel(modelName, appName);
+
+        if (!model)
+          return reject({
+            message: `model ${appName}.${modelName} not found`,
+            code: RESPONSE_CODES.BAD_REQUEST
+          });
+
+        let cursor: MongoDB.Cursor = model.find(options.find.query, options.find.projections || {});
+
+        for (let prop in (options.find.options || {}))
+          if (prop in cursor)
+            (<any>cursor)[prop](options.find.options[prop]);
+
+        cursor
+          .toArray()
+          .then((docs: any[]) => {
+            if (!docs)
+              return reject({
+                message: 'document not found',
+                code: RESPONSE_CODES.BAD_REQUEST
+              });
+
+            for (let i = 0; i < docs.length; i++) {
+              let compareValue = objectUtil.getValue(docs[i], options.match);
+              if (options.field !== compareValue)
+                return reject({
+                  message: 'no match',
+                  code: RESPONSE_CODES.UNAUTHORIZED
+                });
+            }
+
+            ctx.set('fetchedData', docs);
+            resolve();
+          })
+          .catch((err: any) => reject({
+            message: err,
+            code: RESPONSE_CODES.UNKNOWN_ERROR
+          }));
+
+      });
+    }
+
     @HOOK()
-    authorize(options: boolean | string[], ctx: Context): Promise<void> {
+    authorize(options: { field: string, match: string, find: any } | boolean, ctx: Context): Promise<void> {
       return new Promise((resolve, reject) => {
 
         if (!ctx.user)
@@ -79,8 +135,48 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
             code: RESPONSE_CODES.UNAUTHORIZED
           });
 
+        let appName = ctx.appName.toLowerCase();
         let modelName = ctx.model.name.toLowerCase();
         let serviceName = ctx.service.name.toLowerCase();
+
+        if (Validall.Types.object(options) && (<any>options).field && (<any>options).match) {
+          (<any>options).field = objectUtil.getValue(ctx.user, (<any>options).field);
+
+          if (!(<any>options).find) {
+            (<any>options).match = objectUtil.getValue(ctx, (<any>options).match);
+
+            if ((<any>options).field !== (<any>options).match)
+              return reject({
+                message: 'user not authorized',
+                code: RESPONSE_CODES.UNAUTHORIZED
+              });
+
+            return resolve();
+
+          } else {
+            if ((<any>options).find === 'string') {
+              (<any>options).find = objectUtil.getValue(ctx, (<any>options).find);
+            } else {
+              if ((<any>options).find.query === 'string')
+                (<any>options).find.query = objectUtil.getValue(ctx, (<any>options).find.query);
+              else
+                for (let prop in (<any>options).find.query)
+                  if (typeof (<any>options).find.query[prop] === 'string' && (<any>options).find.query[prop].charAt(0) === '@')
+                    (<any>options).find.query[prop] = objectUtil.getValue(ctx, (<any>options).find.query[prop].slice(1));
+
+              if ((<any>options).find.projections === 'string')
+                (<any>options).find.projections = objectUtil.getValue(ctx, (<any>options).find.projections);
+
+              if ((<any>options).find.options === 'string')
+                (<any>options).find.options = objectUtil.getValue(ctx, (<any>options).find.options);
+            }
+
+            if ((<any>options).find.query._id)
+              (<any>options).find.query._id = new MongoDB.ObjectID((<any>options).find.query._id)
+
+            return this._mFetchData(appName, modelName, <any>options, ctx);
+          }
+        }
 
         this._mGetUserRolesFromGroups(ctx.user._id)
           .then(roles => this._mGetUserPermissionsFromRules(ctx.user._id, roles))
@@ -96,37 +192,6 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
                   return resolve();
                 }
               }
-            }
-
-            if (options !== true && Array.isArray(options)) {
-              for (let i = 0; i < (<string[]>options).length; i++) {
-                let option: string = (<string[]>options)[i];
-                let parts = option.split(':');
-                let userField: string = <string>parts.shift();
-                let contextPathArr = parts[0].split('.');
-                let contextField: string | undefined = contextPathArr.shift();
-                let contextSubField: string = contextPathArr.join('.');
-
-                if (!userField || !contextField || !contextSubField || ['query', 'body', 'params'].indexOf(contextField) === -1)
-                  return reject({
-                    message: `${Authorization}: bad options provided: ${options}`,
-                    code: RESPONSE_CODES.BAD_REQUEST
-                  });
-
-                let val01 = objectUtil.getValue(ctx.user, <string>userField);
-                let val02 = objectUtil.getValue((<any>ctx)[contextField], contextSubField);
-
-                if (userField === '_id')
-                  val01 = val01.toString();
-
-                if (val01 !== val02)
-                  return reject({
-                    message: 'user not authorized',
-                    code: RESPONSE_CODES.UNAUTHORIZED
-                  });
-              }
-
-              return resolve();
             }
 
             reject({
@@ -158,7 +223,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
     @SERVICE()
     find(): Promise<IResponse> {
       return new Promise((resolve, reject) => {
-        
+
         let result: any = [];
 
         for (let j = 0; j < State.apps.length; j++) {
@@ -170,10 +235,10 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
               let record: { model: string; services: string[] } = { model: modelName, services: [] };
               let services = model.$getServices();
 
-              if (Object.keys(services).length) 
+              if (Object.keys(services).length)
                 for (let prop in services)
                   record.services.push(prop);
-    
+
               result.push(record);
             }
           }

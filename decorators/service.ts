@@ -52,6 +52,7 @@ const defaultOptions: { [key: string]: IServiceOptions } = {
   count: { domain: RESPONSE_DOMAINS.SELF, method: 'get' },
   search: { domain: RESPONSE_DOMAINS.SELF, method: 'post' },
   insert: { domain: RESPONSE_DOMAINS.ALL, method: 'post' },
+  insertOne: { domain: RESPONSE_DOMAINS.ALL, method: 'post' },
   update: { domain: RESPONSE_DOMAINS.ALL, method: 'put' },
   updateById: { domain: RESPONSE_DOMAINS.ALL, method: 'put', params: ['id'] },
   updateOne: { domain: RESPONSE_DOMAINS.ALL, method: 'put' },

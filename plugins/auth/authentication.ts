@@ -20,17 +20,15 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
   let UserConstructor: typeof MongoModel = authConfig.usersModelConstructor || MongoModel;
   let modelName = UserConstructor.name.toLowerCase();
 
-  @MODEL({
-    accessable: false
-  })
+  @MODEL()
   class Authentication extends UserConstructor {
     transporter: any;
 
-    constructor() {
-      super();
+    constructor(appName: string) {
+      super(appName);
 
       this.name = modelName;
-      State.config.authenticationModelPath = this.app + '/' + this.name;
+      State.config.authenticationModelPath = appName + '/' + this.name;
 
       if (transporterOptions) {
         this.transporter = createTransport(transporterOptions);
@@ -229,10 +227,25 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
       });
     }
 
-    @SERVICE()
-    forgetPassword(ctx: Context) {
+    @SERVICE({
+      secure: false,
+      authorize: false,
+      args: ['body.email']
+    })
+    forgetPassword(email: string) {
       return new Promise((resolve, reject) => {
-        let email = ctx.body.email;
+
+        if (!email)
+          return reject({
+            message: 'email is required',
+            code: RESPONSE_CODES.BAD_REQUEST
+          });
+
+        if (!Validall.Is.email('email'))
+          return reject({
+            message: 'invalid email',
+            code: RESPONSE_CODES.BAD_REQUEST
+          });
 
         this.collection.findOne({ email: email })
           .then(user => {
@@ -310,6 +323,8 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     }
 
     @SERVICE({
+      secure: false,
+      authorize: false,
       args: ['body.email', 'body.password'],
       method: 'post',
       after: ['Authentication.pushToken']
@@ -375,6 +390,8 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     }
 
     @SERVICE({
+      secure: false,
+      authorize: false,
       args: ['body.documents'],
       method: 'post',
       after: ['Authentication.pushToken', 'Authentication.activationEmail']

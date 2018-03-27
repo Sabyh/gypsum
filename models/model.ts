@@ -20,6 +20,10 @@ export class Model {
   public $logger: Logger;
   public name = this.constructor.name.toLowerCase();
 
+  constructor(appName: string) {
+    this.app = appName;
+  }
+
   private _mArrangeServices() {
     this._servicesData = {};
     let eliminationsList = this.$get('eliminate');
@@ -109,10 +113,9 @@ export class Model {
   }
 
   @FRIEND(safe.set('model.init', ['app']))
-  protected init(appName: string) {
+  protected init() {
     let modelName = this.name;
 
-    this.app = appName;
     this.$logger = new Logger(modelName);
 
     this._mArrangeServices();

@@ -12,8 +12,8 @@ export class App {
     let models = this.$get('models');
 
     for (let i = 0; i < models.length; i++) {
-      this.models.push(new models[i]());
-      this.models[i][<'init'>safe.get('model.init')](this.name);
+      this.models.push(new models[i](this.name));
+      this.models[i][<'init'>safe.get('model.init')]();
     }
   }
 

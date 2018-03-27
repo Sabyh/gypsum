@@ -8,8 +8,9 @@ import { SERVICE } from '../../decorators';
 export class FileModel extends Model {
   protected collection: FileCollection;
 
-  constructor() {
-    super();
+  constructor(appName: string) {
+    super(appName);
+    
     this.collection = new FileCollection(this.name, this.$get('schema'));
     this.type = 'File';
   }
@@ -17,7 +18,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['query.query', 'query.projections', 'query.options']
   })
-  find(query: any = {}, projections: string, options: any): Promise<IResponse> {
+  find(query: any = {}, projections: string, options: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('find service called');
       this.$logger.debug('query:', query);
@@ -33,7 +34,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['params.id', 'query.projections']
   })
-  findById(id: string, projections: string): Promise<IResponse> {
+  findById(id: string, projections: string, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('findById service called');
       this.$logger.debug('id:', id);
@@ -48,7 +49,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['query.query', 'query.projections']
   })
-  findOne(query: any, projections: string): Promise<IResponse> {
+  findOne(query: any, projections: string, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('findOne service called');
       this.$logger.debug('query:', query);
@@ -63,7 +64,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['query.query']
   })
-  count(query: any): Promise<IResponse> {
+  count(query: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('count service called');
       this.$logger.debug('query:', query);
@@ -77,7 +78,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['body.query', 'body.projections', 'body.options']
   })
-  search(query: any, projections: string, options: any): Promise<IResponse> {
+  search(query: any, projections: string, options: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('search service called');
       this.$logger.debug('query:', query);
@@ -93,7 +94,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['body.documents']
   })
-  insert(documents: any): Promise<IResponse> {
+  insert(documents: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
 
       this.$logger.info('insert service called');
@@ -106,9 +107,16 @@ export class FileModel extends Model {
   }
 
   @SERVICE({
+    args: ['body.document']
+  })
+  insertOne(document: any, ctx?: Context): Promise<IResponse> {
+    return this.insert([document]);
+  }
+
+  @SERVICE({
     args: ['body.filter', 'body.update', 'body.options']
   })
-  update(filter: any, update: any, options: any): Promise<IResponse> {
+  update(filter: any, update: any, options: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('update service called');
       this.$logger.debug('filter:', filter);
@@ -124,7 +132,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['params.id', 'body.update']
   })
-  updateById(id: string, update: any): Promise<IResponse> {
+  updateById(id: string, update: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('update service called');
       this.$logger.debug('id:', id);
@@ -139,7 +147,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['body.filter', 'body.update']
   })
-  updateOne(filter: any, update: any): Promise<IResponse> {
+  updateOne(filter: any, update: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('update service called');
       this.$logger.debug('filter:', filter);
@@ -154,7 +162,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['body.filter', 'body.options']
   })
-  delete(filter: any, options: any): Promise<IResponse> {
+  delete(filter: any, options: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('delete service called');
       this.$logger.debug('filter:', filter);
@@ -175,7 +183,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['params.id']
   })
-  deleteById(id: string): Promise<IResponse> {
+  deleteById(id: string, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('deleteById service called');
       this.$logger.debug('id:', id);
@@ -195,7 +203,7 @@ export class FileModel extends Model {
   @SERVICE({
     args: ['body.filter']
   })
-  deleteOne(filter: any): Promise<IResponse> {
+  deleteOne(filter: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.$logger.info('deleteOne service called');
       this.$logger.debug('filter:', filter);

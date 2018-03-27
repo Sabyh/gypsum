@@ -12,8 +12,8 @@ const safe = new Safe('mongoModel');
 export class MongoModel extends Model {
   protected collection: MongoDB.Collection;
 
-  constructor() {
-    super();
+  constructor(appName: string) {
+    super(appName);
 
     this.type = 'Mongo';
   }
@@ -34,7 +34,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['query.query', 'query.options']
   })
-  count(query: any = {}, options: any = {}): Promise<IResponse> {
+  count(query: any = {}, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('count service called');
     this.$logger.debug('query:', query);
     this.$logger.debug('options:', options);
@@ -62,7 +62,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['query.query', 'query.projections', 'query.options']
   })
-  find(query: any = {}, projections: any = {}, options: any = {}): Promise<IResponse> {
+  find(query: any = {}, projections: any = {}, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('find service called');
     this.$logger.debug('query:', query);
     this.$logger.debug('projections:', projections);
@@ -109,7 +109,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['query.query', 'query.options']
   })
-  findOne(query: any, options: any = {}): Promise<IResponse> {
+  findOne(query: any, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('findOne service called');
     this.$logger.debug('query:', query);
     this.$logger.debug('options:', options);
@@ -151,7 +151,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['params.id', 'query.options']
   })
-  findById(id: string, options: any = {}): Promise<IResponse> {
+  findById(id: string, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('findById service called');
     this.$logger.debug('id:', id);
     this.$logger.debug('options:', options);
@@ -189,7 +189,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['body.documents', 'body.writeConcern']
   })
-  insert(documents: any, writeConcern: any = {}): Promise<IResponse> {
+  insert(documents: any, writeConcern: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('insert service called');
     this.$logger.debug('documents:')
     this.$logger.debug(documents);
@@ -268,9 +268,16 @@ export class MongoModel extends Model {
   }
 
   @SERVICE({
+    args: ['body.document', 'body.writeConcern']
+  })
+  insertOne(document: any, writeConcern: any = {}, ctx?: Context): Promise<IResponse> {
+    return this.insert([document], writeConcern);
+  }
+
+  @SERVICE({
     args: ['body.query', 'body.projections', 'body.options']
   })
-  search(query: any = {}, projections: any = {}, options: any = {}): Promise<IResponse> {
+  search(query: any = {}, projections: any = {}, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('search service called');
     this.$logger.debug('query:', query);
     this.$logger.debug('projections:', projections);
@@ -316,7 +323,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['body.filter', 'body.update', 'body.options']
   })
-  update(filter: any, update: any, options = {}): Promise<IResponse> {
+  update(filter: any, update: any, options = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('update service called');
     this.$logger.debug('filter:', filter);
     this.$logger.debug('update:', update);
@@ -354,7 +361,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['body.filter', 'body.update', 'body.options']
   })
-  updateOne(filter: any, update: any, options: any = {}): Promise<IResponse> {
+  updateOne(filter: any, update: any, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('updateOne service called');
     this.$logger.debug('filter:', filter);
     this.$logger.debug('update:', update);
@@ -500,7 +507,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['params.id', 'body.update', 'body.options']
   })
-  updateById(id: string, update: any, options: any = {}): Promise<IResponse> {
+  updateById(id: string, update: any, options: any = {}, ctx?: Context): Promise<IResponse> {
 
     this.$logger.info('updateById service called');
     this.$logger.debug('id:', id);
@@ -638,7 +645,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['body.filter', 'body.options']
   })
-  delete(filter: any, options: any = {}): Promise<IResponse> {
+  delete(filter: any, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('delete service called');
     this.$logger.debug('filter:', filter);
     this.$logger.debug('options:', options);
@@ -667,7 +674,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['body.filter', 'body.options']
   })
-  deleteOne(filter: any, options: any = {}): Promise<IResponse> {
+  deleteOne(filter: any, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('deleteOne service called');
     this.$logger.debug('id:', filter);
     this.$logger.debug('options:', options);
@@ -699,7 +706,7 @@ export class MongoModel extends Model {
   @SERVICE({
     args: ['params.id', 'body.options']
   })
-  deleteById(id: string, options: any = {}): Promise<IResponse> {
+  deleteById(id: string, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('deleteById service called');
     this.$logger.debug('id:', id);
     this.$logger.debug('options:', options);
@@ -720,6 +727,5 @@ export class MongoModel extends Model {
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
     });
-
   }
 }

@@ -38,8 +38,8 @@ export class Context {
   private _cookies: any;
   private _domain: RESPONSE_DOMAINS | undefined;
   private _room: string;
-  private _appName: string;
   
+  readonly appName: string;
   readonly _req: express.Request | undefined;
   readonly _res: express.Response | undefined;
 
@@ -59,7 +59,7 @@ export class Context {
     this._res = data.res || undefined;
     this._cookies = data.cookies;
     this._domain = data.domain;
-    this._appName = data.appName;
+    this.appName = data.appName;
     this._room = data.room || '';
     this.apiType = type;
     this.headers = data.headers;
@@ -181,9 +181,9 @@ export class Context {
 
         } else if (this._response.domain === RESPONSE_DOMAINS.ALL) {
           if (process && process.send)
-            (<any>process).send({ data: this._response, target: 'others', action: 'response', appName: this._appName })
+            (<any>process).send({ data: this._response, target: 'others', action: 'response', appName: this.appName })
           
-          let io: any = State.ioNamespaces[this._appName];
+          let io: any = State.ioNamespaces[this.appName];
 
           if (io)
             io.sockets.emit(event, this._response);
