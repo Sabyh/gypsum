@@ -27,8 +27,8 @@ export interface IServerConfigOptions {
   upload_size_limit_mb: number;
   logger_options: ILoggerOptions | null;
   logger_out_dir: string;
-  authenticationModelName: string;
-  authorizationModelName: string;
+  authenticationModelPath: string;
+  authorizationModelPath: string;
 }
 
 export type IServerConfig = {
@@ -58,8 +58,8 @@ export const Config: IGypsumConfig = {
     upload_size_limit_mb: 10,
     logger_options: { all: { level: ['all'] } },
     logger_out_dir: 'logs',
-    authenticationModelName: '',
-    authorizationModelName: '',
+    authenticationModelPath: '',
+    authorizationModelPath: '',
   },
 
   prod: {

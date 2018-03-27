@@ -30,7 +30,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
       super();
 
       this.name = modelName;
-      State.config.authenticationModelName = this.app + '/' + this.name;
+      State.config.authenticationModelPath = this.app + '/' + this.name;
 
       if (transporterOptions) {
         this.transporter = createTransport(transporterOptions);
