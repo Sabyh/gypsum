@@ -74,7 +74,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
       });
     }
 
-    private _mFetchData(appName: string, modelName: string, options: { find: any, field: string, match: string }, ctx: Context): Promise<void> {
+    private _mFetchData(appName: string, modelName: string, options: { fetch: any, field: string, match: string }, ctx: Context): Promise<void> {
       return new Promise((resolve, reject) => {
         if (!options)
           return reject({
@@ -90,11 +90,11 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
             code: RESPONSE_CODES.BAD_REQUEST
           });
 
-        let cursor: MongoDB.Cursor = model.find(options.find.query, options.find.projections || {});
+        let cursor: MongoDB.Cursor = model.find(options.fetch.query, options.fetch.projections || {});
 
-        for (let prop in (options.find.options || {}))
+        for (let prop in (options.fetch.options || {}))
           if (prop in cursor)
-            (<any>cursor)[prop](options.find.options[prop]);
+            (<any>cursor)[prop](options.fetch.options[prop]);
 
         cursor
           .toArray()
@@ -142,7 +142,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
         if (Validall.Types.object(options) && (<any>options).field && (<any>options).match) {
           (<any>options).field = objectUtil.getValue(ctx.user, (<any>options).field);
 
-          if (!(<any>options).find) {
+          if (!(<any>options).fetch) {
             (<any>options).match = objectUtil.getValue(ctx, (<any>options).match);
 
             if ((<any>options).field !== (<any>options).match)
@@ -154,25 +154,25 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
             return resolve();
 
           } else {
-            if ((<any>options).find === 'string') {
-              (<any>options).find = objectUtil.getValue(ctx, (<any>options).find);
+            if ((<any>options).fetch === 'string') {
+              (<any>options).fetch = objectUtil.getValue(ctx, (<any>options).fetch);
             } else {
-              if ((<any>options).find.query === 'string')
-                (<any>options).find.query = objectUtil.getValue(ctx, (<any>options).find.query);
+              if ((<any>options).fetch.query === 'string')
+                (<any>options).fetch.query = objectUtil.getValue(ctx, (<any>options).fetch.query);
               else
-                for (let prop in (<any>options).find.query)
-                  if (typeof (<any>options).find.query[prop] === 'string' && (<any>options).find.query[prop].charAt(0) === '@')
-                    (<any>options).find.query[prop] = objectUtil.getValue(ctx, (<any>options).find.query[prop].slice(1));
+                for (let prop in (<any>options).fetch.query)
+                  if (typeof (<any>options).fetch.query[prop] === 'string' && (<any>options).fetch.query[prop].charAt(0) === '@')
+                    (<any>options).fetch.query[prop] = objectUtil.getValue(ctx, (<any>options).fetch.query[prop].slice(1));
 
-              if ((<any>options).find.projections === 'string')
-                (<any>options).find.projections = objectUtil.getValue(ctx, (<any>options).find.projections);
+              if ((<any>options).fetch.projections === 'string')
+                (<any>options).fetch.projections = objectUtil.getValue(ctx, (<any>options).fetch.projections);
 
-              if ((<any>options).find.options === 'string')
-                (<any>options).find.options = objectUtil.getValue(ctx, (<any>options).find.options);
+              if ((<any>options).fetch.options === 'string')
+                (<any>options).fetch.options = objectUtil.getValue(ctx, (<any>options).fetch.options);
             }
 
-            if ((<any>options).find.query._id)
-              (<any>options).find.query._id = new MongoDB.ObjectID((<any>options).find.query._id)
+            if ((<any>options).fetch.query._id)
+              (<any>options).fetch.query._id = new MongoDB.ObjectID((<any>options).fetch.query._id)
 
             return this._mFetchData(appName, modelName, <any>options, ctx);
           }
@@ -249,6 +249,12 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
     }
   }
 
+  interface II {
+    name: StringConstructor
+  }
+
+  var obj: II = { name: String }
+
 
   /** 
    * Roles
@@ -258,9 +264,9 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
     secure: true,
     authorize: true,
     schema: {
-      name: 'string',
-      users: 'string[]',
-      permissions: [{ model: 'string', services: 'string[]' }]
+      name: String,
+      users: String ,
+      permissions: { model: 'string', services: 'string[]' }
     },
     schemaOptions: { required: true }
   })

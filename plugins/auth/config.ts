@@ -22,7 +22,7 @@ export interface IAuthenticationConfigOptions {
   usernameField: string;
   passwordField: string;
   passwordSaltField: string;
-  userIsActiveField: string;
+  userVerifiedField: string;
   tokenFieldName: string;
   tokenSecret: string;
   usernamePattern: string;
@@ -49,7 +49,7 @@ export const defaultConfig = {
   usernameField: 'username',
   passwordField: 'password',
   passwordSaltField: 'passwordSalt',
-  userIsActiveField: 'isActive',
+  userIsActiveField: 'verified',
   tokenFieldName: 'token',
   tokenSecret: '4s8e1doenf3q2d6q2x4fv12',
   usernamePattern: '/[a-zA-Z0-9_]{5,}/',

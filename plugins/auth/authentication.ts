@@ -73,7 +73,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
               [authConfig.userEmailField]: authConfig.rootUserEmail,
               [authConfig.passwordField]: results[0],
               [authConfig.passwordSaltField]: results[1],
-              [authConfig.userIsActiveField]: true
+              [authConfig.userVerifiedField]: true
             })
               .then(doc => {
                 if (doc)
@@ -204,7 +204,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
         let user = ctx.user;
 
         this.collection
-          .updateOne({ _id: new MongoDB.ObjectID(user._id) }, { $set: { [authConfig.userIsActiveField]: true } })
+          .updateOne({ _id: new MongoDB.ObjectID(user._id) }, { $set: { [authConfig.userVerifiedField]: true } })
           .then(doc => {
             fs.readFile(authConfig.activationPage, 'utf-8', (err, data) => {
               if (err)

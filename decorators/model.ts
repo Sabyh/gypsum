@@ -14,7 +14,7 @@ export interface IModelOptions {
   domain?: RESPONSE_DOMAINS;
   before?: IHookOptions[];
   after?: IHookOptions[];
-  schema?: Validall.Schema | Validall.ISchema;
+  schema?: Validall.ISchema;
   schemaOptions?: Validall.ISchemaOptions;
   indexes?: { name: string, options?: MongoDB.IndexOptions }[];
   cors?: CorsOptions;
@@ -50,15 +50,8 @@ export function MODEL(options: IModelOptions = {}) {
         (<any>options)[prop] = (<any>defaults)[prop];
 
     if (options.schema) {
-
-      if (!(options.schema instanceof Validall.Schema)) {
-        options.schemaOptions = Object.assign({}, defaultSchemaOptions, { root: Target.name }, options.schemaOptions || {});
-        options.schema = Object.assign(options.schema, { '_id?': 'string' });
-        options.schema = new Validall.Schema(options.schema, options.schemaOptions);
-
-      } else {
-        (<any>options.schema).schema['_id?'] = 'string';
-      }
+      (<any>options.schema).schema['_id?'] = 'string';
+      options.schemaOptions = Object.assign({}, defaultSchemaOptions, { root: Target.name }, options.schemaOptions || {});
     }
 
 
