@@ -66,6 +66,23 @@ export function initSocket(io: any) {
           State.ioNamespaces[namespace].sockets.emit(response.event, response);
         }
       }
+    } else if (msg.data && msg.action === 'join room') {
+      let room = msg.data.room;
+      let socketIds = msg.data.socketIds;
+
+      if (room && socketIds && socketIds.length) {
+        for (let i = 0; i < socketIds.length; i++) {
+          for ( let prop in State.ioNamespaces) {
+            let ns = State.ioNamespaces[prop];
+            let nsSockets = ns.sockets.sockets;
+
+            if (nsSockets[socketIds[i]]) {
+              nsSockets[socketIds[i]].join(room);
+              break;
+            }
+          }
+        }
+      }
     }
   });
 }
@@ -77,8 +94,6 @@ function initializeApp(io: any, app: App, ns: string = app.name) {
 
     if ('onConnect' in app)
       (<any>app).onConnect(socket);
-
-    State.pushSocket(socket);
 
     logger.info(`socket connected: { socketId: ${socket.id}, pid: ${process.pid} }`);
 
@@ -106,8 +121,7 @@ function initializeApp(io: any, app: App, ns: string = app.name) {
     socket.on('disconnect', () => {
       if ('onDisconnect' in app)
         (<any>app).onDisconnect(socket, ns);
-
-      State.deleteSocket(socket.id);
+        
       io.emit('user disconnected');
       socket.disconnect();
     });

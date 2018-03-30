@@ -67,6 +67,7 @@ export interface IGypsum {
   dev: boolean;
   get: (name: keyof IServerConfigOptions) => any;
   set: <T extends keyof IServerConfigOptions, U extends IServerConfigOptions[T]>(name: T, value: U) => IGypsum;
+  getModel: (modelName: string, appName: string) => Model | MongoModel | FileModel | undefined;
   bootstrap: (options: IGypsumBootstrapOptions) => void;
 }
 
@@ -82,6 +83,10 @@ export const Gypsum: IGypsum = {
   set<T extends keyof IServerConfigOptions, U extends IServerConfigOptions[T]>(name: T, value: U): IGypsum {
     State.config[name] = value;
     return this;
+  },
+
+  getModel(modelName: string, appName: string): Model | MongoModel | FileModel | undefined {
+    return State.getModel(modelName, appName);
   },
 
   bootstrap(options: IGypsumBootstrapOptions): void {

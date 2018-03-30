@@ -53,19 +53,6 @@ export class AppState {
     return this.hooks.find(hook => (<any>hook).__name === name) || undefined;
   }
 
-  getSocket(id: string) {
-    return this._sockets[id];
-  }
-
-  public pushSocket(socket: any) {
-    this._sockets[socket.id] = socket;
-  }
-
-  public deleteSocket(id: string) {
-    Logger.Info('Deleting socket from server state with id:', id);
-    delete this._sockets[id];
-  }
-
   public setConfiguration(userConfig: IGypsumConfig = <IGypsumConfig>{}) {
 
     objectUtil.extend(this.config, Config.dev);

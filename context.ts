@@ -38,7 +38,7 @@ export class Context {
   private _cookies: any;
   private _domain: RESPONSE_DOMAINS | undefined;
   private _room: string;
-  
+
   readonly appName: string;
   readonly _req: express.Request | undefined;
   readonly _res: express.Response | undefined;
@@ -69,7 +69,7 @@ export class Context {
     this.model = data.model;
     this.service = data.service;
     this.logger = new Logger(this.service.name);
-    
+
 
     this._mInit();
   }
@@ -151,13 +151,13 @@ export class Context {
     this._response.apiType = this.apiType;
     this._response.code = this._response.code || RESPONSE_CODES.UNKNOWN_ERROR;
     this._response.domain = this._response.domain || this.service.domain || RESPONSE_DOMAINS.SELF;
-    
+
     if (this.apiType === API_TYPES.REST && this._res) {
       this._res.status(this._response.code).json(this._response);
 
     } else if (this._socket) {
       let event = this.service.event;
-      if (this._response.code < 200 || this._response.code >= 300 ) {
+      if (this._response.code < 200 || this._response.code >= 300) {
         this._socket.emit(event, this._response);
 
       } else {
@@ -182,7 +182,7 @@ export class Context {
         } else if (this._response.domain === RESPONSE_DOMAINS.ALL) {
           if (process && process.send)
             (<any>process).send({ data: this._response, target: 'others', action: 'response', appName: this.appName })
-          
+
           let io: any = State.ioNamespaces[this.appName];
 
           if (io)
@@ -266,6 +266,27 @@ export class Context {
     return this;
   }
 
+  socketsJoinRoom(roomName: string, socketIds: string[]) {
+    if (roomName && socketIds && socketIds.length) {
+      for (let i = 0; i < socketIds.length; i++) {
+        for (let prop in State.ioNamespaces) {
+          let ns = State.ioNamespaces[prop];
+          let nsSockets = ns.sockets.sockets;
+
+          if (nsSockets[socketIds[i]]) {
+            nsSockets[socketIds[i]].join(roomName);
+            socketIds.splice(i--, 1);
+            break;
+          }
+        }
+      }
+
+      if (socketIds.length)
+        if (process && process.send)
+          (<any>process).send({ data: { room: roomName, socketIds: socketIds }, target: 'others', action: 'join room' })
+    }
+  }
+
   joinRoom(roomName?: string): boolean {
     if (this.apiType === API_TYPES.SOCKET && this._socket)
       if (roomName || this._room) {
@@ -285,7 +306,7 @@ export class Context {
 
     return false;
   }
- 
+
   next(err?: IResponseError): void {
     if (err) {
       console.trace(err);
