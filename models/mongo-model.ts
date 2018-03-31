@@ -17,7 +17,7 @@ export class MongoModel extends Model {
 
     this.type = 'Mongo';
   }
-  
+
   $setCollection(collection: MongoDB.Collection) {
     this.collection = collection;
 
@@ -246,9 +246,9 @@ export class MongoModel extends Model {
           this.$logger.debug(JSON.stringify(res, null, 4));
 
           let schema = this.$get('schema');
-          
+
           if (!schema)
-            return resolve({ data: documents.length === 1 ? res.ops[0] : res.ops });
+            return resolve({ data: res.ops });
 
           let selects = schema.getPropsByName('select');
           selects = selects.filter((item: any) => item.value === false).map((item: any) => item.path);
@@ -257,7 +257,7 @@ export class MongoModel extends Model {
             for (let i = 0; i < res.ops.length; i++)
               objectUtil.omit(res.ops[i], selects);
 
-          resolve({ data: documents.length === 1 ? res.ops[0] : res.ops });
+          resolve({ data: res.ops });
         })
         .catch(error => reject({
           message: `[${this.name}] - insert: unknown error`,
@@ -268,13 +268,24 @@ export class MongoModel extends Model {
   }
 
   @SERVICE({
-    args: ['body.document', 'body.writeConcern']
+    args: ['body.document']
   })
-  insertOne(document: any, writeConcern: any = {}, ctx?: Context): Promise<IResponse> {
+  insertOne(document: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
-      this.insert([document], writeConcern)
-        .then(res => {
-          resolve(res);
+      let schema: Validall.Schema = this.$get('schema');
+
+      if (schema) {
+        if (!schema.test(document))
+          return reject({
+            message: schema.error.message,
+            original: schema.error,
+            code: RESPONSE_CODES.UNAUTHORIZED
+          });
+      }
+
+      this.collection.insertOne(document)
+        .then((res) => {
+          resolve({ data: res.ops[0] });
         })
         .catch(err => reject(err));
     });
@@ -453,13 +464,15 @@ export class MongoModel extends Model {
                       }
                   }
 
-                  if (!errObj && internals.length) {
-                    let changedField = objectUtil.compareValues(internals, preUpdatedDoc, updatedDoc);
-                    if (changedField)
-                      errObj = {
-                        message: `[${this.name}]: '${changedField}' cannot be modified externaly!`,
-                        code: RESPONSE_CODES.UNAUTHORIZED
-                      }
+                  if (ctx) {
+                    if (!errObj && internals.length) {
+                      let changedField = objectUtil.compareValues(internals, preUpdatedDoc, updatedDoc);
+                      if (changedField)
+                        errObj = {
+                          message: `[${this.name}]: '${changedField}' cannot be modified externaly!`,
+                          code: RESPONSE_CODES.UNAUTHORIZED
+                        }
+                    }
                   }
                 }
 
@@ -593,13 +606,15 @@ export class MongoModel extends Model {
                       }
                   }
 
-                  if (!errObj && internals.length) {
-                    let changedField = objectUtil.compareValues(internals, preUpdatedDoc, updatedDoc);
-                    if (changedField)
-                      errObj = {
-                        message: `[${this.name}]: '${changedField}' cannot be modified externaly!`,
-                        code: RESPONSE_CODES.UNAUTHORIZED
-                      }
+                  if (ctx) {
+                    if (!errObj && internals.length) {
+                      let changedField = objectUtil.compareValues(internals, preUpdatedDoc, updatedDoc);
+                      if (changedField)
+                        errObj = {
+                          message: `[${this.name}]: '${changedField}' cannot be modified externaly!`,
+                          code: RESPONSE_CODES.UNAUTHORIZED
+                        }
+                    }
                   }
                 }
 
@@ -696,10 +711,10 @@ export class MongoModel extends Model {
       if (filter._id)
         filter._id = new MongoDB.ObjectID(filter._id);
 
-      this.collection.deleteOne(filter, <MongoDB.CommonOptions>options)
+      this.collection.findOneAndDelete(filter, <MongoDB.CommonOptions>options)
         .then(res => {
           this.$logger.debug('deleteOne service result:', res);
-          resolve({ data: res.result.n, count: res.result.n });
+          resolve({ data: res.value });
         })
         .catch(error => reject({
           message: `[${this.name}] - deleteOne: unknown error`,
@@ -722,10 +737,10 @@ export class MongoModel extends Model {
       if (!id)
         return resolve({ data: null });
 
-      this.collection.deleteOne({ _id: new MongoDB.ObjectID(id) }, <MongoDB.CommonOptions>options)
+      this.collection.findOneAndDelete({ _id: new MongoDB.ObjectID(id) }, <MongoDB.CommonOptions>options)
         .then(res => {
           this.$logger.debug('deleteById service result:', res);
-          resolve({ data: res.result.n, count: res.result.n });
+          resolve({ data: res.value });
         })
         .catch(error => reject({
           message: `[${this.name}] - deleteById: unknown error`,

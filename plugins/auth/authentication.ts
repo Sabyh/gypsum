@@ -75,9 +75,9 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
               [authConfig.passwordSaltField]: results[1],
               [authConfig.userVerifiedField]: true
             })
-              .then(doc => {
-                if (doc)
-                  resolve(doc)
+              .then(res => {
+                if (res && res.ops.length)
+                  resolve(res.ops[0])
                 else
                   reject('unable to create root user');
               })
