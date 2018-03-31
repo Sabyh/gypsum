@@ -5,7 +5,7 @@ import { Logger } from './misc/logger';
 import { Model } from './models';
 import { IService, IHookOptions } from './decorators';
 import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, Response, ResponseError, IResponseError } from './types';
-import { objectUtil } from './util/index';
+import { objectUtil, stringUtil } from './util/index';
 
 const safe = new Safe('context');
 
@@ -37,12 +37,12 @@ export class Context {
   private _locals: any = {};
   private _cookies: any;
   private _domain: RESPONSE_DOMAINS | undefined;
-  private _room: string;
-
+  
   readonly appName: string;
   readonly _req: express.Request | undefined;
   readonly _res: express.Response | undefined;
-
+  
+  public room: string;
   public model: Model;
   public service: IService;
   public apiType: API_TYPES.REST | API_TYPES.SOCKET;
@@ -60,7 +60,7 @@ export class Context {
     this._cookies = data.cookies;
     this._domain = data.domain;
     this.appName = data.appName;
-    this._room = data.room || '';
+    this.room = data.room || '';
     this.apiType = type;
     this.headers = data.headers;
     this.query = data.query;
@@ -162,7 +162,7 @@ export class Context {
 
       } else {
         let domain = this._response.domain || this._domain || this.service.domain;
-        this._response.room = this._room || this._response.room;
+        this._response.room = this.room || this._response.room;
 
         if (this._response.domain === RESPONSE_DOMAINS.ROOM && this._response.room) {
           if (process && process.send)
@@ -204,7 +204,7 @@ export class Context {
 
   useService(model: Model, service: string, hooks: 'before' | 'after' | 'both' | 'none' = 'both', clearOwnHooks: boolean = false) {
     this.model = model;
-    this.service = (<any>this.model)[service];
+    this.service = (<any>this.model)[stringUtil.capitalizeFirst(service)];
     let extraHooks;
 
     if (!clearOwnHooks)
@@ -224,7 +224,6 @@ export class Context {
 
   get domain(): RESPONSE_DOMAINS { return <RESPONSE_DOMAINS>this._domain; }
   set domain(value: RESPONSE_DOMAINS) { this._domain = value; }
-  get room(): string { return this._room; }
 
   getHeader(name: string): string {
     return this.headers[name];
@@ -268,9 +267,10 @@ export class Context {
 
   socketsJoinRoom(roomName: string, socketIds: string[]) {
     if (roomName && socketIds && socketIds.length) {
-      for (let i = 0; i < socketIds.length; i++) {
-        for (let prop in State.ioNamespaces) {
-          let ns = State.ioNamespaces[prop];
+      let ns = State.ioNamespaces[this.appName];
+
+      if (ns) {
+        for (let i = 0; i < socketIds.length; i++) {
           let nsSockets = ns.sockets.sockets;
 
           if (nsSockets[socketIds[i]]) {
@@ -283,14 +283,14 @@ export class Context {
 
       if (socketIds.length)
         if (process && process.send)
-          (<any>process).send({ data: { room: roomName, socketIds: socketIds }, target: 'others', action: 'join room' })
+          (<any>process).send({ data: { room: roomName, socketIds: socketIds }, target: 'others', action: 'join room', namespace: this.appName })
     }
   }
 
   joinRoom(roomName?: string): boolean {
     if (this.apiType === API_TYPES.SOCKET && this._socket)
-      if (roomName || this._room) {
-        this._socket.join(roomName || this._room);
+      if (roomName || this.room) {
+        this._socket.join(roomName || this.room);
         return true;
       }
 

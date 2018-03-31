@@ -24,7 +24,7 @@ export function initSocket(io: any) {
           (<any>app).onHandShake(socket, namespace, next);
         else
           next()
-        
+
       } else {
         next(new Error(`undefined app name: ${appName}`));
       }
@@ -69,17 +69,15 @@ export function initSocket(io: any) {
     } else if (msg.data && msg.action === 'join room') {
       let room = msg.data.room;
       let socketIds = msg.data.socketIds;
+      let ns = State.ioNamespaces[msg.namespace];
 
-      if (room && socketIds && socketIds.length) {
+      if (ns && room && socketIds && socketIds.length) {
         for (let i = 0; i < socketIds.length; i++) {
-          for ( let prop in State.ioNamespaces) {
-            let ns = State.ioNamespaces[prop];
-            let nsSockets = ns.sockets.sockets;
+          let nsSockets = ns.sockets.sockets;
 
-            if (nsSockets[socketIds[i]]) {
-              nsSockets[socketIds[i]].join(room);
-              break;
-            }
+          if (nsSockets[socketIds[i]]) {
+            nsSockets[socketIds[i]].join(room);
+            break;
           }
         }
       }
@@ -121,7 +119,7 @@ function initializeApp(io: any, app: App, ns: string = app.name) {
     socket.on('disconnect', () => {
       if ('onDisconnect' in app)
         (<any>app).onDisconnect(socket, ns);
-        
+
       io.emit('user disconnected');
       socket.disconnect();
     });

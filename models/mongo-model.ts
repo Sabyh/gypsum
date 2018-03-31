@@ -246,7 +246,7 @@ export class MongoModel extends Model {
           this.$logger.debug(JSON.stringify(res, null, 4));
 
           let schema = this.$get('schema');
-
+          
           if (!schema)
             return resolve({ data: documents.length === 1 ? res.ops[0] : res.ops });
 
@@ -271,7 +271,13 @@ export class MongoModel extends Model {
     args: ['body.document', 'body.writeConcern']
   })
   insertOne(document: any, writeConcern: any = {}, ctx?: Context): Promise<IResponse> {
-    return this.insert([document], writeConcern);
+    return new Promise((resolve, reject) => {
+      this.insert([document], writeConcern)
+        .then(res => {
+          resolve(res);
+        })
+        .catch(err => reject(err));
+    });
   }
 
   @SERVICE({
