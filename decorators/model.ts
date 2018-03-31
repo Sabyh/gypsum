@@ -50,7 +50,7 @@ export function MODEL(options: IModelOptions = {}) {
         (<any>options)[prop] = (<any>defaults)[prop];
 
     if (options.schema) {
-      (<any>options.schema).schema['_id?'] = 'string';
+      (<any>options.schema)['_id?'] = 'string';
       options.schemaOptions = Object.assign({}, defaultSchemaOptions, { root: Target.name }, options.schemaOptions || {});
     }
 
