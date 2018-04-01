@@ -74,6 +74,9 @@ export function SERVICE(options?: IServiceOptions) {
           args.push(objectUtil.getValue(ctx, options.args[i]));
 
       args.push(ctx);
+
+      this.$logger.info(`running ${this.name}.${key} service...`);
+      
       this[key](...args)
         .then((res: IResponse) => {
           if (res)

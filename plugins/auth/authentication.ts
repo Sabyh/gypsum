@@ -103,9 +103,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     @HOOK()
     secure(ctx: Context): Promise<void> {
       return new Promise((resolve, reject) => {
-
-        if (ctx.user && ctx.apiType === API_TYPES.SOCKET)
-          resolve();
+        this.$logger.info(`authenticating user for ${ctx.service.__name} service...`);
 
         let token = ctx.getHeader(authConfig.tokenFieldName) || ctx.query[authConfig.tokenFieldName] || ctx.cookies(authConfig.tokenFieldName) || ctx.body[authConfig.tokenFieldName];
 

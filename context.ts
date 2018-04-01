@@ -111,7 +111,7 @@ export class Context {
 
   private _mInit(hooks: 'before' | 'after' | 'both' | 'none' = 'both', extraHooks?: any[]): void {
     // Authentication Layer
-    this.logger.debug('checking authentication layer');
+    this.logger.debug(`checking authentication layer with options: ${this.service.secure}`);
     if (this.service.secure !== undefined && State.config.authenticationModelPath) {
       let authApp, authModel;
       [authApp, authModel] = State.config.authenticationModelPath.split('/');
@@ -120,7 +120,7 @@ export class Context {
       this._stack.push({ handler: (<any>Authentication).secure.bind(Authentication), args: [] });
     }
     
-    this.logger.debug('checking authorization layer');
+    this.logger.debug(`checking authorization layer with options: ${this.service.authorize}`);
     if (this.service.authorize !== undefined && State.config.authorizationModelPath) {
       let authApp, authModel;
       [authApp, authModel] = State.config.authorizationModelPath.split('/');
@@ -129,11 +129,11 @@ export class Context {
         this._stack.push({ handler: (<any>Authorization).authorize.bind(Authorization), args: [this.service.authorize] });
     }
 
-    this.logger.debug('checking validate hook');
+    this.logger.debug(`checking validate hook with options: ${this.service.validate}`);
     if (this.service.validate)
       this._stack.push({ handler: <any>State.getHook('validate'), args: [this.service.validate] });
 
-    this.logger.debug('checking before hooks');
+    this.logger.debug(`checking before hooks with options: ${this.service.before}`);
     // Pushing before hooks to the stack
     if ((hooks === 'both' || hooks === 'before') && this.service.before && this.service.before.length)
     this._mPushStack(this.service.before);
@@ -142,7 +142,7 @@ export class Context {
     // Pushing service to the stack
     this._stack.push({ handler: (<any>this.model)[this.service.__name].bind(this.model), args: [] });
 
-    this.logger.debug('checking after hooks');
+    this.logger.debug(`checking after hooks with options: ${this.service.after}`);
     // Pushing after hooks to the stack
     if ((hooks === 'both' || hooks === 'after') && this.service.after && this.service.after.length)
       this._mPushStack(this.service.after);

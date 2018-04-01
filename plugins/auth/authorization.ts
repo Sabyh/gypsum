@@ -129,6 +129,8 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
     authorize(options: { field: string, match: string, find: any } | boolean, ctx: Context): Promise<void> {
       return new Promise((resolve, reject) => {
 
+        this.$logger.info(`authorizing ${ctx.service.__name} service...`);
+
         if (!ctx.user)
           return reject({
             message: 'user not logged in',
