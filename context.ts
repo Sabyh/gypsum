@@ -111,14 +111,16 @@ export class Context {
 
   private _mInit(hooks: 'before' | 'after' | 'both' | 'none' = 'both', extraHooks?: any[]): void {
     // Authentication Layer
+    this.logger.debug('checking authentication layer');
     if (this.service.secure !== undefined && State.config.authenticationModelPath) {
       let authApp, authModel;
       [authApp, authModel] = State.config.authenticationModelPath.split('/');
       let Authentication = State.getModel(authModel, authApp);
       if (Authentication)
-        this._stack.push({ handler: (<any>Authentication).secure.bind(Authentication), args: [] });
+      this._stack.push({ handler: (<any>Authentication).secure.bind(Authentication), args: [] });
     }
-
+    
+    this.logger.debug('checking authorization layer');
     if (this.service.authorize !== undefined && State.config.authorizationModelPath) {
       let authApp, authModel;
       [authApp, authModel] = State.config.authorizationModelPath.split('/');
@@ -127,23 +129,29 @@ export class Context {
         this._stack.push({ handler: (<any>Authorization).authorize.bind(Authorization), args: [this.service.authorize] });
     }
 
+    this.logger.debug('checking validate hook');
     if (this.service.validate)
       this._stack.push({ handler: <any>State.getHook('validate'), args: [this.service.validate] });
 
+    this.logger.debug('checking before hooks');
     // Pushing before hooks to the stack
     if ((hooks === 'both' || hooks === 'before') && this.service.before && this.service.before.length)
-      this._mPushStack(this.service.before);
-
+    this._mPushStack(this.service.before);
+    
+    this.logger.debug('adding main service');
     // Pushing service to the stack
     this._stack.push({ handler: (<any>this.model)[this.service.__name].bind(this.model), args: [] });
 
+    this.logger.debug('checking after hooks');
     // Pushing after hooks to the stack
     if ((hooks === 'both' || hooks === 'after') && this.service.after && this.service.after.length)
       this._mPushStack(this.service.after);
 
+    this.logger.debug('checking extra hooks');
     if (extraHooks && extraHooks.length)
       this._stack.push(...extraHooks);
 
+    this.logger.debug('running the stack');
     this.next();
   }
 
@@ -316,10 +324,13 @@ export class Context {
     } else {
       let current = this._stack.splice(0, 1)[0];
 
-      if (current)
+      if (current) {
+        this.logger.debug(`running stack handler: ${(<any>current.handler).__name || current.handler.name}`);
         current.handler(this, ...current.args);
-      else
+      } else {
+        this.logger.debug('end of stack, preparing for responding...')
         this._mRespond();
+      }
     }
   }
 
