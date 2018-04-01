@@ -44,7 +44,19 @@ export function pushApis(expressApp: express.Express, app: App) {
           objectUtil.extend(corsOptions, serviceCors);
   
         logger.info(`adding service for ${app.name} app: (${services[service].method}) - ${services[service].path}`);
-        router[services[service].method](services[service].path, cors(corsOptions), Context.Rest(model, services[service]));
+        if (State.env === 'production')
+          router[services[service].method](services[service].path, cors(corsOptions), Context.Rest(model, services[service]));
+        else
+          router[services[service].method](
+            services[service].path,
+            (req, res, next) => {
+              logger.debug(`service request: (${req.method}) ${req.host}${req.path}`);
+              next();
+            },
+            cors(corsOptions),
+            Context.Rest(model, services[service])
+          );
+
       }
     }
   }
@@ -53,7 +65,7 @@ export function pushApis(expressApp: express.Express, app: App) {
 
   expressApp.use((err: express.ErrorRequestHandler, req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger!.error(err);
-    console.trace(err)
+    console.trace(err);
 
     if (err) {
       res.status(RESPONSE_CODES.UNKNOWN_ERROR).json(new Response({
