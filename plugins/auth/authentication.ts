@@ -107,11 +107,12 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
 
         let token = ctx.getHeader(authConfig.tokenFieldName) || ctx.query[authConfig.tokenFieldName] || ctx.cookies(authConfig.tokenFieldName) || ctx.body[authConfig.tokenFieldName];
 
-        if (!token)
+        if (!token) {
           return reject({
             message: 'user token is missing',
             code: RESPONSE_CODES.UNAUTHORIZED
           });
+        }
 
         let data: any = jwt.verify(token, authConfig.tokenSecret);
 

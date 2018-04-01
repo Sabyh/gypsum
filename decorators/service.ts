@@ -5,14 +5,21 @@ import { IHookOptions } from './hook';
 import { stringUtil, objectUtil } from '../util';
 import { Context } from '../context';
 
+export interface IValidateOptions {
+  query?: Validall.ISchema;
+  body?: Validall.ISchema;
+  user?: Validall.ISchema;
+  params?: Validall.ISchema;
+}
+
 export interface IService {
   isService: boolean;
   __name: string;
-  secure: boolean;
-  authorize: boolean | string[];
+  secure: any;
+  authorize: any;
   args: string[];
   name: string;
-  method: "get" | "post" | "put" | "delete";
+  method: "get" | "post" | "put" | "delete" | "patch" | "options" | "head";
   apiType: API_TYPES;
   domain: RESPONSE_DOMAINS;
   path: string;
@@ -20,15 +27,8 @@ export interface IService {
   params: string[];
   before: IHookOptions[];
   after: IHookOptions[];
-  validate: { query?: Validall.ISchema, body?: Validall.ISchema, user?: Validall.ISchema }
+  validate: IValidateOptions | { $or: IValidateOptions[] } | { $and: IValidateOptions[] } | { $nor: IValidateOptions[] } | { $xor: IValidateOptions[] }
   cors: CorsOptions;
-}
-
-export interface IValidateOptions {
-  query?: Validall.ISchema;
-  body?: Validall.ISchema;
-  user?: Validall.ISchema;
-  params?: Validall.ISchema;
 }
 
 export interface IServiceOptions {
@@ -74,8 +74,6 @@ export function SERVICE(options?: IServiceOptions) {
           args.push(objectUtil.getValue(ctx, options.args[i]));
 
       args.push(ctx);
-
-      this.$logger.info(`running ${this.name}.${key} service...`);
       
       this[key](...args)
         .then((res: IResponse) => {
@@ -89,7 +87,7 @@ export function SERVICE(options?: IServiceOptions) {
 
     (<any>service).isService = true;
     (<any>service).__name = serviceName;
-    (<IServiceOptions>service).secure = options && options.secure;
+    (<IServiceOptions>service).secure = options ? options.secure : undefined;
     (<IServiceOptions>service).authorize = options ? options.authorize : undefined;
     (<IServiceOptions>service).apiType = options && options.apiType ? options.apiType : API_TYPES.ALL;
     (<IServiceOptions>service).method = options && options.method ? options.method : (defaultOptions[key] ? defaultOptions[key].method : 'get');
@@ -101,6 +99,7 @@ export function SERVICE(options?: IServiceOptions) {
 
     Object.defineProperty(target.constructor.prototype, serviceName, {
       value: service,
+      writable: true,
       enumerable: true
     });
   }

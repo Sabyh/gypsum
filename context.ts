@@ -112,21 +112,21 @@ export class Context {
   private _mInit(hooks: 'before' | 'after' | 'both' | 'none' = 'both', extraHooks?: any[]): void {
     // Authentication Layer
     this.logger.debug(`checking authentication layer with options: ${this.service.secure}`);
-    if (this.service.secure !== undefined && State.config.authenticationModelPath) {
+    if (this.service.secure && State.config.authenticationModelPath) {
       let authApp, authModel;
       [authApp, authModel] = State.config.authenticationModelPath.split('/');
       let Authentication = State.getModel(authModel, authApp);
       if (Authentication)
-      this._stack.push({ handler: (<any>Authentication).secure.bind(Authentication), args: [] });
+      this._stack.push({ handler: (<any>Authentication).Secure.bind(Authentication), args: [] });
     }
     
     this.logger.debug(`checking authorization layer with options: ${this.service.authorize}`);
-    if (this.service.authorize !== undefined && State.config.authorizationModelPath) {
+    if (this.service.authorize && State.config.authorizationModelPath) {
       let authApp, authModel;
       [authApp, authModel] = State.config.authorizationModelPath.split('/');
       let Authorization = State.getModel(authModel, authApp);
       if (Authorization)
-        this._stack.push({ handler: (<any>Authorization).authorize.bind(Authorization), args: [this.service.authorize] });
+        this._stack.push({ handler: (<any>Authorization).Authorize.bind(Authorization), args: [this.service.authorize] });
     }
 
     this.logger.debug(`checking validate hook with options: ${this.service.validate}`);

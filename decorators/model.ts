@@ -54,6 +54,19 @@ export function MODEL(options: IModelOptions = {}) {
       options.schemaOptions = Object.assign({}, defaultSchemaOptions, { root: Target.name }, options.schemaOptions || {});
     }
 
+    let proto = Object.getOwnPropertyNames(Target.__proto__.prototype).slice(1);
+    for (let i = 0; i < proto.length; i++)
+      if (typeof Target.__proto__.prototype[proto[i]] === 'function') {
+
+        Target.prototype[proto[i]] = function (...args: any[]) {
+          return Target.__proto__.prototype[proto[i]].apply(this, args);
+        }
+
+        for (var key in Target.__proto__.prototype[proto[i]]) {
+          Target.prototype[proto[i]][key] = Target.__proto__.prototype[proto[i]][key];
+        }
+      }
+
 
     for (let prop in options) {
       if (options.hasOwnProperty(prop))

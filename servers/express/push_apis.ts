@@ -50,7 +50,7 @@ export function pushApis(expressApp: express.Express, app: App) {
           router[services[service].method](
             services[service].path,
             (req, res, next) => {
-              logger.debug(`service request: (${req.method}) ${req.host}${req.path}`);
+              logger.debug(`service request: (${req.method}) ${req.hostname}${req.path}`);
               next();
             },
             cors(corsOptions),

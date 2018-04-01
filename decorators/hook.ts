@@ -21,7 +21,6 @@ export function HOOK(options: { private: boolean } = { private: false }) {
 
     function hook(ctx: Context, ...args: any[]) {
       args.push(ctx);
-      this.$logger.info(`running ${this.name}.${key} hook...`);
       this[key](...args)
         .then(() => ctx.next())
         .catch((error: ResponseError) => ctx.next(error));

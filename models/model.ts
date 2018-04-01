@@ -27,11 +27,14 @@ export class Model {
     this._servicesData = {};
     let eliminationsList = this.$get('eliminate');
 
+    if (this.$get('internal'))
+      return;
+
     for (let prop in this) {
 
       let service: IService = <any>this[prop];      
-      let isService = (service && service.isService) ? !this.$get('internal') : false;
-
+      let isService = service && service.isService;
+      
       if (service && isService) {
 
         if (eliminationsList.indexOf(prop) > -1) {

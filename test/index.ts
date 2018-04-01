@@ -15,15 +15,18 @@ import { AuthPlugin, IAuthenticationConfig } from '../plugins/auth';
   //   active: { $type: Boolean, $default: false }
   // }
 })
-class Users extends MongoModel { }
+class Users extends MongoModel {}
 
-// let UserAuthModels = AuthPlugin({ usersModelConstructor: Users, authorization: true });
+@MODEL()
+class Items extends MongoModel {}
+
+let UserAuthModels = AuthPlugin({ usersModelConstructor: Users, authorization: true });
 
 @APP({
   dev: {
     mongodb_url: 'mongodb://localhost:27017',
     database_name: 'gypsym_dev',
-    models: [Users],
+    models: [...UserAuthModels, Items],
   }
 })
 class Api extends App {}
