@@ -48,7 +48,7 @@ export function pushApis(expressApp: express.Express, app: App) {
       }
     }
   }
-
+  
   expressApp.use(router);
 
   expressApp.use((err: express.ErrorRequestHandler, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -3,13 +3,12 @@ import { API_TYPES } from '../types';
 import { FRIEND, IService, IModelHook, IHookOptions, IModelOptions } from '../decorators';
 import { Safe } from '../misc/safe';
 import { State } from '../state';
+import { stringUtil } from '../util';
 
 const safe = new Safe('model');
 
 export type ServiceOptions = { [key: string]: IService | boolean };
 export type getOptions = keyof IModelOptions;
-
-const skippedServicesNames = ['find', 'findById', 'insert', 'update', 'updateById', 'delete', 'deleteById'];
 
 export class Model {
   private _servicesData: { [key: string]: IService };
@@ -56,7 +55,7 @@ export class Model {
           name: service.__name,
           event: this.name + ' ' + service.__name,
           method: service.method,
-          path: this.name + (skippedServicesNames.indexOf(service.__name.toLowerCase()) > -1 ? '' : '/' + service.__name.toLowerCase()),
+          path: createPath(service, this),
           params: service.params,
           domain: (!this.$get('domain') || this.$get('domain') > service.domain) ? service.domain : this.$get('domain'),
           before: [],
@@ -182,4 +181,18 @@ function cleanHooks(hooks: IHookOptions[]) {
       }
     }
   }
+}
+
+function createPath(service: IService, model: Model) {
+  const skippedServicesNames = ['find', 'findbyid', 'insert', 'update', 'updatebyid', 'delete', 'deletebyid'];
+
+  let path = `/${model.name}/`;
+
+  if (skippedServicesNames.indexOf(service.__name.toLowerCase()) === -1)
+    path += `/${service.__name.toLowerCase()}`;
+
+  if (service.params && service.params.length)
+    path += '/' + service.params.map(param => `:${param}`).join('/');
+
+  return '/' + stringUtil.cleanPath(path);
 }

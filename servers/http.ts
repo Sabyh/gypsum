@@ -2,6 +2,7 @@ import * as express from 'express';
 import * as http from 'http';
 import * as IO from 'socket.io';
 import { State } from '../state';
+import { Logger } from '../misc/logger';
 
 export class Server {
   app: express.Express = express();
@@ -10,6 +11,6 @@ export class Server {
 
   start() {
     this.server.listen(State.config.port);
-    console.log(`${State.config.server_name} is running on port: ${State.config.port}, pid: ${process.pid}`);
+    Logger.Info(`${State.config.server_name} is running on port: ${State.config.port}, pid: ${process.pid}`);
   }
 }

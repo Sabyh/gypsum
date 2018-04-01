@@ -291,7 +291,6 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
     }
 
     onCollection() {
-      console.log('searching for:', authConfig.usersModelConstructor.name);
       let authenticationModel = <MongoModel>State.getModel(authConfig.usersModelConstructor.name, this.app);
 
       (<Authorization>State.getModel('authorization', this.app)).roles = this.collection;

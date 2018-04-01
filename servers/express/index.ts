@@ -30,7 +30,7 @@ export function initExpress(app: express.Express) {
     let subApp = express();
     configure(subApp, State.apps[i]);
     pushApis(subApp, State.apps[i]);
-    app.use(vhost(`${State.apps[i].name}.${State.config.hostName}`, subApp))
+    app.use(vhost(`${State.apps[i].name}.${State.config.hostName}`, subApp));
   }
 
   if (State.config.spa && State.config.spa.trim())
