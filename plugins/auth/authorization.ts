@@ -267,7 +267,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
     authorize: true,
     schema: {
       name: String,
-      users: String ,
+      users: String,
       permissions: { model: 'string', services: 'string[]' }
     },
     schemaOptions: { required: true }
@@ -304,19 +304,21 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
             this.$logger.info('no roles found');
             (<any>authenticationModel).getRootUser()
               .then((user: any) => {
-                if (user)
+                if (user) {
                   this._mCreateRootRole(user)
                     .then((role: any) => this._mInsertRootRole(role))
                     .catch((error: any) => {
                       throw error;
                     });
-                else
+                } else {
+                  this.$logger.info('root user not found');
                   (<any>authenticationModel).createRootUser()
                     .then((user: any) => this._mCreateRootRole(user))
                     .then((role: any) => this._mInsertRootRole(role))
                     .catch((error: any) => {
                       throw error;
                     });
+                }
               })
               .catch((error: any) => {
                 throw error;

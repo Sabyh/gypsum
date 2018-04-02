@@ -68,7 +68,7 @@ export class Context {
     this.params = data.params;
     this.model = data.model;
     this.service = data.service;
-    this.logger = new Logger(this.service.name);
+    this.logger = new Logger(`${this.appName}.${this.model.name}.${this.service.name}`);
 
 
     this._mInit();
@@ -159,6 +159,9 @@ export class Context {
     this._response.apiType = this.apiType;
     this._response.code = this._response.code || RESPONSE_CODES.UNKNOWN_ERROR;
     this._response.domain = this._response.domain || this.service.domain || RESPONSE_DOMAINS.SELF;
+
+    this.logger.debug('response:');
+    this.logger.debug(JSON.stringify(this._response, null, 2));
 
     if (this.apiType === API_TYPES.REST && this._res) {
       this._res.status(this._response.code).json(this._response);

@@ -52,20 +52,25 @@ export function MODEL(options: IModelOptions = {}) {
     if (options.schema) {
       (<any>options.schema)['_id?'] = 'string';
       options.schemaOptions = Object.assign({}, defaultSchemaOptions, { root: Target.name }, options.schemaOptions || {});
+      options.schema = new Validall.Schema(options.schema, options.schemaOptions);
     }
 
-    let proto = Object.getOwnPropertyNames(Target.__proto__.prototype).slice(1);
-    for (let i = 0; i < proto.length; i++)
-      if (typeof Target.__proto__.prototype[proto[i]] === 'function') {
+    if (Target.__proto__.prototype) {
+      let proto = Object.getOwnPropertyNames(Target.__proto__.prototype).slice(1);
+      for (let i = 0; i < proto.length; i++) {
+        let method = Target.__proto__.prototype[proto[i]];
+        if (typeof method === 'function' && (method.isService || method.isHook)) {
 
-        Target.prototype[proto[i]] = function (...args: any[]) {
-          return Target.__proto__.prototype[proto[i]].apply(this, args);
-        }
+          Target.prototype[proto[i]] = function (...args: any[]) {
+            return Target.__proto__.prototype[proto[i]].apply(this, args);
+          }
 
-        for (var key in Target.__proto__.prototype[proto[i]]) {
-          Target.prototype[proto[i]][key] = Target.__proto__.prototype[proto[i]][key];
+          for (var key in Target.__proto__.prototype[proto[i]]) {
+            Target.prototype[proto[i]][key] = Target.__proto__.prototype[proto[i]][key];
+          }
         }
       }
+    }
 
 
     for (let prop in options) {

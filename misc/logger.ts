@@ -12,7 +12,7 @@ let outDir: string;
 
 export class Logger {
   private _ns: string;
-  private _logFile: string;
+  private _logDir: string;
   private _levels: LoggerLevels[];
   private _logOptions: LoggerLevels[] | undefined;
   private _active: boolean = false;
@@ -28,14 +28,14 @@ export class Logger {
 
         if (outDir) {
           this._logOptions = options[this._ns] ? options[this._ns].log : options.all.log;
-          this._logFile = this._logOptions && this._logOptions.length ? path.join(outDir, this._ns) : '';
+          this._logDir = this._logOptions && this._logOptions.length ? path.join(outDir, this._ns) : '';
 
 
-          if (this._logFile)
-            if (!fs.existsSync(outDir))
-              fs.mkdirSync(outDir);
+          if (this._logDir)
+            if (!fs.existsSync(this._logDir))
+              fs.mkdirSync(this._logDir);
         }
-        
+
       } else {
         this._active = false;
       }
@@ -48,6 +48,9 @@ export class Logger {
   static SetOptions(opt?: ILoggerOptions | null, logOutPath: string = 'server_logs'): void {
     outDir = path.join(process.cwd(), logOutPath);
     options = opt || null;
+
+    if (!fs.existsSync(outDir))
+      fs.mkdirSync(outDir);
   }
 
   static Error(...args: any[]): void {
@@ -106,7 +109,7 @@ export class Logger {
     args.unshift(new Date());
     args.push('\n');
     let result = args.join(", ");
-    fs.appendFile(this._logFile + '_' + level, result, err => {
+    fs.appendFile(path.join(this._logDir, level), result, err => {
       if (err) {
         console.log('error logging in:', this._ns);
         console.log(err);
