@@ -41,6 +41,7 @@ export class Model {
           delete this[prop];
           continue;
         }
+        let serviceName = prop.toLowerCase();
 
         service.authorize = service.authorize === false ? false : service.authorize || this.$get('authorize');
 
@@ -48,7 +49,7 @@ export class Model {
           if (service.authorize || this.$get('secure') || this.$get('authorize'))
             service.secure = true;
 
-        this._servicesData[prop] = {
+        this._servicesData[serviceName] = {
           __name: service.__name, 
           isService: isService,
           args: [],
@@ -68,31 +69,31 @@ export class Model {
         };
 
         if (this.$get('before') && this.$get('before').length)
-          this._servicesData[prop].before = [...this.$get('before')];
+          this._servicesData[serviceName].before = [...this.$get('before')];
 
         if (service.before && service.before.length) {
           if (service.before[0] === "~") {
-            this._servicesData[prop].before = [...(service.before.slice(1))];
+            this._servicesData[serviceName].before = [...(service.before.slice(1))];
           } else {
-            this._servicesData[prop].before.push(...service.before);
-            cleanHooks(this._servicesData[prop].before)
+            this._servicesData[serviceName].before.push(...service.before);
+            cleanHooks(this._servicesData[serviceName].before)
           }
         }
 
         if (this.$get('after') && this.$get('after').length)
-          this._servicesData[prop].after = [...this.$get('after')];
+          this._servicesData[serviceName].after = [...this.$get('after')];
 
         if (service.after && service.after.length) {
           if (service.after[0] === "~") {
-            this._servicesData[prop].after = [...(service.after.slice(1))];
+            this._servicesData[serviceName].after = [...(service.after.slice(1))];
           } else {
-            this._servicesData[prop].after.push('|', ...service.after);
-            cleanHooks(this._servicesData[prop].after);
+            this._servicesData[serviceName].after.push('|', ...service.after);
+            cleanHooks(this._servicesData[serviceName].after);
 
-            let splitterIndex = this._servicesData[prop].after.indexOf('|');
-            this._servicesData[prop].after = [
-              ...this._servicesData[prop].after.slice(splitterIndex + 1),
-              ...this._servicesData[prop].after.slice(0, splitterIndex)
+            let splitterIndex = this._servicesData[serviceName].after.indexOf('|');
+            this._servicesData[serviceName].after = [
+              ...this._servicesData[serviceName].after.slice(splitterIndex + 1),
+              ...this._servicesData[serviceName].after.slice(0, splitterIndex)
             ];
           }
         }
@@ -106,10 +107,10 @@ export class Model {
 
     for (let prop in this) {
       if (this[prop] && (<any>this[prop]).isHook) {
-        this._hooksData[prop] = <IModelHook>{};
+        this._hooksData[prop.toLowerCase()] = <IModelHook>{};
 
         for (let key in this[prop])
-          (<any>this._hooksData[prop])[key] = this[prop][key];
+          (<any>this._hooksData[prop.toLowerCase()])[key] = this[prop][key];
       }
     }
   }
@@ -133,19 +134,23 @@ export class Model {
   }
 
   $getService(name: string): IService {
-    return this._servicesData[name];
+    return this._servicesData[name.toLowerCase()];
   }
 
   $getHooks(): { [key: string]: IModelHook } {
     return this._hooksData || this._mArrangeHooks();
   }
 
+  $getHook(name: string): IModelHook {
+    return this._hooksData[name.toLowerCase()];
+  }
+
   $hasService(name: string): boolean {
-    return this._servicesData.hasOwnProperty(name) && this._servicesData[name].isService;
+    return this._servicesData[name.toLowerCase()].isService;
   }
 
   $hasHook(name: string): boolean {
-    return this._hooksData.hasOwnProperty(name) && this._hooksData[name].isHook;
+    return this._hooksData.hasOwnProperty(name.toLowerCase()) && this._hooksData[name.toLowerCase()].isHook;
   }
 }
 

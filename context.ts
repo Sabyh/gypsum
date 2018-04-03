@@ -37,11 +37,11 @@ export class Context {
   private _locals: any = {};
   private _cookies: any;
   private _domain: RESPONSE_DOMAINS | undefined;
-  
+
   readonly appName: string;
   readonly _req: express.Request | undefined;
   readonly _res: express.Response | undefined;
-  
+
   public room: string;
   public model: Model;
   public service: IService;
@@ -74,7 +74,7 @@ export class Context {
     this._mInit();
   }
 
-  static Rest(model: Model, service: IService)
+  static Rest(appName: string, model: Model, service: IService)
     : (req: express.Request, res: express.Response, next: express.NextFunction) => void {
 
     return function (req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -110,46 +110,84 @@ export class Context {
   }
 
   private _mInit(hooks: 'before' | 'after' | 'both' | 'none' = 'both', extraHooks?: any[]): void {
+    let stackDetails = {
+      secure: { should: 0, actual: 0 },
+      authorize: { should: 0, actual: 0 },
+      validate: { should: 0, actual: 0 },
+      before: { should: 0, actual: 0 },
+      service: { should: 0, actual: 0 },
+      after: { should: 0, actual: 0 },
+      extra: { should: 0, actual: 0 }
+    };
+
+    let total = 0;
+
     // Authentication Layer
     this.logger.debug(`checking authentication layer with options: ${this.service.secure}`);
     if (this.service.secure && State.config.authenticationModelPath) {
+      stackDetails.secure.should = 1;
       let authApp, authModel;
-      [authApp, authModel] = State.config.authenticationModelPath.split('/');
+      [authApp, authModel] = State.config.authenticationModelPath.split('.');
       let Authentication = State.getModel(authModel, authApp);
       if (Authentication)
-      this._stack.push({ handler: (<any>Authentication).Secure.bind(Authentication), args: [] });
+        this._stack.push({ handler: (<any>Authentication).Secure.bind(Authentication), args: [] });
     }
-    
+    stackDetails.secure.actual = total = this._stack.length;
+
     this.logger.debug(`checking authorization layer with options: ${this.service.authorize}`);
     if (this.service.authorize && State.config.authorizationModelPath) {
+      stackDetails.authorize.should = 1;
       let authApp, authModel;
-      [authApp, authModel] = State.config.authorizationModelPath.split('/');
+      [authApp, authModel] = State.config.authorizationModelPath.split('.');
       let Authorization = State.getModel(authModel, authApp);
       if (Authorization)
         this._stack.push({ handler: (<any>Authorization).Authorize.bind(Authorization), args: [this.service.authorize] });
     }
+    stackDetails.authorize.actual = this._stack.length - total;
+    total = this._stack.length;
 
     this.logger.debug(`checking validate hook with options: ${this.service.validate}`);
-    if (this.service.validate)
+    if (this.service.validate) {
+      stackDetails.validate.should = 1;
       this._stack.push({ handler: <any>State.getHook('validate'), args: [this.service.validate] });
+    }
+    stackDetails.validate.actual = this._stack.length - total;
+    total = this._stack.length;
 
     this.logger.debug(`checking before hooks with options: ${this.service.before}`);
     // Pushing before hooks to the stack
-    if ((hooks === 'both' || hooks === 'before') && this.service.before && this.service.before.length)
-    this._mPushStack(this.service.before);
-    
+    if ((hooks === 'both' || hooks === 'before') && this.service.before && this.service.before.length) {
+      stackDetails.before.should = this.service.before.length;
+      this._mPushStack(this.service.before);
+    }
+    stackDetails.before.actual = this._stack.length - total;
+    total = this._stack.length;
+
     this.logger.debug('adding main service');
     // Pushing service to the stack
+    stackDetails.service.should = 1;
     this._stack.push({ handler: (<any>this.model)[this.service.__name].bind(this.model), args: [] });
+    stackDetails.service.actual = this._stack.length - total;
+    total = this._stack.length;
 
     this.logger.debug(`checking after hooks with options: ${this.service.after}`);
     // Pushing after hooks to the stack
-    if ((hooks === 'both' || hooks === 'after') && this.service.after && this.service.after.length)
+    if ((hooks === 'both' || hooks === 'after') && this.service.after && this.service.after.length) {
+      stackDetails.after.should = this.service.after.length;
       this._mPushStack(this.service.after);
+    }
+    stackDetails.after.actual = this._stack.length - total;
+    total = this._stack.length;
 
     this.logger.debug('checking extra hooks');
-    if (extraHooks && extraHooks.length)
+    if (extraHooks && extraHooks.length) {
+      stackDetails.extra.should = extraHooks.length;
       this._stack.push(...extraHooks);
+    }
+    stackDetails.extra.actual = this._stack.length - total;
+    total = this._stack.length;
+
+    this.logger.debug('stack details:', JSON.stringify(stackDetails, null, 2));
 
     this.logger.debug('running the stack');
     this.next();
@@ -226,11 +264,14 @@ export class Context {
   }
 
   useServiceHooks(service: IService, clearOwnHooks: boolean = false) {
+    if (service) {
+      if (clearOwnHooks)
+        this._stack = [];
 
-    if (clearOwnHooks)
-      this._stack = [];
-
-    this._mPushStack(service.after);
+      this._mPushStack(service.after);
+    } else {
+      this.logger.warn('cannot user undifined service hooks!');
+    }
   }
 
   get domain(): RESPONSE_DOMAINS { return <RESPONSE_DOMAINS>this._domain; }
@@ -404,24 +445,27 @@ function* getHooks(context: Context, list: IHookOptions[]) {
   for (let i = 0; i < list.length; i++) {
     let hook = list[i];
     let args = typeof hook === 'string' ? hook.split(':') : (hook.args ? (Array.isArray(hook.args) ? hook.args : [hook.args]) : []);
-    let hookName = typeof hook === 'string' ? args.shift() : hook.name;
+    let hookName = typeof hook === 'string' ? args.shift().toLowerCase() : hook.name.toLowerCase();
     let handler: ((ctx: Context, ...args: any[]) => void) | undefined = undefined;
 
     if (hookName) {
       if (hookName.indexOf('.') > -1) {
-        let appName, modelName, modelHook;
-        [appName, modelName, modelHook] = hookName.split('.');
+        let appName, modelName, modelHookName;
+        [appName, modelName, modelHookName] = hookName.split('.');
+
+        console.log([appName, modelName, modelHookName]);
 
         let model = State.getModel(modelName, appName);
 
         if (model) {
-          if (model.$hasHook(modelHook))
-            if ((<any>model)[modelHook].private && modelName !== context.model.name)
-              yield null;
-            else
-              handler = (<any>model)[modelHook].bind(model);
-          else
+          console.log('model exists');
+          let modelHook = model.$getHook(modelHookName);
+          if (modelHook) {
+            console.log('hook exists');
+              handler = (<any>model)[modelHook.__name].bind(model);
+          } else {
             yield null;
+          }
 
         } else {
           yield null;

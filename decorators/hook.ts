@@ -7,8 +7,8 @@ export interface IHook {
 }
 
 export interface IModelHook extends IHook {
+  __name: string;
   isHook: boolean;
-  name: string;
   private: boolean;
 }
 

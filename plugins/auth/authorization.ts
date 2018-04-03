@@ -38,7 +38,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
     constructor(appName: string) {
       super(appName);
 
-      State.config.authorizationModelPath = appName + '/' + this.name;
+      State.config.authorizationModelPath = appName + '.' + this.name;
     }
 
     private _mGetUserRolesFromGroups(id: string): Promise<string[]> {

@@ -20,12 +20,18 @@ class Users extends MongoModel {}
 @MODEL()
 class Items extends MongoModel {}
 
-let UserAuthModels = AuthPlugin({ usersModelConstructor: Users, authorization: true });
+let UserAuthModels = AuthPlugin({ usersModelConstructor: Users, authorization: true }, {
+  service: 'gmail',
+  auth: {
+    user: 'amrmrdb51@gmail.com',
+    pass: '^mail|AMR8$'
+  }
+});
 
 @APP({
   dev: {
     mongodb_url: 'mongodb://localhost:27017',
-    database_name: 'gypsym_dev',
+    database_name: 'gypsum_dev',
     models: [...UserAuthModels, Items],
   }
 })

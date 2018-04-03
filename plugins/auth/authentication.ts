@@ -28,7 +28,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
       super(appName);
 
       this.name = modelName;
-      State.config.authenticationModelPath = appName + '/' + this.name;
+      State.config.authenticationModelPath = appName + '.' + this.name;
 
       if (transporterOptions) {
         this.transporter = createTransport(transporterOptions);
@@ -162,7 +162,11 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
             });
 
           let token = jwt.sign({ id: user._id }, authConfig.tokenSecret);
-          let activationLink = stringUtil.cleanPath(`${State.config.hostName}/authentication/activateUser?${authConfig.tokenFieldName}=${token}`);
+          let activationLink = `http${State.config.secure ? 's' : ''}://`;
+          activationLink += `${this.app}.${State.config.hostName}${State.env !== 'production' ? ':' + State.config.port : ''}/`;
+          activationLink += stringUtil.cleanPath(`/${this.name}/activateUser?${authConfig.tokenFieldName}=${token}`);
+
+          console.log(activationLink);
 
           let emailOptions: SendMailOptions = {
             from: authConfig.activationMailSubject,
@@ -188,7 +192,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
 
     @SERVICE({
       secure: true,
-      after: ['authentication.activationEmail']
+      after: [`api.${modelName}.activationEmail`]
     })
     sendActivationEmail(): Promise<IResponse> {
       return Promise.resolve({ data: true });
@@ -326,7 +330,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
       authorize: false,
       args: ['body.email', 'body.password'],
       method: 'post',
-      after: ['Authentication.pushToken']
+      after: [`api.${modelName}.pushToken`]
     })
     signin(email: string, password: string, ctx: Context): Promise<IResponse> {
       return new Promise((resolve, reject) => {
@@ -391,15 +395,15 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     @SERVICE({
       secure: false,
       authorize: false,
-      args: ['body.documents'],
+      args: ['body.document'],
       method: 'post',
-      after: ['Authentication.pushToken', 'Authentication.activationEmail']
+      after: [`api.${modelName}.pushToken`, `api.${modelName}.activationEmail`]
     })
-    signup(documents: any, ctx: Context): Promise<IResponse> {
+    signup(document: any, ctx: Context): Promise<IResponse> {
       return new Promise((resolve, reject) => {
 
         try {
-          let state = Validall(documents, {
+          let state = Validall(document, {
             [authConfig.userEmailField]: { $type: 'string', $is: 'email', $message: 'invalid email' },
             [authConfig.passwordField]: { $required: true, $type: 'string', $regex: toRegExp(authConfig.passwordpattern), $message: 'invalid password' }
           });
@@ -411,7 +415,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
               code: RESPONSE_CODES.BAD_REQUEST
             });
 
-          this.collection.count({ email: documents[0].email })
+          this.collection.count({ email: document[authConfig.userEmailField] })
             .then(count => {
               if (count)
                 return reject({
@@ -419,12 +423,19 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
                   code: RESPONSE_CODES.BAD_REQUEST
                 });
 
-              hash(documents[authConfig.passwordField])
+              hash(document[authConfig.passwordField])
                 .then(results => {
                   if (results && results.length) {
-                    documents[authConfig.passwordField] = results[0];
-                    documents[authConfig.passwordSaltField] = results[1];
-                    ctx.useService(this, 'insert');
+                    document[authConfig.passwordField] = results[0];
+                    document[authConfig.passwordSaltField] = results[1];
+
+                    this.insertOne(document)
+                      .then(doc => {
+                        ctx.useServiceHooks(this.$getService('insertOne'));
+                        resolve(doc);
+                      })
+                      .catch(error => reject(error));
+
                   } else {
                     reject({
                       message: 'Error hashing password',

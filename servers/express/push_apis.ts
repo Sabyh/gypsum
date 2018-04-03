@@ -45,7 +45,7 @@ export function pushApis(expressApp: express.Express, app: App) {
   
         logger.info(`adding service for ${app.name} app: (${services[service].method}) - ${services[service].path}`);
         if (State.env === 'production')
-          router[services[service].method](services[service].path, cors(corsOptions), Context.Rest(model, services[service]));
+          router[services[service].method](services[service].path, cors(corsOptions), Context.Rest(app.name, model, services[service]));
         else
           router[services[service].method](
             services[service].path,
@@ -54,7 +54,7 @@ export function pushApis(expressApp: express.Express, app: App) {
               next();
             },
             cors(corsOptions),
-            Context.Rest(model, services[service])
+            Context.Rest(app.name, model, services[service])
           );
 
       }

@@ -18,14 +18,12 @@ export interface IAuthenticationConfigOptions {
   rootUserPassword: string;
   usersModelConstructor: typeof MongoModel;
   userEmailField: string;
-  userIdField: string;
   usernameField: string;
   passwordField: string;
   passwordSaltField: string;
   userVerifiedField: string;
   tokenFieldName: string;
   tokenSecret: string;
-  usernamePattern: string;
   passwordpattern: string;
   tranporterOptions: IEmailTransporter | null;
   activationMailFrom: string;
@@ -45,20 +43,18 @@ export const defaultConfig = {
   rootUserEmail: 'root@admin.com',
   rootUserPassword: 'admin',
   userEmailField: 'email',
-  userIdField: 'userid',
   usernameField: 'username',
   passwordField: 'password',
   passwordSaltField: 'passwordSalt',
-  userIsActiveField: 'verified',
+  userVerifiedField: 'verified',
   tokenFieldName: 'token',
   tokenSecret: '4s8e1doenf3q2d6q2x4fv12',
-  usernamePattern: '/[a-zA-Z0-9_]{5,}/',
   passwordpattern: '/[a-zA-Z0-9_]{5,}/',
   tranporterOptions: null,
   activationMailFrom: 'me@threre.com',
   activationMailSubject: 'Gypsum Activation Email',
-  activationPage: path.join(__dirname, '../templates/activation-page-template.html'),
-  activationMailTemplatePath: path.join(__dirname, '../templates/activation-email-template.html'),
-  forgetPasswordMailTemplatePath: path.join(__dirname, '../templates/forget-password-email-template.html'),
+  activationPage: path.join(__dirname, './templates/activation-page-template.html'),
+  activationMailTemplatePath: path.join(__dirname, './templates/activation-email-template.html'),
+  forgetPasswordMailTemplatePath: path.join(__dirname, './templates/forget-password-email-template.html'),
   authorization: false
 }

@@ -38,7 +38,7 @@ export class AppState {
   hooks: IHook[] = [];
 
   getModel(name: string, appName: string): Model | MongoModel | FileModel | undefined {
-    let app = this.apps.find(_app => _app.name === appName);
+    let app = this.apps.find(_app => _app.name.toLowerCase() === appName.toLowerCase());
 
     if (app && app.models)
       return app.models.find(model => model.name === name.toLowerCase()) || undefined;
@@ -47,7 +47,7 @@ export class AppState {
   }
 
   getHook(name: string): IHook | undefined {
-    return this.hooks.find(hook => (<any>hook).__name === name) || undefined;
+    return this.hooks.find(hook => (<any>hook).__name.toLowerCase() === name.toLowerCase()) || undefined;
   }
 
   public setConfiguration(userConfig: IGypsumConfig = <IGypsumConfig>{}) {
