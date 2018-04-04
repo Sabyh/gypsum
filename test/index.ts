@@ -18,10 +18,6 @@ class Users extends MongoModel {
   }
 }
 
-console.log(Users);
-console.log((<any>Users.prototype).InsertOne.after);
-console.log('-----------------------------------------------');
-
 let UserAuthModels = AuthPlugin({ usersModelConstructor: Users, authorization: true }, {
   service: 'gmail',
   auth: {

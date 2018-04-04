@@ -83,8 +83,6 @@ export class Model {
         if (this.$get('after') && this.$get('after').length)
           this._servicesData[serviceName].after = [...this.$get('after')];
 
-        // console.log(this.name, this._servicesData[serviceName].name, service.after);
-
         if (service.after && service.after.length) {
           if (service.after[0] === "~") {
             this._servicesData[serviceName].after = [...(service.after.slice(1))];

@@ -110,7 +110,7 @@ export class Context {
     }
   }
 
-  private _mInit(hooks: 'before' | 'after' | 'both' | 'none' = 'both', extraHooks?: any[]): void {
+  private _mInit(hooks: 'before' | 'after' | 'both' | 'none' = 'both', extraHooks?: any[], extraHooksPos: 0 | 1 | -1 = 0): void {
     let stackDetails = {
       secure: { should: 0, actual: 0 },
       authorize: { should: 0, actual: 0 },
@@ -171,6 +171,14 @@ export class Context {
     stackDetails.service.actual = this._stack.length - total;
     total = this._stack.length;
 
+    this.logger.debug('checking extra hooks pre after hooks');
+    if (extraHooks && extraHooks.length && extraHooksPos === -1) {
+      stackDetails.extra.should = extraHooks.length;
+      this._stack.push(...extraHooks);
+    }
+    stackDetails.extra.actual = this._stack.length - total;
+    total = this._stack.length;
+
     this.logger.debug(`checking after hooks with options: ${this.service.after}`);
     // Pushing after hooks to the stack
     if ((hooks === 'both' || hooks === 'after') && this.service.after && this.service.after.length) {
@@ -180,7 +188,7 @@ export class Context {
     stackDetails.after.actual = this._stack.length - total;
     total = this._stack.length;
 
-    this.logger.debug('checking extra hooks');
+    this.logger.debug('checking extra hooks post after hooks' && extraHooksPos === 1);
     if (extraHooks && extraHooks.length) {
       stackDetails.extra.should = extraHooks.length;
       this._stack.push(...extraHooks);
@@ -252,16 +260,16 @@ export class Context {
           this._stack.push(hook);
   }
 
-  useService(model: Model, service: string, hooks: 'before' | 'after' | 'both' | 'none' = 'both', clearOwnHooks: boolean = false) {
+  useService(model: Model, service: string, hooks: 'before' | 'after' | 'both' | 'none' = 'both', useOwnHooks: 0 | 1 | -1 = 0) {
     this.model = model;
     this.service = (<any>this.model)[stringUtil.capitalizeFirst(service)];
     let extraHooks;
 
-    if (!clearOwnHooks)
+    if (useOwnHooks !== 0)
       extraHooks = this._stack;
 
     this._stack = [];
-    this._mInit(hooks, extraHooks);
+    this._mInit(hooks, extraHooks, useOwnHooks);
   }
 
   useServiceHooks(service: IService, clearOwnHooks: boolean = false) {

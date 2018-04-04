@@ -102,11 +102,5 @@ export function SERVICE(options?: IServiceOptions) {
       writable: true,
       enumerable: true
     });
-
-    if (target.constructor.name === 'Users') {
-      console.log('target.constructor');
-      console.log(target.constructor);
-      console.log('--------------------------------------------------------------------');
-    }
   }
 }
