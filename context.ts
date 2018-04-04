@@ -86,6 +86,7 @@ export class Context {
         cookies: req.cookies,
         req: req,
         res: res,
+        appName: appName,
         model: model,
         service: service
       });
@@ -264,10 +265,12 @@ export class Context {
   }
 
   useServiceHooks(service: IService, clearOwnHooks: boolean = false) {
+    console.log(service);
     if (service) {
       if (clearOwnHooks)
         this._stack = [];
 
+      console.log(service.after);
       this._mPushStack(service.after);
     } else {
       this.logger.warn('cannot user undifined service hooks!');
@@ -453,15 +456,12 @@ function* getHooks(context: Context, list: IHookOptions[]) {
         let appName, modelName, modelHookName;
         [appName, modelName, modelHookName] = hookName.split('.');
 
-        console.log([appName, modelName, modelHookName]);
-
         let model = State.getModel(modelName, appName);
 
         if (model) {
-          console.log('model exists');
           let modelHook = model.$getHook(modelHookName);
+
           if (modelHook) {
-            console.log('hook exists');
               handler = (<any>model)[modelHook.__name].bind(model);
           } else {
             yield null;

@@ -1,24 +1,26 @@
 import { Gypsum } from '../main';
-import { MODEL, APP } from '../decorators';
+import { MODEL, APP, SERVICE } from '../decorators';
 import { MongoModel } from '../models';
 import { API_TYPES } from '../types';
 import { App } from '../app';
 import { AuthPlugin, IAuthenticationConfig } from '../plugins/auth';
 
 @MODEL({
-  // apiType: API_TYPES.REST,
-  // schema: {
-  //   username: String,
-  //   email: String,
-  //   password: String,
-  //   passwordSalt: String,
-  //   active: { $type: Boolean, $default: false }
-  // }
+  
 })
-class Users extends MongoModel {}
+class Users extends MongoModel {
 
-@MODEL()
-class Items extends MongoModel {}
+  @SERVICE({
+    after: ['filter:-password,passwordSalt']
+  })
+  insertOne(document: any) {
+    return super.insertOne(document);
+  }
+}
+
+console.log(Users);
+console.log((<any>Users.prototype).InsertOne.after);
+console.log('-----------------------------------------------');
 
 let UserAuthModels = AuthPlugin({ usersModelConstructor: Users, authorization: true }, {
   service: 'gmail',
@@ -32,7 +34,7 @@ let UserAuthModels = AuthPlugin({ usersModelConstructor: Users, authorization: t
   dev: {
     mongodb_url: 'mongodb://localhost:27017',
     database_name: 'gypsum_dev',
-    models: [...UserAuthModels, Items],
+    models: [...UserAuthModels],
   }
 })
 class Api extends App {}

@@ -166,8 +166,6 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
           activationLink += `${this.app}.${State.config.hostName}${State.env !== 'production' ? ':' + State.config.port : ''}/`;
           activationLink += stringUtil.cleanPath(`/${this.name}/activateUser?${authConfig.tokenFieldName}=${token}`);
 
-          console.log(activationLink);
-
           let emailOptions: SendMailOptions = {
             from: authConfig.activationMailSubject,
             to: user[authConfig.userEmailField],

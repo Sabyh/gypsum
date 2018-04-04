@@ -5,14 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
+
+  <style>
+    body { 
+      text-align: center;
+      color: #444;
+      font-family: Roboto, Arial;
+    }
+
+    .activate-btn {
+      margin: 20px 0;
+    }
+
+    .activate-btn a {
+      display: inline-block; 
+      width: 120px;
+      padding: 10px 0; 
+      background-color: #37D; color: #FFF; 
+      cursor: pointer; 
+      border-radius: 3px;
+      text-decoration: none;
+      font-size: 20px;
+    }
+  </style>
 </head>
 <body>
   <p><strong>Dear {{username}}.</strong></p>
 
   <p>kindly click the link below to activate your account:</p>
-  <a href="{{activationLink}}">Activate</a>
-  <br>
 
-  Thank you.
+  <div class="activate-btn">
+    <a href="{{activationLink}}">Activate</a>
+  </div>
+
+  <p>Thank you.</p>
 </body>
 </html>

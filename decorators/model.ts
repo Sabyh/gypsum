@@ -57,16 +57,25 @@ export function MODEL(options: IModelOptions = {}) {
 
     if (Target.__proto__.prototype) {
       let proto = Object.getOwnPropertyNames(Target.__proto__.prototype).slice(1);
+      if (Target.prototype.constructor.name === 'Users') {
+        console.log(Target.prototype.constructor.name, Target.__proto__.prototype.constructor.name);
+        console.log('Target');
+        console.log(Target);
+        console.log('Target.prototype.constructor');
+        console.log(Target.prototype.constructor);
+        console.log('------------------------------------------------------------');
+      }
       for (let i = 0; i < proto.length; i++) {
         let method = Target.__proto__.prototype[proto[i]];
         if (typeof method === 'function' && (method.isService || method.isHook)) {
+          let attrs = Object.create(Target.prototype[proto[i]]);
 
           Target.prototype[proto[i]] = function (...args: any[]) {
             return Target.__proto__.prototype[proto[i]].apply(this, args);
           }
 
-          for (var key in Target.__proto__.prototype[proto[i]]) {
-            Target.prototype[proto[i]][key] = Target.__proto__.prototype[proto[i]][key];
+          for (var key in attrs) {
+            Target.prototype[proto[i]][key] = attrs[key];
           }
         }
       }

@@ -94,7 +94,7 @@ export function SERVICE(options?: IServiceOptions) {
     (<IServiceOptions>service).domain = options && options.domain ? options.domain : (defaultOptions[key] ? defaultOptions[key].domain : RESPONSE_DOMAINS.SELF);
     (<IServiceOptions>service).params = options && options.params ? options.params : (defaultOptions[key] ? defaultOptions[key].params || [] : []);
     (<IServiceOptions>service).before = options && options.before ? options.before : [];
-    (<IServiceOptions>service).after = options && options.after ? options.after : [];
+    (<IServiceOptions>service).after = options && options.after ? options.after : (<IServiceOptions>service).after || [];
     (<IServiceOptions>service).validate = options ? options.validate : undefined;
 
     Object.defineProperty(target.constructor.prototype, serviceName, {
@@ -102,5 +102,11 @@ export function SERVICE(options?: IServiceOptions) {
       writable: true,
       enumerable: true
     });
+
+    if (target.constructor.name === 'Users') {
+      console.log('target.constructor');
+      console.log(target.constructor);
+      console.log('--------------------------------------------------------------------');
+    }
   }
 }
