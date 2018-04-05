@@ -47,7 +47,7 @@ export class AppState {
   }
 
   getHook(name: string): IHook | undefined {
-    return this.hooks.find(hook => (<any>hook).__name.toLowerCase() === name.toLowerCase()) || undefined;
+    return this.hooks.find(hook => (<any>hook).name.toLowerCase() === name.toLowerCase()) || undefined;
   }
 
   public setConfiguration(userConfig: IGypsumConfig = <IGypsumConfig>{}) {

@@ -131,7 +131,7 @@ export class Context {
       [authApp, authModel] = State.config.authenticationModelPath.split('.');
       let Authentication = State.getModel(authModel, authApp);
       if (Authentication)
-        this._stack.push({ handler: (<any>Authentication).Secure.bind(Authentication), args: [] });
+        this._stack.push({ handler: (<any>Authentication).Authenticate.bind(Authentication), args: [] });
     }
     stackDetails.secure.actual = total = this._stack.length;
 

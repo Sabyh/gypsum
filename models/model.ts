@@ -37,11 +37,14 @@ export class Model {
       
       if (service && isService) {
 
-        if (eliminationsList.indexOf(prop) > -1) {
+        if (eliminationsList && eliminationsList.indexOf(prop) > -1) {
           delete this[prop];
           continue;
         }
+
         let serviceName = prop.toLowerCase();
+
+        // console.log(this.name, service.__name, this.$get('authorize'), service.authorize);
 
         service.authorize = service.authorize === false ? false : service.authorize || this.$get('authorize');
 
@@ -192,12 +195,7 @@ function cleanHooks(hooks: IHookOptions[]) {
 }
 
 function createPath(service: IService, model: Model) {
-  const skippedServicesNames = ['find', 'findbyid', 'insert', 'update', 'updatebyid', 'delete', 'deletebyid'];
-
-  let path = `/${model.name}/`;
-
-  if (skippedServicesNames.indexOf(service.__name.toLowerCase()) === -1)
-    path += `/${service.__name.toLowerCase()}`;
+  let path = `/${model.name}/${service.__name.toLowerCase()}`;
 
   if (service.params && service.params.length)
     path += '/' + service.params.map(param => `:${param}`).join('/');

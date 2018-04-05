@@ -101,7 +101,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     }
 
     @HOOK()
-    secure(ctx: Context): Promise<void> {
+    authenticate(ctx: Context): Promise<void> {
       return new Promise((resolve, reject) => {
         this.$logger.info(`authenticating user for ${ctx.service.__name} service...`);
 

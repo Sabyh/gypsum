@@ -22,7 +22,9 @@ export function HOOK(options: { private: boolean } = { private: false }) {
     function hook(ctx: Context, ...args: any[]) {
       args.push(ctx);
       this[key](...args)
-        .then(() => ctx.next())
+        .then(() => {
+          ctx.next()
+        })
         .catch((error: ResponseError) => ctx.next(error));
     }
 

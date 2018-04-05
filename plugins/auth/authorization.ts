@@ -74,7 +74,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
       });
     }
 
-    private _mFetchData(appName: string, modelName: string, options: { fetch: any, field: string, match: string }, ctx: Context): Promise<void> {
+    private _mFetchData(appName: string, modelName: string, options: { fetch: any, userFieldValue: string, match: string }, ctx: Context): Promise<void> {
       return new Promise((resolve, reject) => {
         if (!options)
           return reject({
@@ -90,26 +90,24 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
             code: RESPONSE_CODES.BAD_REQUEST
           });
 
-        let cursor: MongoDB.Cursor = model.find(options.fetch.query, options.fetch.projections || {});
-
-        for (let prop in (options.fetch.options || {}))
-          if (prop in cursor)
-            (<any>cursor)[prop](options.fetch.options[prop]);
-
-        cursor
-          .toArray()
-          .then((docs: any[]) => {
-            if (!docs)
+        model.find(options.fetch.query, options.fetch.projections || {}, options.fetch.options)
+          .then((res: any) => {
+            if (!res || !res.data)
               return reject({
                 message: 'document not found',
                 code: RESPONSE_CODES.BAD_REQUEST
               });
 
+            let docs = res.data;
+
             for (let i = 0; i < docs.length; i++) {
               let compareValue = objectUtil.getValue(docs[i], options.match);
-              if (options.field !== compareValue)
+              if (compareValue instanceof MongoDB.ObjectID)
+                compareValue = compareValue.toString();
+
+              if (options.userFieldValue !== compareValue)
                 return reject({
-                  message: 'no match',
+                  message: 'user not authorized',
                   code: RESPONSE_CODES.UNAUTHORIZED
                 });
             }
@@ -141,45 +139,7 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
         let modelName = ctx.model.name.toLowerCase();
         let serviceName = ctx.service.name.toLowerCase();
 
-        if (Validall.Types.object(options) && (<any>options).field && (<any>options).match) {
-          (<any>options).field = objectUtil.getValue(ctx.user, (<any>options).field);
-
-          if (!(<any>options).fetch) {
-            (<any>options).match = objectUtil.getValue(ctx, (<any>options).match);
-
-            if ((<any>options).field !== (<any>options).match)
-              return reject({
-                message: 'user not authorized',
-                code: RESPONSE_CODES.UNAUTHORIZED
-              });
-
-            return resolve();
-
-          } else {
-            if ((<any>options).fetch === 'string') {
-              (<any>options).fetch = objectUtil.getValue(ctx, (<any>options).fetch);
-            } else {
-              if ((<any>options).fetch.query === 'string')
-                (<any>options).fetch.query = objectUtil.getValue(ctx, (<any>options).fetch.query);
-              else
-                for (let prop in (<any>options).fetch.query)
-                  if (typeof (<any>options).fetch.query[prop] === 'string' && (<any>options).fetch.query[prop].charAt(0) === '@')
-                    (<any>options).fetch.query[prop] = objectUtil.getValue(ctx, (<any>options).fetch.query[prop].slice(1));
-
-              if ((<any>options).fetch.projections === 'string')
-                (<any>options).fetch.projections = objectUtil.getValue(ctx, (<any>options).fetch.projections);
-
-              if ((<any>options).fetch.options === 'string')
-                (<any>options).fetch.options = objectUtil.getValue(ctx, (<any>options).fetch.options);
-            }
-
-            if ((<any>options).fetch.query._id)
-              (<any>options).fetch.query._id = new MongoDB.ObjectID((<any>options).fetch.query._id)
-
-            return this._mFetchData(appName, modelName, <any>options, ctx);
-          }
-        }
-
+        this.$logger.debug('getting user rules...');
         this._mGetUserRolesFromGroups(ctx.user._id)
           .then(roles => this._mGetUserPermissionsFromRules(ctx.user._id, roles))
           .then(permissions => {
@@ -193,6 +153,62 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
                 ) {
                   return resolve();
                 }
+              }
+            } else if (Validall.Types.object(options) && (<any>options).field && (<any>options).match) {
+
+              let userFieldValue = objectUtil.getValue(ctx.user, (<any>options).field);
+
+              if (!userFieldValue)
+                return reject({
+                  message: `${(<any>options).field} dose not exist in user object`,
+                  code: RESPONSE_CODES.UNAUTHORIZED
+                });
+
+              if (userFieldValue instanceof MongoDB.ObjectID)
+                userFieldValue = userFieldValue.toString();
+
+              if (!(<any>options).fetch) {
+                let matchValue = objectUtil.getValue(ctx, (<any>options).match);
+
+                console.log(userFieldValue, matchValue);
+
+                if (userFieldValue !== matchValue)
+                  return reject({
+                    message: 'user not authorized',
+                    code: RESPONSE_CODES.UNAUTHORIZED
+                  });
+
+                return resolve();
+
+              } else {
+                let fetchObj: any = { query: {} };
+
+                if (typeof (<any>options).fetch === 'string') {
+                  fetchObj = objectUtil.getValue(ctx, (<any>options).fetch);
+
+                } else {
+
+                  if (typeof (<any>options).fetch.query === 'string')
+                    fetchObj.query = objectUtil.getValue(ctx, (<any>options).fetch.query);
+
+                  else
+                    for (let prop in (<any>options).fetch.query)
+                      if (typeof (<any>options).fetch.query[prop] === 'string' && (<any>options).fetch.query[prop].charAt(0) === '@')
+                        fetchObj.query[prop] = objectUtil.getValue(ctx, (<any>options).fetch.query[prop].slice(1));
+
+                  if (typeof (<any>options).fetch.projections === 'string')
+                    fetchObj.projections = objectUtil.getValue(ctx, (<any>options).fetch.projections);
+
+                  if (typeof (<any>options).fetch.options === 'string')
+                    fetchObj.options = objectUtil.getValue(ctx, (<any>options).fetch.options);
+                }
+
+                if (fetchObj.query._id)
+                  fetchObj.query._id = new MongoDB.ObjectID(fetchObj.query._id)
+
+                return this._mFetchData(appName, modelName, { fetch: fetchObj, userFieldValue: userFieldValue, match: (<any>options).match }, ctx)
+                  .then(() => resolve())
+                  .catch(err => reject(err));
               }
             }
 
