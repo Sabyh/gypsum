@@ -26,6 +26,7 @@ export function pushApis(expressApp: express.Express, app: App) {
   
       let corsOptions: cors.CorsOptions = {};
       let appCors = app.$get('cors');
+      objectUtil.extend(corsOptions, appCors);
   
       let modelCors = model.$get('cors');
 
@@ -44,6 +45,7 @@ export function pushApis(expressApp: express.Express, app: App) {
           objectUtil.extend(corsOptions, serviceCors);
   
         logger.info(`adding service for ${app.name} app: (${services[service].method}) - ${services[service].path}`);
+        router.options(services[service].path, cors(corsOptions));
         if (State.env === 'production')
           router[services[service].method](services[service].path, cors(corsOptions), Context.Rest(app.name, model, services[service]));
         else

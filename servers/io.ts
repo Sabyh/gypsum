@@ -13,8 +13,8 @@ export function initSocket(io: any) {
 
   io.use((socket: any, next: Function) => {
 
-    if (socket.handShake.query && socket.handShake.query.app) {
-      let namespace = socket.handShake.query.app;
+    if (socket.handshake.query && socket.handshake.query.app) {
+      let namespace = socket.handshake.query.app;
       let appName = namespace.split('/')[0];
 
       let app = State.apps.find(_app => _app.name === appName);
@@ -93,7 +93,7 @@ function initializeApp(io: any, app: App, ns: string = app.name) {
     if ('onConnect' in app)
       (<any>app).onConnect(socket);
 
-    logger.info(`socket connected: { socketId: ${socket.id}, pid: ${process.pid} }`);
+    logger.info(`socket connected: { socketId: ${socket.id}, pid: ${process.pid}, namespace: ${ns} }`);
 
     logger.info('Implementing socket web services');
 
