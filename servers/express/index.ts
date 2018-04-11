@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as express from 'express';
+import * as cors from 'cors';
 import { State } from '../../state';
 import { Logger } from '../../misc/logger';
 import { configure } from './configure_app';
@@ -23,8 +24,8 @@ export function initExpress(app: express.Express) {
     }
   }
 
-  app.get('/getapp/:name', (req, res) => {
-    let app = State.apps.find(app => app.name === req.params.name);
+  app.get('/getapp/:name', cors(), (req, res) => {
+    let app = State.apps.find(_app => _app.name === req.params.name.toLowerCase());
 
     if (!app)
       return res.json(null);
