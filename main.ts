@@ -32,7 +32,6 @@ import { initSocket } from './servers/io';
  */
 import { Server } from './servers/http';
 import { initializeWorkers } from './workers';
-import { generateClientGypsum } from './client/generate-client-gypsum';
 import { MongoModel, FileModel } from './models';
 import { IModelHook, IHook } from './decorators';
 import { App } from './app';
@@ -118,9 +117,6 @@ export const Gypsum: IGypsum = {
         app.init();
         State.apps.push(app);
       }
-
-    logger.info('generating gypsum-client.js');
-    generateClientGypsum();
 
     logger.info('initializing mongodb...');
     try {

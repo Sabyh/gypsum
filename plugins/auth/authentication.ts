@@ -189,11 +189,27 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     }
 
     @SERVICE({
-      secure: true,
+      secure: false,
+      authorize: false,
+      args: ['body.email'],
       after: [`api.${modelName}.activationEmail`]
     })
-    sendActivationEmail(): Promise<IResponse> {
-      return Promise.resolve({ data: true });
+    sendActivationEmail(email: string, ctx: Context): Promise<IResponse> {
+      return new Promise((resolve, reject) => {
+        this.collection.findOne({ email: email })
+          .then(doc => {
+            if (doc) {
+              ctx.user = doc;
+              resolve({ data: true });
+            } else {
+              reject({
+                message: 'email not found',
+                code: RESPONSE_CODES.UNAUTHORIZED
+              });
+            }
+          })
+          .catch(err => reject(err));
+      });
     }
 
     @SERVICE({

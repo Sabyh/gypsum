@@ -373,7 +373,7 @@ export class Context {
   next(err?: IResponseError): void {
     if (err) {
       console.trace(err);
-      this._response = new Response({ data: new ResponseError(err), code: err.code });
+      this._response = new Response({ error: new ResponseError(err), code: err.code });
       this._mRespond();
 
     } else {

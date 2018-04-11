@@ -23,6 +23,15 @@ export function initExpress(app: express.Express) {
     }
   }
 
+  app.get('/getapp/:name', (req, res) => {
+    let app = State.apps.find(app => app.name === req.params.name);
+
+    if (!app)
+      return res.json(null);
+    else
+      res.json(app.$getApis());
+  });
+
   for (let i = 0; i < State.apps.length; i++) {
     if (State.apps[i].$get('apiType') === API_TYPES.SOCKET)
       continue;
