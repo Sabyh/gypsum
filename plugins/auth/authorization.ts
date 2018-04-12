@@ -170,8 +170,6 @@ export function initAuthorization(authConfig: IAuthenticationConfigOptions): any
               if (!(<any>options).fetch) {
                 let matchValue = objectUtil.getValue(ctx, (<any>options).match);
 
-                console.log(userFieldValue, matchValue);
-
                 if (userFieldValue !== matchValue)
                   return reject({
                     message: 'user not authorized',

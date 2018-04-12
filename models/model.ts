@@ -44,8 +44,6 @@ export class Model {
 
         let serviceName = prop.toLowerCase();
 
-        // console.log(this.name, service.__name, this.$get('authorize'), service.authorize);
-
         service.authorize = service.authorize === false ? false : service.authorize || this.$get('authorize');
 
         if (service.secure === undefined)

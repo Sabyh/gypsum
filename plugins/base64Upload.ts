@@ -26,7 +26,7 @@ export function gypsumBase64Upload(options: IGypsumBase64UploadOptions): IHook {
 
     fs.writeFile(path.join(outDir, fileName), data, 'base64', err => {
       if (err) {
-        console.log('error:', err);
+        logger.error(err);
         return ctx.next({
           message: 'error writing file',
           original: err,

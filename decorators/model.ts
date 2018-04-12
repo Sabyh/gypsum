@@ -45,8 +45,6 @@ export function MODEL(options: IModelOptions = {}) {
 
   return function (Target: any) {
 
-    // console.log(Target.name, options);
-
     if (Target.__proto__.prototype) {
       let proto = Object.getOwnPropertyNames(Target.__proto__.prototype).slice(1);
       
@@ -74,9 +72,6 @@ export function MODEL(options: IModelOptions = {}) {
         else
           (<any>options)[prop] = Target.prototype[`__${prop}`];
       }
-
-      // if (Target.name === 'Users' || Target.name === 'Authentication')
-      //   console.log(Target.name, prop, (<any>options)[prop], Target.prototype[`__${prop}`], Target.__proto__.prototype[`__${prop}`]);
     }
 
     if (options.schema) {
@@ -84,9 +79,6 @@ export function MODEL(options: IModelOptions = {}) {
       options.schemaOptions = Object.assign({}, defaultSchemaOptions, { root: Target.name }, options.schemaOptions || {});
       options.schema = new Validall.Schema(options.schema, options.schemaOptions);
     }
-    
-    // if (Target.name === 'Users' || Target.name === 'Authentication')
-    //   console.log(Target.name, options);
 
     for (let prop in options) {
       if (options.hasOwnProperty(prop))

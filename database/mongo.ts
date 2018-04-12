@@ -103,7 +103,7 @@ function Connect(connection: any, logger: Logger) {
 
 function cleanup(client: MongoClient) {
   client.close(() => {
-    console.log('Closing DB connection and stopping the app.');
+    Logger.Info('Closing DB connection and stopping the app.');
     process.exit(0);
   });
 }

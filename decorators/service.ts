@@ -77,7 +77,7 @@ export function SERVICE(options?: IServiceOptions) {
       
       this[key](...args)
         .then((res: IResponse) => {
-          console.log(key, res);
+          
           if (res)
             ctx.ok(new Response(res));
           else
@@ -97,9 +97,6 @@ export function SERVICE(options?: IServiceOptions) {
     (<IServiceOptions>service).before = options && options.before ? options.before : [];
     (<IServiceOptions>service).after = options && options.after ? options.after : [];
     (<IServiceOptions>service).validate = options ? options.validate : undefined;
-
-    // console.log(target.constructor.name, serviceName);
-    // console.dir(service);
 
     Object.defineProperty(target.constructor.prototype, serviceName, {
       value: service,
