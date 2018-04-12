@@ -22,7 +22,6 @@ export interface IAuthenticationConfigOptions {
   passwordField: string;
   passwordSaltField: string;
   userVerifiedField: string;
-  tokenFieldName: string;
   tokenSecret: string;
   passwordpattern: string;
   tranporterOptions: IEmailTransporter | null;
@@ -47,7 +46,6 @@ export const defaultConfig = {
   passwordField: 'password',
   passwordSaltField: 'passwordSalt',
   userVerifiedField: 'verified',
-  tokenFieldName: 'token',
   tokenSecret: '4s8e1doenf3q2d6q2x4fv12',
   passwordpattern: '/[a-zA-Z0-9_]{5,}/',
   tranporterOptions: null,

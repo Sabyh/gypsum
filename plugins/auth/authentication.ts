@@ -95,7 +95,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
         if (!responseData || Array.isArray(responseData) || !Validall.Types.object(responseData))
           return resolve();
 
-        responseData[authConfig.tokenFieldName] = jwt.sign({ id: responseData._id }, authConfig.tokenSecret);
+        responseData.token = jwt.sign({ id: responseData._id }, authConfig.tokenSecret);
         resolve();
       });
     }
@@ -105,7 +105,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
       return new Promise((resolve, reject) => {
         this.$logger.info(`authenticating user for ${ctx.service.__name} service...`);
 
-        let token = ctx.getHeader(authConfig.tokenFieldName) || ctx.query[authConfig.tokenFieldName] || ctx.cookies(authConfig.tokenFieldName) || ctx.body[authConfig.tokenFieldName];
+        let token = ctx.getHeader('token') || ctx.query.token || ctx.body.token || ctx.cookies('token');
 
         if (!token) {
           return reject({
@@ -164,7 +164,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
           let token = jwt.sign({ id: user._id }, authConfig.tokenSecret);
           let activationLink = `http${State.config.secure ? 's' : ''}://`;
           activationLink += `${this.app}.${State.config.hostName}${State.env !== 'production' ? ':' + State.config.port : ''}/`;
-          activationLink += stringUtil.cleanPath(`/${this.name}/activateUser?${authConfig.tokenFieldName}=${token}`);
+          activationLink += stringUtil.cleanPath(`/${this.name}/activateUser?${token}=${token}`);
 
           let emailOptions: SendMailOptions = {
             from: authConfig.activationMailSubject,

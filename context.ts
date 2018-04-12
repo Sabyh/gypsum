@@ -273,12 +273,11 @@ export class Context {
   }
 
   useServiceHooks(service: IService, clearOwnHooks: boolean = false) {
-    console.log(service);
+    
     if (service) {
       if (clearOwnHooks)
         this._stack = [];
-
-      console.log(service.after);
+        
       this._mPushStack(service.after);
     } else {
       this.logger.warn('cannot user undifined service hooks!');
