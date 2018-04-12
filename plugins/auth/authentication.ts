@@ -145,7 +145,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     activationEmail(ctx: Context): Promise<void> {
       return new Promise((resolve, reject) => {
 
-        let user = ctx.getResponseData() || ctx.user;
+        let user = ctx.user || ctx.getResponseData();
 
         if (!user)
           return reject({
