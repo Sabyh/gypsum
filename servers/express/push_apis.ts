@@ -45,7 +45,7 @@ export function pushApis(expressApp: express.Express, app: App) {
           objectUtil.extend(corsOptions, serviceCors);
   
         logger.info(`adding service for ${app.name} app: (${services[service].method}) - ${services[service].path}`);
-        router.options(services[service].path, cors(corsOptions));
+        router.options(services[service].path, cors(corsOptions), (req, res) => res.status(204).end());
         if (State.env === 'production')
           router[services[service].method](services[service].path, cors(corsOptions), Context.Rest(app.name, model, services[service]));
         else

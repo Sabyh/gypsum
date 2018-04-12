@@ -192,6 +192,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
       secure: false,
       authorize: false,
       args: ['body.email'],
+      method: 'post',
       after: [`api.${modelName}.activationEmail`]
     })
     sendActivationEmail(email: string, ctx: Context): Promise<IResponse> {
@@ -213,7 +214,8 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     }
 
     @SERVICE({
-      secure: true
+      secure: true,
+      authorize: false
     })
     activateUser(ctx: Context): Promise<IResponse> {
       return new Promise((resolve, reject) => {
@@ -247,6 +249,7 @@ export function initAuthentication(authConfig: IAuthenticationConfigOptions, tra
     @SERVICE({
       secure: false,
       authorize: false,
+      method: 'post',
       args: ['body.email']
     })
     forgetPassword(email: string) {
