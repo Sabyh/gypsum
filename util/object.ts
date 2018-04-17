@@ -46,7 +46,7 @@ export const objectUtil = {
         }
       }
     }
-  
+
     return dest;
   },
 
@@ -54,20 +54,41 @@ export const objectUtil = {
     let parts = path.split('.');
 
     if (parts.length === 1) {
-      if (value === undefined) return obj[parts[0]];
-      else if (inject) return obj[parts[0]] = value;
-      else if (obj.hasOwnProperty(parts[0])) return obj[parts[0]] = value;
-      else return false;
+      if (value === undefined) {
+        return parts[0] ? obj[parts[0]] : obj;
+      } else if (inject) {
+        return obj[parts[0]] = value;
+      } else if (obj.hasOwnProperty(parts[0])) {
+        return obj[parts[0]] = value;
+      } else {
+        return false;
+      }
     }
 
-    let temp = obj;
+    let temp: any = obj;
 
     for (let j = 0; j < parts.length; j++) {
+      if (parts[j] === '$') {
+        temp = Array.isArray(temp) ? temp : undefined;
+        if (temp) {
+          let result = [];
+          for (let i = 0; i < (temp.length || 1); i++) {
+            temp[i] = temp[i] || {};
+            let currentValue = Array.isArray(value) ? value[i] : value;
+            result.push(this.fromPath(temp[i], parts.slice(j + 1).join('.'), currentValue, inject));
+          }
+
+          return result;
+        } else {
+          return false;
+        }
+      }
+
       if (temp[parts[j]]) {
         temp = temp[parts[j]];
 
         if (j === parts.length - 2 && value !== undefined) {
-          if (inject || obj.hasOwnProperty(parts[j + 1]))
+          if (inject || temp.hasOwnProperty(parts[j + 1]))
             return !!(temp[parts[j + 1]] = value);
           else
             return undefined;
@@ -78,7 +99,11 @@ export const objectUtil = {
           return temp;
 
       } else if (inject) {
-        temp[parts[j--]] = {};
+        if (parts[j + 1] && parts[j + 1] === '$' && inject) {
+          temp[parts[j--]] = [];
+        } else {
+          temp[parts[j--]] = {};
+        }
       } else {
         return undefined;
       }
