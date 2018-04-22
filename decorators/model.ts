@@ -35,8 +35,8 @@ const defaults: IModelOptions = {
 const defaultSchemaOptions: Validall.ISchemaOptions = {
   root: '',
   required: false,
-  filter: false,
-  strict: true,
+  filter: true,
+  strict: false,
   throwMode: false,
   traceError: false
 };
