@@ -65,6 +65,9 @@ export function gypsumBase64Upload(options: IGypsumBase64UploadOptions): IHook {
       // data:image/png;base64
 
       for (let j = 0; j < files.length && j < limit; j++) {
+        if (files[j].indexOf('data') !== 0)
+          continue;
+          
         let parts = files[j].split(',');
         let data = parts[1];
         let mimeType = parts[0].split(':')[1].split(';')[0];
