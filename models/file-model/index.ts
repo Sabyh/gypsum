@@ -4,12 +4,13 @@ import { Model } from '../model';
 import { Context } from '../../context';
 import { IResponseError, RESPONSE_CODES, IResponse } from '../../types';
 import { SERVICE } from '../../decorators';
+import { App } from '../../app';
 
 export class FileModel extends Model {
   protected collection: FileCollection;
 
-  constructor(appName: string) {
-    super(appName);
+  constructor(app: App) {
+    super(app);
     
     this.collection = new FileCollection(this.name, this.$get('schema'));
     this.type = 'File';

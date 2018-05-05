@@ -61,9 +61,9 @@ export function initSocket(io: any) {
 
       if (State.ioNamespaces[namespace]) {
         if ((response.domain === RESPONSE_DOMAINS.ROOM || response.domain === RESPONSE_DOMAINS.ALL_ROOM) && response.room) {
-          State.ioNamespaces[namespace].to(response.room).emit(response.event, response);
+          State.ioNamespaces[namespace].to(response.room).emit(response.crud, response);
         } else if (response.domain === RESPONSE_DOMAINS.OTHERS || response.domain === RESPONSE_DOMAINS.ALL) {
-          State.ioNamespaces[namespace].sockets.emit(response.event, response);
+          State.ioNamespaces[namespace].sockets.emit(response.crud, response);
         }
       }
     } else if (msg.data && msg.action === 'join room') {

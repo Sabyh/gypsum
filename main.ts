@@ -5,7 +5,7 @@ import { Logger } from './misc/logger';
 /**
  * import default config and Server state
  */
-import { IServerConfigOptions, IGypsumConfig, IServerConfig, IGypsumConfigurations, IApp } from './config';
+import { IServerConfigOptions, IGypsumConfig, IServerConfig, IGypsumConfigurations } from './config';
 import { State } from './state';
 
 /**
@@ -35,6 +35,8 @@ import { initializeWorkers } from './workers';
 import { MongoModel, FileModel } from './models';
 import { IModelHook, IHook } from './decorators';
 import { App } from './app';
+import { IAuthConfig, IAuthEnvConfig } from './auth/config';
+import { IStorageEnvConfig } from './storage/config';
 
 /**
  * Instanciating Logger for gypsum
@@ -54,6 +56,8 @@ export interface IGypsumUseOptions {
 }
 
 export interface IGypsumBootstrapOptions {
+  auth?: IAuthEnvConfig;
+  storage?: IStorageEnvConfig;
   config?: IGypsumConfigurations;
   apps?: typeof App[];
   middlewares?: Function;
@@ -85,12 +89,23 @@ export const Gypsum: IGypsum = {
   },
 
   getModel(modelName: string, appName: string): Model | MongoModel | FileModel | undefined {
-    return State.getModel(modelName, appName);
+    return State.getModel(appName, modelName);
   },
 
   bootstrap(options: IGypsumBootstrapOptions): void {
     Logger.Info('Configuring Gypsum..');
     State.setConfiguration(options.config ? <IGypsumConfig>options.config : <IGypsumConfig>{});
+
+    if (State.config.processes !== 1 && cluster.isMaster) {
+      initializeWorkers(State.config.processes);
+      return;
+    }
+
+    Logger.Info('Configuring Auth Layer..');
+    State.setAuthConfig(options.auth);
+
+    Logger.Info('Configuring Auth Layer..');
+    State.setStorageConfig(options.storage);
 
     Logger.SetOptions(State.config.logger_options, State.config.logger_out_dir);
     logger = new Logger('gypsum');
@@ -105,12 +120,11 @@ export const Gypsum: IGypsum = {
       State.middlewares = options.middlewares;
     }
 
-    if (State.config.processes !== 1 && cluster.isMaster) {
-      initializeWorkers(State.config.processes);
-      return;
-    }
-
     logger.info('intializing apps');
+    
+    require('./auth');
+    require('./storage');
+
     if (options.apps)
       for (let i = 0; i < options.apps.length; i++) {
         let app = new options.apps[i]()

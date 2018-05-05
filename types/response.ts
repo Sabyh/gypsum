@@ -13,6 +13,7 @@ export interface IResponse {
   apiType?: API_TYPES.REST | API_TYPES.SOCKET;
   event?: string;
   room?: string;
+  crud?: 'read' | 'create' | 'update' | 'delete';
   success?: boolean;
   type?: responseTypes;
   error?: IResponseError;
@@ -24,9 +25,10 @@ export class Response {
   code: RESPONSE_CODES;
   domain: RESPONSE_DOMAINS;
   apiType: API_TYPES.REST | API_TYPES.SOCKET;
-  event: string;
+  service: string;
   success: boolean;
   room: string;
+  crud: 'read' | 'create' | 'update' | 'delete';
   type: responseTypes;
   error: IResponseError | undefined;
 
@@ -35,8 +37,9 @@ export class Response {
     this.code = options.code || <any>(options.error ? options.error.code : RESPONSE_CODES.OK);
     this.success = this.success !== undefined ? !!options.success : (this.code >= 200 && this.code < 300 ? true : false);
     this.domain = options.domain || 0;
+    this.crud = options.crud || 'read';
     this.apiType = options.apiType || API_TYPES.REST;
-    this.event = options.event || "";
+    this.service = options.event || "";
     this.room = options.room || "";
     this.type = options.type || 'json';
     this.error = options.error;

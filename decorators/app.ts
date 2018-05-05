@@ -1,16 +1,16 @@
 import { CorsOptions } from 'cors';
-import { Model } from '../models';
+import { Model, MongoModel } from '../models';
 import { State } from '../state';
 import { objectUtil } from '../util';
 import { API_TYPES } from '../types';
 
 export interface IAppOptions {
-  mongodb_url: string;
-  database_name: string;
+  mongodb_url?: string;
+  database_name?: string;
   namespaces?: string[];
   cors?: CorsOptions;
   apiType?: API_TYPES;
-  models: typeof Model[];
+  models: (any)[];
 }
 
 export type IAppProdOptions = {

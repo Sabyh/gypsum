@@ -7,7 +7,6 @@ import { Logger } from '../../misc/logger';
 import { Context } from '../../context';
 import { State } from '../../state';
 import { objectUtil } from '../../util';
-import { IApp } from '../../config';
 import { App } from '../../app';
 
 export function pushApis(expressApp: express.Express, app: App) {

@@ -4,6 +4,7 @@ import { FRIEND, IService, IModelHook, IHookOptions, IModelOptions } from '../de
 import { Safe } from '../misc/safe';
 import { State } from '../state';
 import { stringUtil } from '../util';
+import { App } from '../app';
 
 const safe = new Safe('model');
 
@@ -14,21 +15,21 @@ export class Model {
   private _servicesData: { [key: string]: IService };
   private _hooksData: { [key: string]: IModelHook };
   
-  public app: string;
+  public app: App;
   public type: 'Mongo' | 'File' | undefined;
   public $logger: Logger;
   public name = this.constructor.name.toLowerCase();
 
-  constructor(appName: string) {
-    this.app = appName;
+  constructor(app: App) {
+    this.app = app;
   }
 
-  private _mArrangeServices() {
+  private _mArrangeServices(): { [key: string]: IService } {
     this._servicesData = {};
-    let eliminationsList = this.$get('eliminate');
+    let servicesOptions = this.$get('servicesOptions');
 
     if (this.$get('internal'))
-      return;
+      return {};
 
     for (let prop in this) {
 
@@ -37,7 +38,7 @@ export class Model {
       
       if (service && isService) {
 
-        if (eliminationsList && eliminationsList.indexOf(prop) > -1) {
+        if (servicesOptions[prop] === false) {
           delete this[prop];
           continue;
         }
@@ -60,6 +61,7 @@ export class Model {
           name: service.__name,
           event: this.name + ' ' + service.__name.toLowerCase(),
           method: service.method,
+          crud: service.crud,
           path: createPath(service, this),
           params: service.params,
           domain: (!this.$get('domain') || this.$get('domain') > service.domain) ? service.domain : this.$get('domain'),
@@ -101,9 +103,11 @@ export class Model {
 
       }
     }
+
+    return this._servicesData;
   }
 
-  private _mArrangeHooks() {
+  private _mArrangeHooks(): { [key: string]: IModelHook } {
     this._hooksData = {};
 
     for (let prop in this) {
@@ -114,6 +118,8 @@ export class Model {
           (<any>this._hooksData[prop.toLowerCase()])[key] = this[prop][key];
       }
     }
+
+    return this._hooksData;
   }
 
   @FRIEND(safe.set('model.init', ['app']))

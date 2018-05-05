@@ -7,7 +7,7 @@ import { stringUtil } from './util';
 
 const safe = new Safe('app');
 
-export class App {
+export class App{
   models: Model[] = [];
   name = this.constructor.name.toLowerCase();
 
@@ -15,7 +15,7 @@ export class App {
     let models = this.$get('models');
 
     for (let i = 0; i < models.length; i++) {
-      this.models.push(new models[i](this.name));
+      this.models.push(new models[i](this));
       this.models[i][<'init'>safe.get('model.init')]();
     }
   }
@@ -24,8 +24,8 @@ export class App {
     return (<any>this)[`__${prop}`];
   }
 
-  $getModel(name: string) {
-    return this.models.find(model => model.name === name.toLowerCase()) || undefined;
+  $getModel(name: string): Model {
+    return this.models.find(model => model.name === name.toLowerCase()) || null;
   }
 
   $getApis() {

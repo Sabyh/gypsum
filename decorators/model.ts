@@ -3,13 +3,14 @@ import * as Validall from 'validall';
 import { CorsOptions } from 'cors';
 import { API_TYPES, RESPONSE_DOMAINS } from '../types';
 import { IHookOptions } from './hook';
+import { IServiceOptions } from '.';
 
 export interface IModelOptions {
   secure?: any;
   authorize?: any;
   accessable?: boolean | string[];
   internal?: boolean;
-  eliminate?: string[];
+  servicesOptions?: { [key: string]: IServiceOptions };
   apiType?: API_TYPES;
   domain?: RESPONSE_DOMAINS;
   before?: IHookOptions[];
@@ -25,7 +26,7 @@ const defaults: IModelOptions = {
   authorize: false,
   accessable: true,
   internal: false,
-  eliminate: [],
+  servicesOptions: {},
   apiType: API_TYPES.ALL,
   domain: 1,
   before: [],

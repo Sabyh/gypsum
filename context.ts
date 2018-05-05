@@ -3,7 +3,7 @@ import { State } from './state';
 import { Safe } from './misc/safe';
 import { Logger } from './misc/logger';
 import { Model } from './models';
-import { IService, IHookOptions } from './decorators';
+import { IService, IHookOptions, IHook, IServiceOptions } from './decorators';
 import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, Response, ResponseError, IResponseError } from './types';
 import { objectUtil, stringUtil } from './util/index';
 
@@ -25,9 +25,14 @@ export interface IContext {
   room?: string;
 }
 
+export type IContextOptions = {
+  [key in keyof IContext]?: IContext[key];
+}
+
 interface IStack {
   handler: (ctx: Context, ...args: any[]) => void;
   args: any[];
+  mainHandler?: boolean;
 }
 
 export class Context {
@@ -37,6 +42,9 @@ export class Context {
   private _locals: any = {};
   private _cookies: any;
   private _domain: RESPONSE_DOMAINS | undefined;
+  private _mainHandler = false;
+  private _resolve: Function = null;
+  private _reject: Function = null;
 
   readonly appName: string;
   readonly _req: express.Request | undefined;
@@ -53,7 +61,7 @@ export class Context {
   public user: any = null;
   public logger: Logger;
 
-  constructor(type: API_TYPES.REST | API_TYPES.SOCKET, data: IContext) {
+  constructor(type: API_TYPES.REST | API_TYPES.SOCKET, data: IContext, init = true) {
     this._socket = data.socket || undefined;
     this._req = data.req || undefined;
     this._res = data.res || undefined;
@@ -70,8 +78,50 @@ export class Context {
     this.service = data.service;
     this.logger = new Logger(`${this.appName}.${this.model.name}.${this.service.name}`);
 
+    if (init)
+      this._mInit();
+  }
 
-    this._mInit();
+  static Publish(model: Model, serviceName: string, data: Response, options?: IServiceOptions) {
+    return new Promise((resolve, reject) => {
+
+      if (!State.currentContext)
+        return reject({
+          message: 'could not access current context!'
+        });
+
+      if (State.currentContext.apiType === API_TYPES.REST || !State.currentContext._socket) {
+        return reject({
+          message: 'could not publish during rest request!'
+        });
+      }
+
+      options = Object.assign(options || {}, {
+        crud: 'update',
+        domain: RESPONSE_DOMAINS.SELF,
+        after: []
+      });
+
+      let service = mimicService(serviceName, options);
+  
+      let context = new Context(API_TYPES.SOCKET, {
+        headers: State.currentContext.headers,
+        query: State.currentContext.query,
+        body: State.currentContext.body,
+        params: State.currentContext.params,
+        cookies: State.currentContext.cookies,
+        req: State.currentContext._req,
+        res: State.currentContext._res,
+        appName: model.app.name,
+        model: model,
+        service: service
+      }, false);
+      
+      context._resolve = resolve;
+      context._reject = reject;
+      context._mPushStack(service.after);
+      context.ok(data);
+    });
   }
 
   static Rest(appName: string, model: Model, service: IService)
@@ -125,22 +175,20 @@ export class Context {
 
     // Authentication Layer
     this.logger.debug(`checking authentication layer with options: ${this.service.secure}`);
-    if (this.service.secure && State.config.authenticationModelPath) {
+    if (this.service.secure) {
       stackDetails.secure.should = 1;
-      let authApp, authModel;
-      [authApp, authModel] = State.config.authenticationModelPath.split('.');
-      let Authentication = State.getModel(authModel, authApp);
+
+      let Authentication = State.getModel('auth', 'users');
       if (Authentication)
         this._stack.push({ handler: (<any>Authentication).Authenticate.bind(Authentication), args: [] });
     }
     stackDetails.secure.actual = total = this._stack.length;
 
     this.logger.debug(`checking authorization layer with options: ${this.service.authorize}`);
-    if (this.service.authorize && State.config.authorizationModelPath) {
+    if (this.service.authorize) {
       stackDetails.authorize.should = 1;
-      let authApp, authModel;
-      [authApp, authModel] = State.config.authorizationModelPath.split('.');
-      let Authorization = State.getModel(authModel, authApp);
+
+      let Authorization = State.getModel('auth', 'authorization');
       if (Authorization)
         this._stack.push({ handler: (<any>Authorization).Authorize.bind(Authorization), args: [this.service.authorize] });
     }
@@ -167,7 +215,7 @@ export class Context {
     this.logger.debug('adding main service');
     // Pushing service to the stack
     stackDetails.service.should = 1;
-    this._stack.push({ handler: (<any>this.model)[this.service.__name].bind(this.model), args: [] });
+    this._stack.push({ handler: (<any>this.model)[this.service.__name].bind(this.model), args: [], mainHandler: true });
     stackDetails.service.actual = this._stack.length - total;
     total = this._stack.length;
 
@@ -188,8 +236,8 @@ export class Context {
     stackDetails.after.actual = this._stack.length - total;
     total = this._stack.length;
 
-    this.logger.debug('checking extra hooks post after hooks' && extraHooksPos === 1);
-    if (extraHooks && extraHooks.length) {
+    this.logger.debug('checking extra hooks post after hooks');
+    if (extraHooks && extraHooks.length && extraHooksPos === 1) {
       stackDetails.extra.should = extraHooks.length;
       this._stack.push(...extraHooks);
     }
@@ -198,6 +246,7 @@ export class Context {
 
     this.logger.debug('stack details:', JSON.stringify(stackDetails, null, 2));
 
+    State.currentContext = this;
     this.logger.debug('running the stack');
     this.next();
   }
@@ -206,15 +255,25 @@ export class Context {
     this._response.apiType = this.apiType;
     this._response.code = this._response.code || RESPONSE_CODES.UNKNOWN_ERROR;
     this._response.domain = this._response.domain || this.service.domain || RESPONSE_DOMAINS.SELF;
+    this._response.service = this._response.service || this.service.__name;
 
-    this.logger.debug('response:');
-    this.logger.debug(JSON.stringify(this._response, null, 2));
+    this.logger.debug('sending response');
 
     if (this.apiType === API_TYPES.REST && this._res) {
-      this._res.status(this._response.code).json(this._response);
+      State.currentContext = null;
+      
+      if (this._resolve && this._response.success) {
+        this._resolve(this._response);
+      } else if (this._reject && !this._response.success) {
+        this._reject(this._response);
+      } else {
+        this._res.status(this._response.code).json(this._response);
+      }
 
     } else if (this._socket) {
-      let event = this.service.event;
+      let event = this.service.crud;
+      this._response.crud = event;
+      
       if (this._response.code < 200 || this._response.code >= 300) {
         this._socket.emit(event, this._response);
 
@@ -250,6 +309,14 @@ export class Context {
           this._socket.emit(event, this._response);
         }
       }
+
+      State.currentContext = null;
+
+      if (this._resolve && this._response.success) {
+        this._resolve(this._response);
+      } else if (this._reject && !this._response.success) {
+        this._reject(this._response);
+      }
     }
   }
 
@@ -260,9 +327,9 @@ export class Context {
           this._stack.push(hook);
   }
 
-  useService(model: Model, service: string, hooks: 'before' | 'after' | 'both' | 'none' = 'both', useOwnHooks: 0 | 1 | -1 = 0) {
+  switchService(model: Model, serviceName: string, hooks: 'before' | 'after' | 'both' | 'none' = 'both', useOwnHooks: 0 | 1 | -1 = 0) {
     this.model = model;
-    this.service = (<any>this.model)[stringUtil.capitalizeFirst(service)];
+    this.service = (<any>this.model)[stringUtil.capitalizeFirst(serviceName)];
     let extraHooks;
 
     if (useOwnHooks !== 0)
@@ -272,12 +339,42 @@ export class Context {
     this._mInit(hooks, extraHooks, useOwnHooks);
   }
 
+  runService(model: Model, serviceName: string, data: IContextOptions = {}, user: any) {
+    return new Promise((resolve, reject) =>{
+
+      let service = (<any>model)[stringUtil.capitalizeFirst(serviceName)];
+  
+      let context = new Context(this.apiType, {
+        headers: this.headers,
+        query: data.query || this.query,
+        body: data.body || this.body,
+        params: data.params || this.params,
+        cookies:data.cookies || this.cookies,
+        req: this._req,
+        res: this._res,
+        appName: model.app.name,
+        model: model,
+        service: service
+      }, false);
+  
+      context.user = user || this.user;
+      context._resolve = resolve;
+      context._reject = reject;
+  
+      context._mInit();
+    })
+      .then(response => {
+        State.currentContext = this;
+        return response;
+      });
+  }
+
   useServiceHooks(service: IService, clearOwnHooks: boolean = false) {
-    
+
     if (service) {
       if (clearOwnHooks)
         this._stack = [];
-        
+
       this._mPushStack(service.after);
     } else {
       this.logger.warn('cannot user undifined service hooks!');
@@ -286,6 +383,14 @@ export class Context {
 
   get domain(): RESPONSE_DOMAINS { return <RESPONSE_DOMAINS>this._domain; }
   set domain(value: RESPONSE_DOMAINS) { this._domain = value; }
+  get isMainHandler(): boolean {
+    if (this._mainHandler) {
+      this._mainHandler = false;
+      return true;
+    }
+
+    return false;
+  }
 
   getHeader(name: string): string {
     return this.headers[name];
@@ -380,6 +485,7 @@ export class Context {
 
       if (current) {
         this.logger.debug(`running stack handler: ${(<any>current.handler).__name || current.handler.name}`);
+        this._mainHandler = !!current.mainHandler;
         current.handler(this, ...current.args);
       } else {
         this.logger.debug('end of stack, preparing for responding...')
@@ -463,13 +569,13 @@ function* getHooks(context: Context, list: IHookOptions[]) {
         let appName, modelName, modelHookName;
         [appName, modelName, modelHookName] = hookName.split('.');
 
-        let model = State.getModel(modelName, appName);
+        let model = State.getModel(appName, modelName);
 
         if (model) {
           let modelHook = model.$getHook(modelHookName);
 
           if (modelHook) {
-              handler = (<any>model)[modelHook.__name].bind(model);
+            handler = (<any>model)[modelHook.__name].bind(model);
           } else {
             yield null;
           }
@@ -514,7 +620,7 @@ function getReference(ctx: Context, name: string, hookName: string) {
   if (name.charAt(0) === '@') {
     let app, modelName;
     [app, modelName] = name.split('.');
-    let model = State.getModel(modelName, app.slice(1));
+    let model = State.getModel(app.slice(1), modelName);
 
     if (!model) {
       ctx.logger.warn(`${hookName} hook: model '${modelName}' is not found`);
@@ -547,4 +653,14 @@ function getReference(ctx: Context, name: string, hookName: string) {
   }
 
   return name;
+}
+
+function mimicService(name: string, options: IServiceOptions): IService {
+  let service = <IService>{
+    __name: name
+  };
+
+  objectUtil.extend(service, options);
+
+  return service;
 }

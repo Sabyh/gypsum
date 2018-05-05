@@ -2,7 +2,7 @@
 // import * as fs from 'fs';
 import * as express from 'express';
 import * as IO from 'socket.io';
-import { Config, IGypsumConfig, IServerConfigOptions, IApp } from './config';
+import { Config, IGypsumConfig, IServerConfigOptions } from './config';
 import { Context } from './context';
 import { Model, MongoModel, FileModel } from './models';
 import { stringUtil } from './util/string';
@@ -11,15 +11,13 @@ import { Safe } from './misc/safe';
 import { Logger } from './misc/logger';
 import { objectUtil } from './util';
 import { App } from './app';
+import { IAuthConfig, IAuthEnvConfig, defaultAuthConfig } from './auth/config';
+import { IStorageConfig, defaultStorageConfig, IStorageEnvConfig } from './storage/config';
 
 let safe = new Safe('state');
 
 export interface IMiddleware {
   (app: express.Express): void;
-}
-
-export interface IApplication extends IApp {
-  models?: Model[]
 }
 
 export class AppState {
@@ -34,10 +32,13 @@ export class AppState {
   ioNamespaces: { [key: string]: any } = {};
   config = <IServerConfigOptions>{};
   apps = <App[]>[];
+  storage = <IStorageConfig>{};
+  auth: IAuthConfig = <IAuthConfig>{};
   middlewares: Function;
   hooks: IHook[] = [];
+  currentContext: Context = null;
 
-  getModel(name: string, appName: string): Model | MongoModel | FileModel | undefined {
+  public getModel(appName: string, name: string): Model | MongoModel | FileModel | undefined {
     let app = this.apps.find(_app => _app.name.toLowerCase() === appName.toLowerCase());
 
     if (app && app.models)
@@ -46,7 +47,7 @@ export class AppState {
     return undefined;
   }
 
-  getHook(name: string): IHook | undefined {
+  public getHook(name: string): IHook | undefined {
     return this.hooks.find(hook => (<any>hook).name.toLowerCase() === name.toLowerCase()) || undefined;
   }
 
@@ -61,6 +62,20 @@ export class AppState {
       objectUtil.extend(this.config, userConfig.prod);
 
     this.config.files_data_dir = stringUtil.cleanPath(<string>this.config.files_data_dir);
+  }
+
+  public setAuthConfig(auth: IAuthEnvConfig = <IAuthEnvConfig>{}) {
+    this.auth = objectUtil.extend(defaultAuthConfig, auth.dev || {});
+
+    if (this.env === 'production' && auth.prod)
+      objectUtil.extend(this.auth, auth.prod);
+  }
+
+  public setStorageConfig(storageConfig: IStorageEnvConfig = <IStorageEnvConfig>{}) {
+    this.storage = objectUtil.extend(defaultStorageConfig, storageConfig.dev || {});
+
+    if (this.env === 'production' && storageConfig.prod)
+      objectUtil.extend(this.storage, storageConfig.prod);
   }
 }
 

@@ -20,6 +20,7 @@ export interface IService {
   args: string[];
   name: string;
   method: "get" | "post" | "put" | "delete" | "patch" | "options" | "head";
+  crud: "create" | "read" | "update" | "delete";
   apiType: API_TYPES;
   domain: RESPONSE_DOMAINS;
   path: string;
@@ -36,6 +37,7 @@ export interface IServiceOptions {
   secure?: any;
   authorize?: any;
   method?: "get" | "post" | "put" | "delete" | "patch" | "options" | "head";
+  crud?: "create" | "read" | "update" | "delete";
   apiType?: API_TYPES;
   domain?: RESPONSE_DOMAINS;
   params?: string[];
@@ -46,19 +48,19 @@ export interface IServiceOptions {
 }
 
 const defaultOptions: { [key: string]: IServiceOptions } = {
-  find: { domain: RESPONSE_DOMAINS.SELF, method: 'get' },
-  findById: { domain: RESPONSE_DOMAINS.SELF, method: 'get', params: ['id'] },
-  findOne: { domain: RESPONSE_DOMAINS.SELF, method: 'get' },
-  count: { domain: RESPONSE_DOMAINS.SELF, method: 'get' },
-  search: { domain: RESPONSE_DOMAINS.SELF, method: 'post' },
-  insert: { domain: RESPONSE_DOMAINS.ALL, method: 'post' },
-  insertOne: { domain: RESPONSE_DOMAINS.ALL, method: 'post' },
-  update: { domain: RESPONSE_DOMAINS.ALL, method: 'put' },
-  updateById: { domain: RESPONSE_DOMAINS.ALL, method: 'put', params: ['id'] },
-  updateOne: { domain: RESPONSE_DOMAINS.ALL, method: 'put' },
-  delete: { domain: RESPONSE_DOMAINS.ALL, method: 'delete' },
-  deleteById: { domain: RESPONSE_DOMAINS.ALL, method: 'delete', params: ['id'] },
-  deleteOne: { domain: RESPONSE_DOMAINS.ALL, method: 'delete' },
+  find: { domain: RESPONSE_DOMAINS.SELF, method: 'get', crud: 'read' },
+  findById: { domain: RESPONSE_DOMAINS.SELF, method: 'get', crud: 'read', params: ['id'] },
+  findOne: { domain: RESPONSE_DOMAINS.SELF, method: 'get', crud: 'read' },
+  count: { domain: RESPONSE_DOMAINS.SELF, method: 'get', crud: 'read' },
+  search: { domain: RESPONSE_DOMAINS.SELF, method: 'post', crud: 'read' },
+  insert: { domain: RESPONSE_DOMAINS.ALL, method: 'post', crud: 'create' },
+  insertOne: { domain: RESPONSE_DOMAINS.ALL, method: 'post', crud: 'create' },
+  update: { domain: RESPONSE_DOMAINS.ALL, method: 'put', crud: 'update' },
+  updateById: { domain: RESPONSE_DOMAINS.ALL, method: 'put', crud: 'update', params: ['id'] },
+  updateOne: { domain: RESPONSE_DOMAINS.ALL, method: 'put', crud: 'update' },
+  delete: { domain: RESPONSE_DOMAINS.ALL, method: 'delete', crud: 'delete' },
+  deleteById: { domain: RESPONSE_DOMAINS.ALL, method: 'delete', crud: 'delete', params: ['id'] },
+  deleteOne: { domain: RESPONSE_DOMAINS.ALL, method: 'delete', crud: 'delete' }
 };
 
 export function SERVICE(options?: IServiceOptions) {
@@ -77,11 +79,20 @@ export function SERVICE(options?: IServiceOptions) {
       
       this[key](...args)
         .then((res: IResponse) => {
-          
-          if (res)
-            ctx.ok(new Response(res));
-          else
-            ctx.ok(new Response({ data: res }));
+          let response: Response;
+
+          if (res) {
+            if (res instanceof Response)
+              response = res;
+            else if (res.data)
+              response = new Response(res);
+            else
+              response = new Response({ data: res });
+          } else {
+            response = new Response({ data: true });
+          }
+
+          ctx.ok(response);
         })
         .catch((error: ResponseError) => ctx.next(error));
     }
@@ -92,6 +103,7 @@ export function SERVICE(options?: IServiceOptions) {
     (<IServiceOptions>service).authorize = options ? options.authorize : undefined;
     (<IServiceOptions>service).apiType = options && options.apiType ? options.apiType : API_TYPES.ALL;
     (<IServiceOptions>service).method = options && options.method ? options.method : (defaultOptions[key] ? defaultOptions[key].method : 'get');
+    (<IServiceOptions>service).crud = options && options.crud ? options.crud : (defaultOptions[key] ? defaultOptions[key].crud : getCrud((<IServiceOptions>service).method));
     (<IServiceOptions>service).domain = options && options.domain ? options.domain : (defaultOptions[key] ? defaultOptions[key].domain : RESPONSE_DOMAINS.SELF);
     (<IServiceOptions>service).params = options && options.params ? options.params : (defaultOptions[key] ? defaultOptions[key].params || [] : []);
     (<IServiceOptions>service).before = options && options.before ? options.before : [];
@@ -104,4 +116,17 @@ export function SERVICE(options?: IServiceOptions) {
       enumerable: true
     });
   }
+}
+
+function getCrud(method: string) {
+  if (method === 'post')
+    return 'create';
+  
+  if (method === 'put')
+    return 'update';
+
+  if (method === 'delete')
+    return 'delete';
+
+  return 'read';
 }

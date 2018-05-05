@@ -6,14 +6,15 @@ import { SERVICE, FRIEND } from '../decorators';
 import { Context } from '../context';
 import { Safe } from '../misc/safe';
 import { objectUtil } from '../util';
+import { App } from '../app';
 
 const safe = new Safe('mongoModel');
 
 export class MongoModel extends Model {
   protected collection: MongoDB.Collection;
 
-  constructor(appName: string) {
-    super(appName);
+  constructor(app: App) {
+    super(app);
 
     this.type = 'Mongo';
   }
