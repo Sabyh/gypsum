@@ -34,7 +34,7 @@ export class FileCollection {
 
   constructor(name: string, schema?: Validall.Schema, options?: FileCollection.ICollectionOptions) {
     let dir = State.config.files_data_dir;
-
+    
     if (!fs.existsSync(dir))
       fs.mkdirSync(dir);
 

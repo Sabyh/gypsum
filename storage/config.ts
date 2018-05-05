@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as Multer from 'multer';
 
 export interface IStorageConfig {
@@ -15,7 +14,7 @@ export interface IStorageEnvConfig {
 }
 
 export const defaultStorageConfig: IStorageConfig = {
-  storageDir: path.join(process.cwd(), 'storage'),
+  storageDir: 'storage',
   secure: true,
   authorize: false,
   limits: null,

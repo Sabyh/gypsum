@@ -6,7 +6,6 @@ import { Model } from "../models";
 import { Context } from "../context";
 import { RESPONSE_CODES, Response } from '../types';
 import { State } from '../state';
-import { App } from '../app';
 import { objectUtil } from '../util';
 
 @MODEL({
@@ -17,20 +16,13 @@ export class File extends Model {
   origin = `http${State.config.secure ? 's' : ''}//storage.${State.config.hostName}`
   uploader = Multer({
     storage: Multer.diskStorage({
-      destination: path.join(State.root, State.storage.storageDir),
+      destination: State.storage.storageDir,
       filename: (req, file, callback) => {
         callback(null, `${Date.now()}`); //.${file.mimetype.split('/')[1]}
       }
     }),
     limits: State.storage.limits
   });
-
-  constructor(app: App) {
-    super(app)
-
-    if (!fs.existsSync(State.storage.storageDir))
-      fs.mkdirSync(State.storage.storageDir);
-  }
 
   private multerUploadPaths(ctx: Context, type: string, options: string) {
     let filePath: string;
@@ -188,7 +180,7 @@ export class File extends Model {
   }
 
   @SERVICE({
-    method: 'post',
+    method: 'delete',
     args: ['body.filePath']
   })
   removeOne(filePath: string, ctx?: Context) {
@@ -216,8 +208,7 @@ export class File extends Model {
   }
 
   @SERVICE({
-    secure: State.storage.secure,
-    method: 'post',
+    method: 'delete',
     args: ['body.filesPaths']
   })
   removeMany(filesPaths: string[], ctx?: Context) {

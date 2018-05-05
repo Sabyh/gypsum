@@ -23,7 +23,8 @@ let tokenSecret = unique.Get();
   schema: usersSchema,
   schemaOptions: usersSchemaOptions,
   domain: RESPONSE_DOMAINS.SELF,
-  after: ['filter:-password:passwordSalt']
+  after: ['filter:-password:passwordSalt'],
+  indexes: [{ name: 'email', options: { unique: true } }]
 })
 export class Users extends MongoModel {
   transporter: any;

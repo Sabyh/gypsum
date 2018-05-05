@@ -1,4 +1,4 @@
-// import * as path from 'path';
+import * as path from 'path';
 // import * as fs from 'fs';
 import * as express from 'express';
 import * as IO from 'socket.io';
@@ -76,6 +76,8 @@ export class AppState {
 
     if (this.env === 'production' && storageConfig.prod)
       objectUtil.extend(this.storage, storageConfig.prod);
+
+    this.storage.storageDir = path.join(this.root, this.storage.storageDir);
   }
 }
 

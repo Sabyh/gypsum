@@ -29,11 +29,12 @@ export class Logger {
         if (outDir) {
           this._logOptions = options[this._ns] ? options[this._ns].log : options.all.log;
           this._logDir = this._logOptions && this._logOptions.length ? path.join(outDir, this._ns) : '';
-
-
-          if (this._logDir)
+          
+          if (this._logDir) {
             if (!fs.existsSync(this._logDir))
-              fs.mkdirSync(this._logDir);
+              try { fs.mkdirSync(this._logDir); }
+              catch (err) { console.trace(err); }
+          }
         }
 
       } else {
@@ -48,7 +49,7 @@ export class Logger {
   static SetOptions(opt?: ILoggerOptions | null, logOutPath: string = 'server_logs'): void {
     outDir = path.join(process.cwd(), logOutPath);
     options = opt || null;
-
+    
     if (!fs.existsSync(outDir))
       fs.mkdirSync(outDir);
   }

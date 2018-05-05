@@ -101,10 +101,10 @@ export const Gypsum: IGypsum = {
       return;
     }
 
-    Logger.Info('Configuring Auth Layer..');
+    Logger.Info('Configuring Auth App..');
     State.setAuthConfig(options.auth);
 
-    Logger.Info('Configuring Auth Layer..');
+    Logger.Info('Configuring Storage App..');
     State.setStorageConfig(options.storage);
 
     Logger.SetOptions(State.config.logger_options, State.config.logger_out_dir);
@@ -120,10 +120,13 @@ export const Gypsum: IGypsum = {
       State.middlewares = options.middlewares;
     }
 
-    logger.info('intializing apps');
     
+    logger.info('intializing auth app');
     require('./auth');
+    logger.info('intializing storage app');
     require('./storage');
+
+    console.log('initializing the rest apps');
 
     if (options.apps)
       for (let i = 0; i < options.apps.length; i++) {
