@@ -39,7 +39,7 @@ export class App{
       for (let prop in modelServices) {
         let service = modelServices[prop];
         let path = null;
-        let event = null;
+        let crud = null;
         
         if (service.apiType !== API_TYPES.SOCKET) {
           path = 'http' + (State.config.secure ? 's' : '') + '://';
@@ -50,11 +50,11 @@ export class App{
         }
   
         if (service.apiType !== API_TYPES.REST)
-          event = service.event;
+          crud = service.crud;
   
         services[service.__name.toLowerCase()] = {
           name: service.__name.toLowerCase(),
-          event: event,
+          crud: crud,
           method: service.method,
           path: path
         };
