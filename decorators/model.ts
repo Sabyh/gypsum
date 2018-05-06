@@ -77,6 +77,8 @@ export function MODEL(options: IModelOptions = {}) {
 
     if (options.schema) {
       (<any>options.schema)['_id?'] = 'string';
+      (<any>options.schema)['createdAt?'] = { $type: 'number', $default: Date.now };
+      (<any>options.schema)['upatedAt?'] = { $type: 'number', $default: Date.now };
       options.schemaOptions = Object.assign({}, defaultSchemaOptions, { root: Target.name }, options.schemaOptions || {});
       options.schema = new Validall.Schema(options.schema, options.schemaOptions);
     }

@@ -17,9 +17,6 @@ export const usersSchema: Validall.ISchema = {
   verified: {
     $type: 'boolean',
     $default: false
-  },
-  createdAt: {
-    $type: 'number', $default: 'Date.now'
   }
 };
 

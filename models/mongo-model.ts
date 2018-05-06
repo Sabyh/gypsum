@@ -360,6 +360,12 @@ export class MongoModel extends Model {
       if (filter._id)
         filter._id = new MongoDB.ObjectID(filter._id);
 
+      if (update.$set) {
+        update.$set.updatedAt = Date.now();
+      } else {
+        update.$set = { updatedAt: Date.now() };
+      }
+
       this.collection.updateMany(
         filter,
         update,
@@ -397,6 +403,12 @@ export class MongoModel extends Model {
 
       delete update._id;
       delete update.token;
+
+      if (update.$set) {
+        update.$set.updatedAt = Date.now();
+      } else {
+        update.$set = { updatedAt: Date.now() };
+      }
 
       let schema: Validall.Schema = this.$get('schema');
 
@@ -541,6 +553,12 @@ export class MongoModel extends Model {
 
       delete update._id;
       delete update.token;
+
+      if (update.$set) {
+        update.$set.updatedAt = Date.now();
+      } else {
+        update.$set = { updatedAt: Date.now() };
+      }
 
       let schema: Validall.Schema = this.$get('schema');
 
