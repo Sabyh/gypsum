@@ -10,6 +10,7 @@ export interface IAuthConfig {
   rootUserEmail?: string;
   rootUserPassword?: string;
   verificationEmailExpiry?: number;
+  tokenExpiry?: number;
 }
 
 export interface IAuthEnvConfig {
@@ -29,5 +30,6 @@ export const defaultAuthConfig: IAuthConfig = {
   transporter: null,
   rootUserEmail: 'root@gypsum.com',
   rootUserPassword: 'g56648e1845tg565g3s',
-  verificationEmailExpiry: 60 * 60
+  verificationEmailExpiry: 60 * 60,
+  tokenExpiry: 60 * 60 * 24 * 7
 }

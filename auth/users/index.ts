@@ -94,7 +94,7 @@ export class Users extends MongoModel {
       if (!responseData || Array.isArray(responseData) || !Validall.Types.object(responseData))
         return resolve();
 
-      responseData.token = jwt.sign({ id: responseData._id }, tokenSecret);
+      responseData.token = jwt.sign({ id: responseData._id, date: Date.now(), type: 'auth' }, tokenSecret);
       resolve();
     });
   }
@@ -121,8 +121,21 @@ export class Users extends MongoModel {
           code: RESPONSE_CODES.UNAUTHORIZED
         });
 
-      if (data.date)
-        ctx.set('tokenDate', data.date);
+      if (data.type !== 'auth') {
+        return reject({
+          message: 'fake_token',
+          code: RESPONSE_CODES.UNAUTHORIZED
+        });
+      }
+
+      if (!data.date || ((Date.now() - data.date) > State.auth.tokenExpiry)) {
+        return reject({
+          message: 'out_dated_token',
+          code: RESPONSE_CODES.UNAUTHORIZED
+        });
+      }
+
+      ctx.set('tokenData', data);
 
       this.collection.findOne({ _id: new MongoDB.ObjectID(data.id) })
         .then(doc => {
@@ -144,7 +157,7 @@ export class Users extends MongoModel {
   }
 
   @HOOK({ private: true })
-  activationEmail(ctx: Context): Promise<void> {
+  verificationEmail(ctx: Context): Promise<void> {
     return new Promise((resolve, reject) => {
 
       let user = ctx.user || ctx.getResponseData();
@@ -163,7 +176,7 @@ export class Users extends MongoModel {
             code: RESPONSE_CODES.UNKNOWN_ERROR
           });
 
-        let token = jwt.sign({ id: user._id, date: Date.now() }, tokenSecret);
+        let token = jwt.sign({ id: user._id, date: Date.now(), type: 'verifyEmail' }, tokenSecret);
         let activationLink = `http${State.config.secure ? 's' : ''}://`;
         activationLink += `${this.app}.${State.config.hostName}${State.env !== 'production' ? ':' + State.config.port : ''}/`;
         activationLink += stringUtil.cleanPath(`/${this.name}/activateUser?${token}=${token}`);
@@ -195,9 +208,9 @@ export class Users extends MongoModel {
     authorize: false,
     args: ['body.email'],
     method: 'post',
-    after: ['-filter', 'auth.users.activationEmail']
+    after: ['-filter', 'auth.users.verificationEmail']
   })
-  sendActivationEmail(email: string, ctx: Context): Promise<IResponse> {
+  sendVerificationEmail(email: string, ctx: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
       this.collection.findOne({ email: email })
         .then(doc => {
@@ -224,11 +237,18 @@ export class Users extends MongoModel {
     return new Promise((resolve, reject) => {
 
       let user = ctx.user;
-      let tokenDate = ctx.get('tokenDate');
+      let tokenData = ctx.get('tokenData');
 
-      if (!tokenDate || ((Date.now() - tokenDate) > State.auth.verificationEmailExpiry)) {
+      if (!tokenData.date || ((Date.now() - tokenData.date) > State.auth.verificationEmailExpiry)) {
         return reject({
           message: 'out_dated_token',
+          code: RESPONSE_CODES.UNAUTHORIZED
+        });
+      }
+
+      if (tokenData.type !== "verifyEmail") {
+        return reject({
+          message: 'fake_token',
           code: RESPONSE_CODES.UNAUTHORIZED
         });
       }
@@ -357,6 +377,25 @@ export class Users extends MongoModel {
   @SERVICE({
     secure: false,
     authorize: false,
+    args: ['body.token'],
+    method: 'post',
+    after: [`auth.users.pushToken`]
+  })
+  verifyToken(token: string, ctx?: Context) {
+    return new Promise((resolve, reject) => {
+      if (ctx.user)
+        return resolve({ data: ctx.user })
+      
+      reject({
+        message: 'invalid token',
+        code: RESPONSE_CODES.UNAUTHORIZED
+      });
+    });
+  }
+
+  @SERVICE({
+    secure: false,
+    authorize: false,
     args: ['body.email', 'body.password'],
     method: 'post',
     after: [`auth.users.pushToken`]
@@ -364,13 +403,13 @@ export class Users extends MongoModel {
   signin(email: string, password: string, ctx: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
 
-      if (!email && !email.trim())
+      if (!email || !email.trim())
         return reject({
           message: 'email is required',
           code: RESPONSE_CODES.BAD_REQUEST
         });
 
-      if (!password && !password.trim())
+      if (!password || !password.trim())
         return reject({
           message: 'password is required',
           code: RESPONSE_CODES.BAD_REQUEST
@@ -425,7 +464,7 @@ export class Users extends MongoModel {
     authorize: false,
     args: ['body.document'],
     method: 'post',
-    after: [`auth.users.pushToken`, `auth.users.activationEmail`]
+    after: [`auth.users.pushToken`, `auth.users.verificationEmail`]
   })
   signup(document: any, ctx: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {

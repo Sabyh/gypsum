@@ -10,6 +10,7 @@ import { objectUtil, stringUtil } from './util/index';
 const safe = new Safe('context');
 
 export interface IContext {
+  rid: string;
   headers: any;
   query: any;
   body: any;
@@ -36,6 +37,7 @@ interface IStack {
 }
 
 export class Context {
+  private _rid: string;
   private _response: Response = <Response>{};
   private _socket: any | undefined;
   private _stack: IStack[] = [];
@@ -105,6 +107,7 @@ export class Context {
       let service = mimicService(serviceName, options);
   
       let context = new Context(API_TYPES.SOCKET, {
+        rid: model.name === State.currentContext.model.name ? State.currentContext._rid : null,
         headers: State.currentContext.headers,
         query: State.currentContext.query,
         body: State.currentContext.body,
@@ -129,6 +132,7 @@ export class Context {
 
     return function (req: express.Request, res: express.Response, next: express.NextFunction) {
       new Context(API_TYPES.REST, {
+        rid: null,
         headers: req.headers,
         query: req.query,
         body: req.body,
@@ -147,6 +151,7 @@ export class Context {
     return function (data: any) {
       new Context(API_TYPES.SOCKET, {
         headers: socket.handshake.headers,
+        rid: data.rid,
         query: data.query,
         body: data.body,
         params: data.params,
@@ -256,6 +261,7 @@ export class Context {
     this._response.code = this._response.code || RESPONSE_CODES.UNKNOWN_ERROR;
     this._response.domain = this._response.domain || this.service.domain || RESPONSE_DOMAINS.SELF;
     this._response.service = this._response.service || this.service.__name;
+    this._response.rid = this._rid;
 
     this.logger.debug('sending response');
 
@@ -345,6 +351,7 @@ export class Context {
       let service = (<any>model)[stringUtil.capitalizeFirst(serviceName)];
   
       let context = new Context(this.apiType, {
+        rid: model.name === this.model.name ? this._rid : null,
         headers: this.headers,
         query: data.query || this.query,
         body: data.body || this.body,
