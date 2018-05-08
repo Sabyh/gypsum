@@ -182,7 +182,7 @@ export class Users extends MongoModel {
         activationLink += stringUtil.cleanPath(`/${this.name}/activateUser?${token}=${token}`);
 
         let emailOptions: SendMailOptions = {
-          from: `${State.config.server_name} Administration`,
+          from: State.auth.supportEmail || `${State.config.server_name} Administration`,
           to: user.email,
           subject: `${State.config.server_name} Account Verification`,
           html: stringUtil.compile(template.toString('utf-8'), { username: 'User', activationLink })
@@ -335,7 +335,7 @@ export class Users extends MongoModel {
                       });
 
                     let emailOptions: SendMailOptions = {
-                      from: `${State.config.server_name} Administration`,
+                      from: State.auth.supportEmail || `${State.config.server_name} Administration`,
                       to: user.email,
                       subject: `${State.config.server_name} Reset Password`,
                       html: stringUtil.compile(template.toString('utf-8'), { email: user.email, password: newPassword })
@@ -385,7 +385,7 @@ export class Users extends MongoModel {
     return new Promise((resolve, reject) => {
       if (ctx.user)
         return resolve({ data: ctx.user })
-      
+
       reject({
         message: 'invalid token',
         code: RESPONSE_CODES.UNAUTHORIZED

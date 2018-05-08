@@ -1,6 +1,16 @@
 import { CorsOptions } from 'cors';
+import { TransportOptions } from 'nodemailer';
 
-export interface IEmailTransporter {}
+export interface IEmailTransporter {
+  host?: string;
+  port?: number;
+  secure?: boolean;
+  service?: string;
+  auth: {
+    user: string;
+    password: string;
+  }
+}
 
 export interface IAuthConfig {
   mongodb_url?: string;
@@ -11,6 +21,7 @@ export interface IAuthConfig {
   rootUserPassword?: string;
   verificationEmailExpiry?: number;
   tokenExpiry?: number;
+  supportEmail?: string;
 }
 
 export interface IAuthEnvConfig {
