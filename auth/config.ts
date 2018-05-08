@@ -8,7 +8,7 @@ export interface IEmailTransporter {
   service?: string;
   auth: {
     user: string;
-    password: string;
+    pass: string;
   }
 }
 
