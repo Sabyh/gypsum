@@ -159,7 +159,7 @@ export class Authorization extends Model {
               fetchObj.options = objectUtil.getValue(ctx, (<any>options).fetch.options);
           }
 
-          if (fetchObj.query._id)
+          if (fetchObj.query._id && typeof fetchObj.query._id === 'string')
             fetchObj.query._id = new MongoDB.ObjectID(fetchObj.query._id)
 
           return this._mFetchData(appName, modelName, { fetch: fetchObj, userFieldValue: userFieldValue, match: (<any>options).match }, ctx)
