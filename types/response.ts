@@ -12,6 +12,7 @@ export interface IResponse {
   code?: RESPONSE_CODES;
   domain?: RESPONSE_DOMAINS;
   apiType?: API_TYPES.REST | API_TYPES.SOCKET;
+  service?: string;
   event?: string;
   room?: string;
   crud?: 'read' | 'create' | 'update' | 'delete';
@@ -28,9 +29,9 @@ export class Response {
   domain: RESPONSE_DOMAINS;
   apiType: API_TYPES.REST | API_TYPES.SOCKET;
   service: string;
-  success: boolean;
   room: string;
   crud: 'read' | 'create' | 'update' | 'delete';
+  success: boolean;
   type: responseTypes;
   error: IResponseError | undefined;
 
