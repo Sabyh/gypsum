@@ -18,6 +18,9 @@ export function initMongo(): Promise<boolean> {
       let mongoUrl = app.$get('mongodb_url');
       let databaseName = app.$get('database_name');
 
+      if (!mongoUrl || !databaseName)
+        continue;
+
       let urlIndex = usedUrls.indexOf(mongoUrl);
 
       if (urlIndex === -1) {
