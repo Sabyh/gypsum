@@ -36,7 +36,7 @@ export class Response {
   error: IResponseError | undefined;
 
   constructor(options: IResponse) {
-    this.rid = null;
+    this.rid = options.rid || null;
     this.data = options.data;
     this.code = options.code || <any>(options.error ? options.error.code : RESPONSE_CODES.OK);
     this.success = this.success !== undefined ? !!options.success : (this.code >= 200 && this.code < 300 ? true : false);

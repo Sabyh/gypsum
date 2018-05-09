@@ -4,7 +4,7 @@ import { Safe } from './misc/safe';
 import { Logger } from './misc/logger';
 import { Model } from './models';
 import { IService, IHookOptions, IHook, IServiceOptions } from './decorators';
-import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, Response, ResponseError, IResponseError } from './types';
+import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, Response, ResponseError, IResponseError, IResponse } from './types';
 import { objectUtil, stringUtil } from './util/index';
 
 const safe = new Safe('context');
@@ -84,7 +84,7 @@ export class Context {
       this._mInit();
   }
 
-  static Publish(model: Model, serviceName: string, data: Response) {
+  static Publish(model: Model, serviceName: string, data: IResponse) {
     return new Promise((resolve, reject) => {
 
       if (!State.currentContext)
@@ -129,7 +129,7 @@ export class Context {
       context._resolve = resolve;
       context._reject = reject;
       context._mPushStack(service.after);
-      context.ok(data);
+      context.ok(<Response>data);
     });
   }
 

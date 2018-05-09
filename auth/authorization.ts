@@ -100,7 +100,7 @@ export class Authorization extends Model {
   }
 
   @HOOK()
-  authorize(options: { field: string, match: string, find: any } | boolean, ctx: Context): Promise<void> {
+  authorize(options: { field: string, match: string, fetch: any } | boolean, ctx: Context): Promise<void> {
     return new Promise((resolve, reject) => {
 
       this.$logger.info(`authorizing ${ctx.service.__name} service...`);
@@ -154,9 +154,6 @@ export class Authorization extends Model {
               for (let prop in (<any>options).fetch.query)
                 if (typeof (<any>options).fetch.query[prop] === 'string' && (<any>options).fetch.query[prop].charAt(0) === '@')
                   fetchObj.query[prop] = objectUtil.getValue(ctx, (<any>options).fetch.query[prop].slice(1));
-
-            if (typeof (<any>options).fetch.projections === 'string')
-              fetchObj.projections = objectUtil.getValue(ctx, (<any>options).fetch.projections);
 
             if (typeof (<any>options).fetch.options === 'string')
               fetchObj.options = objectUtil.getValue(ctx, (<any>options).fetch.options);
