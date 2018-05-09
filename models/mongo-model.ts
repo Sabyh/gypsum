@@ -61,12 +61,11 @@ export class MongoModel extends Model {
   }
 
   @SERVICE({
-    args: ['query.query', 'query.projections', 'query.options']
+    args: ['query.query', 'query.options']
   })
-  find(query: any = {}, projections: any = {}, options: any = {}, ctx?: Context): Promise<IResponse> {
+  find(query: any = {}, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('find service called');
     this.$logger.debug('query:', query);
-    this.$logger.debug('projections:', projections);
     this.$logger.debug('options:', options);
 
     if (query._id)
@@ -74,7 +73,7 @@ export class MongoModel extends Model {
 
     return new Promise((resolve, reject) => {
 
-      let cursor: MongoDB.Cursor = this.collection.find(query, projections);
+      let cursor: MongoDB.Cursor = this.collection.find(query);
 
       for (let prop in options)
         if (prop in cursor)
@@ -293,12 +292,11 @@ export class MongoModel extends Model {
   }
 
   @SERVICE({
-    args: ['body.query', 'body.projections', 'body.options']
+    args: ['body.query', 'body.options']
   })
-  search(query: any = {}, projections: any = {}, options: any = {}, ctx?: Context): Promise<IResponse> {
+  search(query: any = {}, options: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('search service called');
     this.$logger.debug('query:', query);
-    this.$logger.debug('projections:', projections);
     this.$logger.debug('options:', options);
 
     if (query._id)
@@ -306,7 +304,7 @@ export class MongoModel extends Model {
 
     return new Promise((resolve, reject) => {
 
-      let cursor: MongoDB.Cursor = this.collection.find(query, projections);
+      let cursor: MongoDB.Cursor = this.collection.find(query);
 
       for (let prop in options)
         if ((<any>cursor)[prop])
@@ -357,22 +355,32 @@ export class MongoModel extends Model {
       delete update._id;
       delete update.token;
 
-      if (filter._id)
-        filter._id = new MongoDB.ObjectID(filter._id);
-
       if (update.$set) {
         update.$set.updatedAt = Date.now();
       } else {
         update.$set = { updatedAt: Date.now() };
       }
 
-      this.collection.updateMany(
-        filter,
-        update,
-        <MongoDB.CommonOptions>(Object.assign(options || {}, { multi: true, upsert: false })))
-        .then(res => {
-          this.$logger.debug('update service result:', res);
-          resolve({ data: res.result.nModified, count: res.result.nModified });
+      if (filter._id && typeof filter._id === 'string')
+        filter._id = new MongoDB.ObjectID(filter._id);
+
+      this.collection.find(filter).project({ _id: 1 }).toArray()
+        .then(ids => {
+
+          this.collection.updateMany(
+            { _id: { $in: ids }},
+            update,
+            <MongoDB.CommonOptions>(Object.assign(options || {}, { multi: true, upsert: false })))
+            .then(res => {
+              this.$logger.debug('update service result:', res);
+              this.$logger.debug({ data: res.result.nModified, count: res.result.nModified });
+              return this.find({ _id: { $in: ids }});
+            })
+            .catch(error => reject({
+              message: `[${this.name}] - update: unknown error`,
+              original: error,
+              code: RESPONSE_CODES.UNKNOWN_ERROR
+            }));
         })
         .catch(error => reject({
           message: `[${this.name}] - update: unknown error`,
@@ -398,7 +406,7 @@ export class MongoModel extends Model {
       if (!update || Object.keys(update).length === 0)
         return resolve({ data: null });
 
-      if (filter._id)
+      if (filter._id && typeof filter._id === 'string')
         filter._id = new MongoDB.ObjectID(filter._id);
 
       delete update._id;

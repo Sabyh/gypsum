@@ -6,6 +6,7 @@ import { ResponseError, IResponseError } from './index';
 export type responseTypes = 'json' | 'html' | 'file';
 
 export interface IResponse {
+  rid?: string;
   data?: any;
   count?: number;
   code?: RESPONSE_CODES;
