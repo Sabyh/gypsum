@@ -14,7 +14,7 @@ export type getOptions = keyof IModelOptions;
 export class Model {
   private _servicesData: { [key: string]: IService };
   private _hooksData: { [key: string]: IModelHook };
-  
+
   public app: App;
   public type: 'Mongo' | 'File' | undefined;
   public $logger: Logger;
@@ -26,18 +26,24 @@ export class Model {
 
   private _mArrangeServices(): { [key: string]: IService } {
     this._servicesData = {};
-    let servicesOptions = this.$get('servicesOptions');
 
     if (this.$get('internal'))
       return {};
 
     for (let prop in this) {
 
-      let service: IService = <any>this[prop];      
+      /**
+       * Checking if method is a service
+       */
+      let service: IService = <any>this[prop];
       let isService = service && service.isService;
-      
-      if (service && isService) {
 
+      if (service && isService) {
+        let servicesOptions = this.$get('servicesOptions');
+
+        /**
+         * Checking if service is cancelled
+         */
         if (servicesOptions[prop] === false) {
           delete this[prop];
           continue;
@@ -45,14 +51,28 @@ export class Model {
 
         let serviceName = prop.toLowerCase();
 
-        service.authorize = service.authorize === false ? false : service.authorize || this.$get('authorize');
+        /**
+         * Checking service authorization
+         */
+        if (servicesOptions[prop].authorize !== undefined) {
+          service.authorize = servicesOptions[prop].authorize;
+        } else {
+          service.authorize = service.authorize === false ? false : service.authorize || this.$get('authorize');
+        }
 
-        if (service.secure === undefined)
-          if (service.authorize || this.$get('secure') || this.$get('authorize'))
-            service.secure = true;
+        /**
+         * Checking service authentication
+         */
+        if (service.authorize) {
+          service.secure = true;
+        } else if (servicesOptions[prop].secure !== undefined) {
+          service.secure = servicesOptions[prop].secure;
+        } else {
+          service.secure = service.secure === false ? false : service.secure || this.$get('secure');
+        }
 
         this._servicesData[serviceName] = {
-          __name: service.__name, 
+          __name: service.__name,
           isService: isService,
           args: [],
           secure: service.secure,
@@ -74,11 +94,19 @@ export class Model {
         if (this.$get('before') && this.$get('before').length)
           this._servicesData[serviceName].before = [...this.$get('before')];
 
-        if (service.before && service.before.length) {
-          if (service.before[0] === "~") {
-            this._servicesData[serviceName].before = [...(service.before.slice(1))];
+        let serviceBeforeHooks;
+
+        if (servicesOptions[prop].before && servicesOptions[prop].before.length)
+          serviceBeforeHooks = servicesOptions[prop].before;
+        else if (service.before && service.before.length) {
+          serviceBeforeHooks = service.before;
+        }
+
+        if (serviceBeforeHooks && serviceBeforeHooks.length) {
+          if (serviceBeforeHooks[0] === "~") {
+            this._servicesData[serviceName].before = [...(serviceBeforeHooks.slice(1))];
           } else {
-            this._servicesData[serviceName].before.push(...service.before);
+            this._servicesData[serviceName].before.push(...serviceBeforeHooks);
             cleanHooks(this._servicesData[serviceName].before)
           }
         }
@@ -86,11 +114,19 @@ export class Model {
         if (this.$get('after') && this.$get('after').length)
           this._servicesData[serviceName].after = [...this.$get('after')];
 
-        if (service.after && service.after.length) {
+        let serviceAfterHooks;
+
+        if (servicesOptions[prop].after && servicesOptions[prop].after.length)
+          serviceAfterHooks = servicesOptions[prop].after;
+        else if (service.after && service.after.length) {
+          serviceAfterHooks = service.after;
+        }
+
+        if (serviceAfterHooks && serviceAfterHooks.length) {
           if (service.after[0] === "~") {
-            this._servicesData[serviceName].after = [...(service.after.slice(1))];
+            this._servicesData[serviceName].after = [...(serviceAfterHooks.slice(1))];
           } else {
-            this._servicesData[serviceName].after.push('|', ...service.after);
+            this._servicesData[serviceName].after.push('|', ...serviceAfterHooks);
             cleanHooks(this._servicesData[serviceName].after);
 
             let splitterIndex = this._servicesData[serviceName].after.indexOf('|');
