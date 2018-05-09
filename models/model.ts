@@ -54,7 +54,7 @@ export class Model {
         /**
          * Checking service authorization
          */
-        if (servicesOptions[prop].authorize !== undefined) {
+        if (servicesOptions[prop] && servicesOptions[prop].authorize !== undefined) {
           service.authorize = servicesOptions[prop].authorize;
         } else {
           service.authorize = service.authorize === false ? false : service.authorize || this.$get('authorize');
@@ -65,7 +65,7 @@ export class Model {
          */
         if (service.authorize) {
           service.secure = true;
-        } else if (servicesOptions[prop].secure !== undefined) {
+        } else if (servicesOptions[prop] && servicesOptions[prop].secure !== undefined) {
           service.secure = servicesOptions[prop].secure;
         } else {
           service.secure = service.secure === false ? false : service.secure || this.$get('secure');
@@ -96,7 +96,7 @@ export class Model {
 
         let serviceBeforeHooks;
 
-        if (servicesOptions[prop].before && servicesOptions[prop].before.length)
+        if (servicesOptions[prop] && servicesOptions[prop].before && servicesOptions[prop].before.length)
           serviceBeforeHooks = servicesOptions[prop].before;
         else if (service.before && service.before.length) {
           serviceBeforeHooks = service.before;
@@ -116,7 +116,7 @@ export class Model {
 
         let serviceAfterHooks;
 
-        if (servicesOptions[prop].after && servicesOptions[prop].after.length)
+        if (servicesOptions[prop] && servicesOptions[prop].after && servicesOptions[prop].after.length)
           serviceAfterHooks = servicesOptions[prop].after;
         else if (service.after && service.after.length) {
           serviceAfterHooks = service.after;
