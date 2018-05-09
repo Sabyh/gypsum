@@ -84,7 +84,7 @@ export class Context {
       this._mInit();
   }
 
-  static Publish(model: Model, serviceName: string, data: Response, options?: IServiceOptions) {
+  static Publish(model: Model, serviceName: string, data: Response) {
     return new Promise((resolve, reject) => {
 
       if (!State.currentContext)
@@ -98,13 +98,19 @@ export class Context {
         });
       }
 
-      options = Object.assign(options || {}, {
-        crud: 'update',
-        domain: RESPONSE_DOMAINS.SELF,
-        after: []
-      });
+      let serviceData = model.$getService(serviceName);
 
-      let service = mimicService(serviceName, options);
+      if (!serviceData) {
+        return reject({
+          message: `could not publish: service not found: ${serviceName}!`
+        });
+      }
+
+      let service = mimicService(serviceName, {
+        crud: serviceData.crud,
+        domain: serviceData.domain,
+        after: serviceData.after.slice(1)
+      });
   
       let context = new Context(API_TYPES.SOCKET, {
         rid: model.name === State.currentContext.model.name ? State.currentContext._rid : null,
