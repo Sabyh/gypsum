@@ -79,7 +79,7 @@ export class Model {
           authorize: service.authorize,
           apiType: this.$get('apiType') === API_TYPES.ALL ? service.apiType : this.$get('apiType'),
           name: service.__name,
-          event: this.name + ' ' + service.__name.toLowerCase(),
+          event: `${this.app.name} ${this.name} ${service.__name.toLowerCase()}`,
           method: service.method,
           crud: service.crud,
           path: createPath(service, this),
