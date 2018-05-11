@@ -33,6 +33,21 @@ export function initExpress(app: express.Express) {
       res.json(app.$getApis());
   });
 
+  app.get('/getapps/:names', cors(), (req, res) => {
+    let appNames = req.params.names.split(',');
+    let apis = [];
+
+    for (let i = 0; i < appNames.length; i++) {
+      let app = State.apps.find(_app => _app.name === appNames[i].toLowerCase());
+
+      if (app) {
+        apis.push(app.$getApis());
+      }
+    }
+
+    return res.json(apis);
+  });
+
   for (let i = 0; i < State.apps.length; i++) {
     if (State.apps[i].$get('apiType') === API_TYPES.SOCKET)
       continue;
