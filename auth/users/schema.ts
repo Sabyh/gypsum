@@ -10,7 +10,7 @@ export const usersSchema: Validall.ISchema = {
   password: {
     $and: [
       { $required: true, $message: 'no_password' },
-      { $type: 'string', $regex: /.{6, 20}/, $message: 'invalid_password' }
+      { $type: 'string', $message: 'invalid_password' }
     ]
   },
   passwordSalt: 'string',
