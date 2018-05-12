@@ -178,8 +178,10 @@ export class Users extends MongoModel {
 
         let token = jwt.sign({ id: user._id, date: Date.now(), type: 'verifyEmail' }, tokenSecret);
         let activationLink = `http${State.config.secure ? 's' : ''}://`;
-        activationLink += `${this.app}.${State.config.hostName}${State.env !== 'production' ? ':' + State.config.port : ''}/`;
-        activationLink += stringUtil.cleanPath(`/${this.name}/activateUser?${token}=${token}`);
+        activationLink += `${this.app.name}.${State.config.hostName}${State.env !== 'production' ? ':' + State.config.port : ''}/`;
+        activationLink += `${this.name}/activateUser?token=${token}`;
+
+        this.$logger.info('activation link:', activationLink);
 
         let emailOptions: SendMailOptions = {
           from: State.auth.supportEmail || `${State.config.server_name} Administration`,
