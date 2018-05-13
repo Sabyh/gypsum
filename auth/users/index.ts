@@ -111,7 +111,16 @@ export class Users extends MongoModel {
         });
       }
 
-      let data: any = jwt.verify(token, State.auth.tokenSecret);
+      let data: any;
+
+      try {
+        data = jwt.verify(token, State.auth.tokenSecret);
+      } catch (err) {
+        return reject({
+          message: 'invalid_user_token',
+          code: RESPONSE_CODES.UNAUTHORIZED
+        });
+      }
 
       if (!data || !data.id)
         return reject({
@@ -119,7 +128,7 @@ export class Users extends MongoModel {
           code: RESPONSE_CODES.UNAUTHORIZED
         });
 
-      if (data.type !== 'verifyEmail' || data.type !== 'auth') {
+      if (data.type !== 'verifyEmail' && data.type !== 'auth') {
         return reject({
           message: 'fake_token',
           code: RESPONSE_CODES.UNAUTHORIZED
@@ -187,7 +196,7 @@ export class Users extends MongoModel {
           from: State.auth.supportEmail || `${State.config.server_name} Administration`,
           to: user.email,
           subject: `${State.config.server_name} Account Verification`,
-          html: stringUtil.compile(template.toString('utf-8'), { username: 'User', activationLink })
+          html: stringUtil.compile(template.toString('utf-8'), { username: user.email.split('@')[0], activationLink })
         };
 
         this.transporter.sendMail(emailOptions, (sendEmailError: any, info: any) => {
@@ -267,7 +276,7 @@ export class Users extends MongoModel {
               });
 
             let message = 'Your account has been activated successfully';
-            let template = stringUtil.compile(data, { email: ctx.user.email, message: message });
+            let template = stringUtil.compile(data, { email: ctx.user.email.split('@')[0], message: message });
             resolve({ data: template, type: 'html' });
           });
         })
@@ -340,7 +349,7 @@ export class Users extends MongoModel {
                       from: State.auth.supportEmail || `${State.config.server_name} Administration`,
                       to: user.email,
                       subject: `${State.config.server_name} Reset Password`,
-                      html: stringUtil.compile(template.toString('utf-8'), { email: user.email, password: newPassword })
+                      html: stringUtil.compile(template.toString('utf-8'), { username: user.email.split('@')[0], password: newPassword })
                     };
 
                     this.transporter.sendMail(emailOptions, (sendEmailError: any, info: any) => {
@@ -377,7 +386,7 @@ export class Users extends MongoModel {
   }
 
   @SERVICE({
-    secure: false,
+    secure: true,
     authorize: false,
     args: ['body.token'],
     method: 'post',
