@@ -121,18 +121,20 @@ export class Users extends MongoModel {
           code: RESPONSE_CODES.UNAUTHORIZED
         });
 
-      if (data.type !== 'auth') {
+      if (data.type !== 'verifyEmail' || data.type !== 'auth') {
         return reject({
           message: 'fake_token',
           code: RESPONSE_CODES.UNAUTHORIZED
         });
       }
 
-      if (!data.date || ((Date.now() - data.date) > State.auth.tokenExpiry)) {
-        return reject({
-          message: 'out_dated_token',
-          code: RESPONSE_CODES.UNAUTHORIZED
-        });
+      if (data.type === 'auth') {
+        if (!data.date || ((Date.now() - data.date) > State.auth.tokenExpiry)) {
+          return reject({
+            message: 'out_dated_token',
+            code: RESPONSE_CODES.UNAUTHORIZED
+          });
+        }
       }
 
       ctx.set('tokenData', data);
@@ -241,16 +243,16 @@ export class Users extends MongoModel {
       let user = ctx.user;
       let tokenData = ctx.get('tokenData');
 
-      if (!tokenData.date || ((Date.now() - tokenData.date) > State.auth.verificationEmailExpiry)) {
+      if (tokenData.type !== "verifyEmail") {
         return reject({
-          message: 'out_dated_token',
+          message: 'fake_token',
           code: RESPONSE_CODES.UNAUTHORIZED
         });
       }
 
-      if (tokenData.type !== "verifyEmail") {
+      if (!tokenData.date || ((Date.now() - tokenData.date) > State.auth.verificationEmailExpiry)) {
         return reject({
-          message: 'fake_token',
+          message: 'out_dated_token',
           code: RESPONSE_CODES.UNAUTHORIZED
         });
       }
