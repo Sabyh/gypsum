@@ -101,8 +101,16 @@ export class Users extends MongoModel {
   authenticate(ctx: Context): Promise<void> {
     return new Promise((resolve, reject) => {
       this.$logger.info(`authenticating user for ${ctx.service.__name} service...`);
+      let token = ctx.getHeader('token');
 
-      let token = ctx.getHeader('token') || ctx.query.token || ctx.body.token || ctx.cookies('token');
+      if (!token) {
+        if (ctx.query && ctx.query.token)
+          token = ctx.query.token;
+        else if (ctx.body && ctx.body.token)
+          token = ctx.body.token;
+        else
+          token = ctx.cookies('token');
+      }
 
       if (!token) {
         return reject({

@@ -156,7 +156,7 @@ export class Context {
   static Socket(appName: string, socket: any, model: Model, service: IService): (data: any) => void {
     return function (data: any) {
       new Context(API_TYPES.SOCKET, {
-        headers: socket.handshake.headers,
+        headers: socket.handshake ? socket.handshake.query : {},
         rid: data.rid,
         query: data.query,
         body: data.body,
