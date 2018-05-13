@@ -20,7 +20,7 @@ export interface IAuthConfig {
   rootUserEmail?: string;
   rootUserPassword?: string;
   verificationEmailExpiry?: number;
-  tokenSecret: string;
+  tokenSecret?: string;
   tokenExpiry?: number;
   supportEmail?: string;
 }

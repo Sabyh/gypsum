@@ -15,8 +15,6 @@ import unique from '../../util/unique';
 import { RESPONSE_CODES, IResponse, RESPONSE_DOMAINS } from '../../types';
 import { App } from '../../app';
 
-let tokenSecret = unique.Get();
-
 @MODEL({
   secure: true,
   authorize: true,
@@ -94,7 +92,7 @@ export class Users extends MongoModel {
       if (!responseData || Array.isArray(responseData) || !Validall.Types.object(responseData))
         return resolve();
 
-      responseData.token = jwt.sign({ id: responseData._id, date: Date.now(), type: 'auth' }, tokenSecret);
+      responseData.token = jwt.sign({ id: responseData._id, date: Date.now(), type: 'auth' }, State.auth.tokenSecret);
       resolve();
     });
   }
@@ -113,7 +111,7 @@ export class Users extends MongoModel {
         });
       }
 
-      let data: any = jwt.verify(token, tokenSecret);
+      let data: any = jwt.verify(token, State.auth.tokenSecret);
 
       if (!data || !data.id)
         return reject({
@@ -178,7 +176,7 @@ export class Users extends MongoModel {
             code: RESPONSE_CODES.UNKNOWN_ERROR
           });
 
-        let token = jwt.sign({ id: user._id, date: Date.now(), type: 'verifyEmail' }, tokenSecret);
+        let token = jwt.sign({ id: user._id, date: Date.now(), type: 'verifyEmail' }, State.auth.tokenSecret);
         let activationLink = `http${State.config.secure ? 's' : ''}://`;
         activationLink += `${this.app.name}.${State.config.hostName}${State.env !== 'production' ? ':' + State.config.port : ''}/`;
         activationLink += `${this.name}/activateUser?token=${token}`;
