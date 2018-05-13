@@ -66,7 +66,7 @@ export class Authorization extends Model {
           code: RESPONSE_CODES.BAD_REQUEST
         });
 
-      model.find(options.fetch.query, options.fetch.projections || {}, options.fetch.options)
+      model.find(options.fetch.query, options.fetch.options)
         .then((res: any) => {
           if (!res || !res.data)
             return reject({
@@ -77,15 +77,27 @@ export class Authorization extends Model {
           let docs = res.data;
 
           for (let i = 0; i < docs.length; i++) {
-            let compareValue = objectUtil.getValue(docs[i], options.match);
-            if (compareValue instanceof MongoDB.ObjectID)
-              compareValue = compareValue.toString();
+            let matchParts = options.match.split('|');
+            let matchPass = false;
 
-            if (options.userFieldValue !== compareValue)
-              return reject({
-                message: 'user not authorized',
-                code: RESPONSE_CODES.UNAUTHORIZED
-              });
+            for (let j = 0; j < matchParts.length; j++) {
+              if (matchParts[i] && matchParts[i].trim()) {
+                let compareValue = objectUtil.getValue(docs[i], matchParts[i].trim());
+
+                if (compareValue instanceof MongoDB.ObjectID)
+                  compareValue = compareValue.toString();
+
+                if (options.userFieldValue === compareValue)
+                  matchPass = true;
+                  break;
+              }
+              
+              if (!matchPass)
+                return reject({
+                  message: 'user not authorized',
+                  code: RESPONSE_CODES.UNAUTHORIZED
+                });
+            }
           }
 
           ctx.set('fetchedData', docs);

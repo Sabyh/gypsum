@@ -20,6 +20,10 @@ import { App } from '../../app';
   authorize: true,
   schema: usersSchema,
   schemaOptions: usersSchemaOptions,
+  servicesOptions: {
+    findById: { authorize: { field: '_id', match: 'params.id' } },
+    updateById: { authorize: { field: '_id', match: 'params.id' } }
+  },
   domain: RESPONSE_DOMAINS.SELF,
   after: ['filter:-password:passwordSalt'],
   indexes: [{ name: 'email', options: { unique: true } }]
