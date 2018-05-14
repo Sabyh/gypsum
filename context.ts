@@ -283,7 +283,7 @@ export class Context {
       }
 
     } else if (this._socket) {
-      let event = `${this.appName} ${this.model.name} ${this.service.crud}`;
+      let event = `${this.model.name} ${this.service.crud}`;
       this._response.crud = this.service.crud;
       
       if (this._response.code < 200 || this._response.code >= 300) {
