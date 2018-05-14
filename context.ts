@@ -285,6 +285,8 @@ export class Context {
     } else if (this._socket) {
       let event = `${this.model.name} ${this.service.crud}`;
       this._response.crud = this.service.crud;
+
+      this.logger.debug(`dispatching event: '${event}' with domain: ${this._response.domain || this._domain || this.service.domain}`);
       
       if (this._response.code < 200 || this._response.code >= 300) {
         this._socket.emit(event, this._response);
