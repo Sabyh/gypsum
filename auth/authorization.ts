@@ -91,7 +91,7 @@ export class Authorization extends Model {
                   matchPass = true;
                   break;
               }
-              
+
               if (!matchPass)
                 return reject({
                   message: 'user not authorized',
@@ -113,19 +113,27 @@ export class Authorization extends Model {
 
   @HOOK()
   authorize(options: { field: string, match: string, fetch: any } | boolean, ctx: Context): Promise<void> {
+
+    let appName = ctx.appName.toLowerCase();
+    let modelName = ctx.model.name.toLowerCase();
+    let serviceName = ctx.service.__name.toLowerCase();
+
     return new Promise((resolve, reject) => {
 
-      this.$logger.info(`authorizing ${ctx.service.__name} service...`);
+      this.$logger.info(`authorizing service:`);
+      this.$logger.info(`${appName}${modelName}${serviceName}`);
+      this.$logger.info(`options:`);
+      this.$logger.info(options);
+      this.$logger.debug('params:', ctx.params);
+      this.$logger.debug('query:', ctx.query);
+      this.$logger.debug('body:', ctx.body);
+
 
       if (!ctx.user)
         return reject({
           message: 'user not logged in',
           code: RESPONSE_CODES.UNAUTHORIZED
         });
-
-      let appName = ctx.appName.toLowerCase();
-      let modelName = ctx.model.name.toLowerCase();
-      let serviceName = ctx.service.name.toLowerCase();
 
       if (Validall.Types.object(options) && (<any>options).field && (<any>options).match) {
 
