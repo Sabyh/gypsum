@@ -124,9 +124,12 @@ export class Authorization extends Model {
       this.$logger.info(`${appName}${modelName}${serviceName}`);
       this.$logger.info(`options:`);
       this.$logger.info(options);
-      this.$logger.debug('params:', ctx.params);
-      this.$logger.debug('query:', ctx.query);
-      this.$logger.debug('body:', ctx.body);
+      this.$logger.debug('params:');
+      this.$logger.debug(ctx.params);
+      this.$logger.debug('query:');
+      this.$logger.debug(ctx.query);
+      this.$logger.debug('body:');
+      this.$logger.debug(ctx.body);
 
 
       if (!ctx.user)
