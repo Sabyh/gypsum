@@ -155,6 +155,8 @@ export class Context {
 
   static Socket(appName: string, socket: any, model: Model, service: IService): (data: any) => void {
     return function (data: any) {
+      Logger.Info(`${appName} - socket event catched: '${service.event}'`);
+      
       new Context(API_TYPES.SOCKET, {
         headers: socket.handshake ? socket.handshake.query : {},
         rid: data.rid,
