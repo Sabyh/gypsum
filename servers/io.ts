@@ -111,6 +111,7 @@ function initializeApp(io: any, app: App, ns: string = app.name) {
           if (services[service].apiType === API_TYPES.REST)
             continue;
 
+          logger.info(`app ${ns} is listening on '${services[service].event}' event`);
           socket.on(services[service].event, Context.Socket(ns, socket, model, services[service]));
         }
       }
