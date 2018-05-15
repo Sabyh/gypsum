@@ -68,6 +68,7 @@ export class Context {
     this._req = data.req || undefined;
     this._res = data.res || undefined;
     this._cookies = data.cookies;
+    this._rid = data.rid;
     this._domain = data.domain;
     this.appName = data.appName;
     this.room = data.room || '';
@@ -156,10 +157,10 @@ export class Context {
   static Socket(appName: string, socket: any, model: Model, service: IService): (data: any) => void {
     return function (data: any) {
       Logger.Info(`${appName} - socket event catched: '${service.event}'`);
-      
+
       new Context(API_TYPES.SOCKET, {
         headers: socket.handshake ? socket.handshake.query : {},
-        rid: data.rid,
+        rid: data.headers ? data.headers.rid || null : null,
         query: data.query,
         body: data.body,
         params: data.params,
