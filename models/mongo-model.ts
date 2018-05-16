@@ -391,13 +391,12 @@ export class MongoModel extends Model {
   }
 
   @SERVICE({
-    args: ['body.filter', 'body.update', 'body.options']
+    args: ['body.filter', 'body.update']
   })
-  updateOne(filter: any, update: any, options: any = {}, ctx?: Context): Promise<IResponse> {
+  updateOne(filter: any, update: any, ctx?: Context): Promise<IResponse> {
     this.$logger.info('updateOne service called');
     this.$logger.debug('filter:', filter);
     this.$logger.debug('update:', update);
-    this.$logger.debug('options:', options);
 
     filter = filter || {};
 
@@ -425,7 +424,7 @@ export class MongoModel extends Model {
         this.collection.findOneAndUpdate(
           filter,
           update,
-          Object.assign(<MongoDB.FindOneAndReplaceOption>options || {}, { returnOriginal: false })
+          { returnOriginal: false }
         ).then(res => {
           this.$logger.debug('updateOne service result:', res);
           resolve(res.value);
@@ -454,7 +453,7 @@ export class MongoModel extends Model {
             this.collection.findOneAndUpdate(
               filter,
               update,
-              Object.assign(<MongoDB.FindOneAndReplaceOption>options || {}, { returnOriginal: false })
+              { returnOriginal: false }
             ).then(res => {
               updatedDoc = res.value;
               delete updatedDoc._id;
@@ -545,14 +544,13 @@ export class MongoModel extends Model {
   }
 
   @SERVICE({
-    args: ['params.id', 'body.update', 'body.options']
+    args: ['params.id', 'body.update']
   })
-  updateById(id: string, update: any, options: any = {}, ctx?: Context): Promise<IResponse> {
+  updateById(id: string, update: any, ctx?: Context): Promise<IResponse> {
 
     this.$logger.info('updateById service called');
     this.$logger.debug('id:', id);
     this.$logger.debug('update:', update);
-    this.$logger.debug('options:', options);
 
     return new Promise((resolve, reject) => {
 
@@ -574,7 +572,7 @@ export class MongoModel extends Model {
         this.collection.findOneAndUpdate(
           { _id: new MongoDB.ObjectID(id) },
           update,
-          Object.assign(<MongoDB.FindOneAndReplaceOption>options || {}, { returnOriginal: false })
+          { returnOriginal: false }
         ).then(res => {
           this.$logger.debug('updateById service result:', res);
           resolve(res.value);
@@ -602,7 +600,7 @@ export class MongoModel extends Model {
             this.collection.findOneAndUpdate(
               { _id: new MongoDB.ObjectID(id) },
               update,
-              Object.assign(<MongoDB.FindOneAndReplaceOption>options || {}, { returnOriginal: false })
+              { returnOriginal: false }
             ).then(res => {
               updatedDoc = res.value;
               delete updatedDoc._id;
@@ -691,12 +689,11 @@ export class MongoModel extends Model {
   }
 
   @SERVICE({
-    args: ['body.filter', 'body.options']
+    args: ['body.filter']
   })
-  delete(filter: any, options: any = {}, ctx?: Context): Promise<IResponse> {
+  delete(filter: any, ctx?: Context): Promise<IResponse> {
     this.$logger.info('delete service called');
     this.$logger.debug('filter:', filter);
-    this.$logger.debug('options:', options);
 
     return new Promise((resolve, reject) => {
 
@@ -706,7 +703,7 @@ export class MongoModel extends Model {
           code: RESPONSE_CODES.UNAUTHORIZED
         });
 
-      this.collection.deleteMany(filter, <MongoDB.CommonOptions>options)
+      this.collection.deleteMany(filter)
         .then(res => {
           this.$logger.debug('delete service result:', res);
           resolve({ data: res.result.n, count: res.result.n });
@@ -720,12 +717,11 @@ export class MongoModel extends Model {
   }
 
   @SERVICE({
-    args: ['body.filter', 'body.options']
+    args: ['body.filter']
   })
-  deleteOne(filter: any, options: any = {}, ctx?: Context): Promise<IResponse> {
+  deleteOne(filter: any, ctx?: Context): Promise<IResponse> {
     this.$logger.info('deleteOne service called');
     this.$logger.debug('id:', filter);
-    this.$logger.debug('options:', options);
 
     return new Promise((resolve, reject) => {
 
@@ -738,7 +734,7 @@ export class MongoModel extends Model {
       if (filter._id)
         filter._id = new MongoDB.ObjectID(filter._id);
 
-      this.collection.findOneAndDelete(filter, <MongoDB.CommonOptions>options)
+      this.collection.findOneAndDelete(filter)
         .then(res => {
           this.$logger.debug('deleteOne service result:', res);
           resolve({ data: res.value });
@@ -752,19 +748,18 @@ export class MongoModel extends Model {
   }
 
   @SERVICE({
-    args: ['params.id', 'body.options']
+    args: ['params.id']
   })
-  deleteById(id: string, options: any = {}, ctx?: Context): Promise<IResponse> {
+  deleteById(id: string, ctx?: Context): Promise<IResponse> {
     this.$logger.info('deleteById service called');
     this.$logger.debug('id:', id);
-    this.$logger.debug('options:', options);
 
     return new Promise((resolve, reject) => {
 
       if (!id)
         return resolve({ data: null });
 
-      this.collection.findOneAndDelete({ _id: new MongoDB.ObjectID(id) }, <MongoDB.CommonOptions>options)
+      this.collection.findOneAndDelete({ _id: new MongoDB.ObjectID(id) })
         .then(res => {
           this.$logger.debug('deleteById service result:', res);
           resolve({ data: res.value });
