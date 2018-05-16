@@ -337,13 +337,12 @@ export class MongoModel extends Model {
   }
 
   @SERVICE({
-    args: ['body.filter', 'body.update', 'body.options']
+    args: ['body.filter', 'body.update']
   })
-  update(filter: any, update: any, options = {}, ctx?: Context): Promise<IResponse> {
+  update(filter: any, update: any, ctx?: Context): Promise<IResponse> {
     this.$logger.info('update service called');
     this.$logger.debug('filter:', filter);
     this.$logger.debug('update:', update);
-    this.$logger.debug('options:', options);
 
     filter = filter || {};
 
@@ -370,7 +369,8 @@ export class MongoModel extends Model {
           this.collection.updateMany(
             { _id: { $in: ids }},
             update,
-            <MongoDB.CommonOptions>(Object.assign(options || {}, { multi: true, upsert: false })))
+            { upsert: false }
+          )
             .then(res => {
               this.$logger.debug('update service result:', res);
               this.$logger.debug({ data: res.result.nModified, count: res.result.nModified });
