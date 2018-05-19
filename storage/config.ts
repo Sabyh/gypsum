@@ -6,6 +6,8 @@ export interface IStorageConfig {
   authorize?: any;
   limits?: any;
   maxUploadCount?: number;
+  folders?: string[];
+  mimeTypes?: string[];
 }
 
 export interface IStorageEnvConfig {

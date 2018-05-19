@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as Multer from 'multer';
+import * as mime from 'mime';
 import { MODEL, SERVICE } from "../decorators";
 import { Model } from "../models";
 import { Context } from "../context";
@@ -69,32 +70,48 @@ export class File extends Model {
     method: 'post',
     args: ['body']
   })
-  base64UploadOne(body: any, ctx?: Context) {
+  dataURLUploadOne(body: any, ctx?: Context) {
     return new Promise((resolve, reject) => {
-      if (!body.type)
+      if (!body.folder) {
         return reject({
-          message: 'file type was not provided!',
+          message: 'folder name was not provided!',
           code: RESPONSE_CODES.BAD_REQUEST
         });
+      }
 
-      if (!body.file)
+      if (State.storage.folders && State.storage.folders.indexOf(body.folder) === -1) {
+        return reject({
+          message: `folder name '${body.folder}' is not authorized!`,
+          code: RESPONSE_CODES.BAD_REQUEST
+        });
+      }
+
+      if (!body.file) {
         return reject({
           message: 'file was not provided!',
           code: RESPONSE_CODES.BAD_REQUEST
         });
+      }
 
-      let folderPath = path.join(State.storage.storageDir, body.type);
-
-      if (!fs.existsSync(folderPath))
-        fs.mkdirSync(folderPath);
+      let folderPath = path.join(State.storage.storageDir, body.folder);
 
       let fileName = `${Date.now()}`;
       let parts = body.file.split(',');
       let data = parts[1];
       let mimeType = parts[0].split(':')[1].split(';')[0];
-      let type = mimeType.split('/')[1];
+      let extension = mime.getExtension(mimeType);
       let filePath = path.join(folderPath, fileName);
-      let clientFilePath = `${this.origin}/${body.type}/${fileName}`;
+      let clientFilePath = `${this.origin}/${body.folder}/${fileName}.${extension}`;
+
+      if (State.storage.mimeTypes && State.storage.mimeTypes.indexOf(mimeType) === -1) {
+        return reject({
+          message: `mime type '${mimeType}' is not authorized!`,
+          code: RESPONSE_CODES.BAD_REQUEST
+        });
+      }
+
+      if (!fs.existsSync(folderPath))
+        fs.mkdirSync(folderPath);
 
       try {
         fs.writeFileSync(path.join(filePath), data, 'base64');
@@ -104,7 +121,7 @@ export class File extends Model {
       } catch (err) {
         this.$logger.error(err);
 
-        this.removeOne(`${body.type}/${fileName}`)
+        this.removeOne(`${body.folder}/${fileName}`)
           .then(removed => {
             reject({
               message: 'error writing file',
@@ -120,13 +137,20 @@ export class File extends Model {
     method: 'post',
     args: ['body']
   })
-  base64UploadMany(body: any, ctx?: Context) {
+  dataURLUploadMany(body: any, ctx?: Context) {
     return new Promise((resolve, reject) => {
-      if (!body.type)
+      if (!body.folder)
         return reject({
-          message: 'file type was not provided!',
+          message: 'folder name was not provided!',
           code: RESPONSE_CODES.BAD_REQUEST
         });
+
+      if (State.storage.folders && State.storage.folders.indexOf(body.folder) === -1) {
+        return reject({
+          message: `folder name '${body.folder}' is not authorized!`,
+          code: RESPONSE_CODES.BAD_REQUEST
+        });
+      }
 
       if (!body.files || body.files.length)
         return reject({
@@ -134,7 +158,7 @@ export class File extends Model {
           code: RESPONSE_CODES.BAD_REQUEST
         });
 
-      let folderPath = path.join(State.storage.storageDir, body.type);
+      let folderPath = path.join(State.storage.storageDir, body.folder);
 
       if (!fs.existsSync(folderPath))
         fs.mkdirSync(folderPath);
@@ -148,14 +172,21 @@ export class File extends Model {
         let parts = body.files[i].split(',');
         let data = parts[1];
         let mimeType = parts[0].split(':')[1].split(';')[0];
-        let type = mimeType.split('/')[1];
+        let extension = mime.getExtension(mimeType);
         let filePath = path.join(folderPath, fileName);
-        let clientFilePath = `${this.origin}/${body.type}/${fileName}`;
+        let clientFilePath = `${this.origin}/${body.folder}/${fileName}.${extension}`;
+
+        if (State.storage.mimeTypes && State.storage.mimeTypes.indexOf(mimeType) === -1) {
+          return reject({
+            message: `mime type '${mimeType}' is not authorized!`,
+            code: RESPONSE_CODES.BAD_REQUEST
+          });
+        }
 
         try {
           fs.writeFileSync(path.join(filePath), data, 'base64');
           clientPaths.push(clientFilePath);
-          savedFiles.push(`${body.type}/${fileName}`);
+          savedFiles.push(`${body.folder}/${fileName}`);
 
         } catch (err) {
           this.$logger.error(err);
