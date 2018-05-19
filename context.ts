@@ -160,7 +160,7 @@ export class Context {
 
       new Context(API_TYPES.SOCKET, {
         headers: socket.handshake ? socket.handshake.query : {},
-        rid: data.headers ? data.headers.rid || null : null,
+        rid: data.rid || null,
         query: data.query,
         body: data.body,
         params: data.params,

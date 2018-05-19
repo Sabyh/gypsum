@@ -34,7 +34,7 @@ export function initExpress(app: express.Express) {
   });
 
   app.get('/getapps/:names', cors(), (req, res) => {
-    let appNames = req.params.names.split(',');
+    let appNames = req.params.names.split('-');
     let apis = [];
 
     for (let i = 0; i < appNames.length; i++) {
