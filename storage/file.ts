@@ -100,7 +100,11 @@ export class File extends Model {
       let data = parts[1];
       let mimeType = parts[0].split(':')[1].split(';')[0];
       let extension = mime.getExtension(mimeType);
-      let filePath = path.join(folderPath, fileName);
+
+      if (extension === 'jpeg')
+        extension = 'jpg';
+
+      let filePath = path.join(folderPath, `${fileName}.${extension}`);
       let clientFilePath = `${this.origin}/${body.folder}/${fileName}.${extension}`;
 
       if (State.storage.mimeTypes && State.storage.mimeTypes.indexOf(mimeType) === -1) {
@@ -173,7 +177,11 @@ export class File extends Model {
         let data = parts[1];
         let mimeType = parts[0].split(':')[1].split(';')[0];
         let extension = mime.getExtension(mimeType);
-        let filePath = path.join(folderPath, fileName);
+
+        if (extension === 'jpeg')
+          extension = 'jpg';
+
+        let filePath = path.join(folderPath, `${fileName}.${extension}`);
         let clientFilePath = `${this.origin}/${body.folder}/${fileName}.${extension}`;
 
         if (State.storage.mimeTypes && State.storage.mimeTypes.indexOf(mimeType) === -1) {
