@@ -152,7 +152,7 @@ export class File extends Model {
         });
       }
 
-      if (!body.files || body.files.length)
+      if (!body.files || !body.files.length)
         return reject({
           message: 'files were not provided!',
           code: RESPONSE_CODES.BAD_REQUEST
