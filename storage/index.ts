@@ -28,8 +28,8 @@ class Storage extends App {
 
   middlewares(app: express.Express) {
     console.log('serving storage static from path:');
-    console.log(path.join(State.root, State.storage.storageDir));
-    app.use(express.static(path.join(State.root, State.storage.storageDir)));
+    console.log(State.storage.storageDir);
+    app.use(express.static(State.storage.storageDir));
   }
 }
 
