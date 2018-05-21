@@ -447,7 +447,7 @@ export class MongoModel extends Model {
             let updatedDoc: any;
             let errObj: IResponseError;
 
-            delete preUpdatedDoc._id;
+            
 
             // update the doc in database
             this.collection.findOneAndUpdate(
@@ -456,7 +456,7 @@ export class MongoModel extends Model {
               { returnOriginal: false }
             ).then(res => {
               updatedDoc = res.value;
-              delete updatedDoc._id;
+              
 
               // test the updated doc in the database
               let state = schema.test(updatedDoc);
@@ -594,8 +594,6 @@ export class MongoModel extends Model {
             let updatedDoc: any;
             let errObj: IResponseError;
 
-            delete preUpdatedDoc._id;
-
             // update the doc in database
             this.collection.findOneAndUpdate(
               { _id: new MongoDB.ObjectID(id) },
@@ -603,7 +601,7 @@ export class MongoModel extends Model {
               { returnOriginal: false }
             ).then(res => {
               updatedDoc = res.value;
-              delete updatedDoc._id;
+              
 
               // test the updated doc in the database
               let state = schema.test(updatedDoc);
