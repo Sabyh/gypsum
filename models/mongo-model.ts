@@ -599,6 +599,9 @@ export class MongoModel extends Model {
             ).then(res => {
               updatedDoc = res.value;
 
+              console.dir(preUpdatedDoc);
+              console.dir(updatedDoc);
+
 
               // test the updated doc in the database
               let state = schema.test(updatedDoc);

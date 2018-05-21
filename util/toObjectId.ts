@@ -1,7 +1,7 @@
 import * as MongoDB from 'mongodb';
 
 export function toObjectID(query: { [key: string]: any }) {
-  if (!query || !query._id)
+  if (!query || !query._id || query._id instanceof MongoDB.ObjectID)
     return query;
 
   if (typeof query._id === 'string') {
