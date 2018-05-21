@@ -6,6 +6,7 @@ import { RESPONSE_CODES, RESPONSE_DOMAINS } from '../types';
 import { objectUtil } from '../util';
 import { State } from '../state';
 import { Context } from '../context';
+import { toObjectID } from '../util/toObjectId';
 
 @MODEL()
 export class Authorization extends Model {
@@ -182,8 +183,7 @@ export class Authorization extends Model {
               fetchObj.options = objectUtil.getValue(ctx, (<any>options).fetch.options);
           }
 
-          if (fetchObj.query._id && typeof fetchObj.query._id === 'string')
-            fetchObj.query._id = new MongoDB.ObjectID(fetchObj.query._id)
+          fetchObj.query = toObjectID(fetchObj.query);
 
           return this._mFetchData(appName, modelName, { fetch: fetchObj, userFieldValue: userFieldValue, match: (<any>options).match }, ctx)
             .then(() => resolve())

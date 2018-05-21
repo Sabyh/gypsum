@@ -7,6 +7,7 @@ import { Context } from '../context';
 import { Safe } from '../misc/safe';
 import { objectUtil } from '../util';
 import { App } from '../app';
+import { toObjectID } from '../util/toObjectId';
 
 const safe = new Safe('mongoModel');
 
@@ -40,8 +41,7 @@ export class MongoModel extends Model {
     this.$logger.debug('query:', query);
     this.$logger.debug('options:', options);
 
-    if (query._id)
-      query._id = new MongoDB.ObjectID(query._id);
+    query = toObjectID(query);
 
     return new Promise((resolve, reject) => {
 
@@ -68,8 +68,7 @@ export class MongoModel extends Model {
     this.$logger.debug('query:', query);
     this.$logger.debug('options:', options);
 
-    if (query._id)
-      query._id = new MongoDB.ObjectID(query._id);
+    query = toObjectID(query);
 
     return new Promise((resolve, reject) => {
 
@@ -119,8 +118,7 @@ export class MongoModel extends Model {
       if (!query || Object.keys(query).length === 0)
         return resolve({ data: null });
 
-      if (query._id)
-        query._id = new MongoDB.ObjectID(query._id);
+      query = toObjectID(query);
 
       this.collection.findOne(query, <MongoDB.FindOneOptions>options)
         .then(doc => {
@@ -299,8 +297,7 @@ export class MongoModel extends Model {
     this.$logger.debug('query:', query);
     this.$logger.debug('options:', options);
 
-    if (query._id)
-      query._id = new MongoDB.ObjectID(query._id);
+    query = toObjectID(query);
 
     return new Promise((resolve, reject) => {
 
@@ -367,14 +364,14 @@ export class MongoModel extends Model {
         .then(ids => {
 
           this.collection.updateMany(
-            { _id: { $in: ids }},
+            { _id: { $in: ids } },
             update,
             { upsert: false }
           )
             .then(res => {
               this.$logger.debug('update service result:', res);
               this.$logger.debug({ data: res.result.nModified, count: res.result.nModified });
-              return this.find({ _id: { $in: ids }});
+              return this.find({ _id: { $in: ids } });
             })
             .catch(error => reject({
               message: `[${this.name}] - update: unknown error`,
@@ -447,7 +444,7 @@ export class MongoModel extends Model {
             let updatedDoc: any;
             let errObj: IResponseError;
 
-            
+
 
             // update the doc in database
             this.collection.findOneAndUpdate(
@@ -456,7 +453,7 @@ export class MongoModel extends Model {
               { returnOriginal: false }
             ).then(res => {
               updatedDoc = res.value;
-              
+
 
               // test the updated doc in the database
               let state = schema.test(updatedDoc);
@@ -601,7 +598,7 @@ export class MongoModel extends Model {
               { returnOriginal: false }
             ).then(res => {
               updatedDoc = res.value;
-              
+
 
               // test the updated doc in the database
               let state = schema.test(updatedDoc);
