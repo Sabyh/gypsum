@@ -10,11 +10,10 @@ import { Context } from "../context";
   authorize: true,
   domain: RESPONSE_DOMAINS.SELF,
   schema: {
-    name: 'string',
-    users: 'string[]',
-    permissions: 'string[]'
-  },
-  schemaOptions: { required: true }
+    name: { $required: true, $type: 'string' },
+    users: { $required: true, $type: 'string[]' },
+    permissions: { $required: true, $type: 'string[]' }
+  }
 })
 export class Roles extends MongoModel {
   

@@ -9,10 +9,9 @@ import { RESPONSE_DOMAINS } from "../types";
   authorize: true,
   domain: RESPONSE_DOMAINS.SELF,
   schema: {
-    name: 'string',
-    roles: 'string[]',
-    users: 'string[]'
-  },
-  schemaOptions: { required: true }
+    name: { $required: true, $type: 'string' },
+    roles: { $required: true, $type: 'string[]' },
+    users: { $required: true, $type: 'string[]' }
+  }
 })
 export class Groups extends MongoModel {}

@@ -7,7 +7,7 @@ import { MODEL, HOOK, SERVICE } from "../../decorators";
 import { MongoModel } from "../../models";
 import { createTransport, createTestAccount, SendMailOptions } from "nodemailer";
 import { State } from "../../state";
-import { usersSchema, usersSchemaOptions } from "./schema";
+import { usersSchema } from "./schema";
 import { hash, stringUtil, verify, toRegExp } from "../../util";
 import { Context } from "../../context";
 import { JsonWebTokenError } from 'jsonwebtoken';
@@ -19,7 +19,6 @@ import { App } from '../../app';
   secure: true,
   authorize: true,
   schema: usersSchema,
-  schemaOptions: usersSchemaOptions,
   servicesOptions: {
     FindById: { authorize: { field: '_id', match: 'params.id' } },
     UpdateById: { authorize: { field: '_id', match: 'params.id' } }

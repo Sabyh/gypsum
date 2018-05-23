@@ -16,7 +16,6 @@ export interface IModelOptions {
   before?: IHookOptions[];
   after?: IHookOptions[];
   schema?: Validall.ISchema;
-  schemaOptions?: Validall.ISchemaOptions;
   indexes?: { name: string, options?: MongoDB.IndexOptions }[];
   cors?: CorsOptions;
 }
@@ -33,7 +32,7 @@ const defaults: IModelOptions = {
   after: []
 };
 
-const defaultSchemaOptions: Validall.ISchemaOptions = {
+const schemaOptions: Validall.ISchemaOptions = {
   root: '',
   required: false,
   filter: true,
@@ -76,11 +75,10 @@ export function MODEL(options: IModelOptions = {}) {
     }
 
     if (options.schema) {
-      (<any>options.schema)['_id?'] = 'any';
-      (<any>options.schema)['createdAt?'] = { $type: 'number', $default: Date.now };
-      (<any>options.schema)['upatedAt?'] = { $type: 'number', $default: Date.now };
-      options.schemaOptions = Object.assign({}, defaultSchemaOptions, { root: Target.name }, options.schemaOptions || {});
-      options.schema = new Validall.Schema(options.schema, options.schemaOptions);
+      // (<any>options.schema)['_id?'] = 'any';
+      // (<any>options.schema)['createdAt?'] = { $type: 'number', $default: Date.now };
+      // (<any>options.schema)['upatedAt?'] = { $type: 'number', $default: Date.now };
+      options.schema = new Validall.Schema(options.schema, schemaOptions);
     }
 
     for (let prop in options) {

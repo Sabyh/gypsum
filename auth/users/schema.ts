@@ -19,9 +19,3 @@ export const usersSchema: Validall.ISchema = {
     $default: false
   }
 };
-
-export const usersSchemaOptions: Validall.ISchemaOptions = {
-  required: false,
-  strict: false,
-  filter: true
-};
