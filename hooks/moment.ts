@@ -4,39 +4,25 @@ import { objectUtil } from '../util';
 import { Types } from 'validall';
 import { Logger } from '../misc/logger';
 
-export function moment(ctx: Context, ...fields: string[]) {
-  const logger = new Logger('moment');
-
-  if (!fields || !fields.length)
-    return ctx.next();
-
-  let response = ctx.getResponseData();
-  if (!response || (response && !response.length))
-    return ctx.next();
-
-  let data = [];
-  if (!Array.isArray(response))
-    data.push(response);
-  else
-    data = response;
-
-  for (let i = 0; i < data.length; i++) {
-
-    for (let i = 0; i < fields.length; i++) {
-      let field = Array.isArray(fields[i]) ? fields[i] : [fields[i]];
+function convert(src: any[], fields: string[], logger: Logger) {
+  for (let i = 0; i < src.length; i++) {
+    for (let j = 0; j < fields.length; j++) {
+      let field = Array.isArray(fields[j]) ? fields[j] : [fields[j]];
       let srcField = field[0];
-      let destField = field[1] || field[0];
+      let destField = field[1] || srcField;
       let method = field[2] || field[1] || 'from';
 
       if (['form', 'fromNow'].indexOf(method) === -1)
         method = 'from';
 
-      if (srcField === '.' && typeof data[i] === 'string') {
-        data[i] = (<any>Moment())[method](data[i]);
-      } else if (Types.object(data[i])) {
-        let srcValue = objectUtil.getValue(data[i], srcField);
+      if (srcField === '.' && typeof src[i] === 'string') {
+        src[i] = (<any>Moment())[method](src[i]);
+
+      } else if (Types.object(src[i])) {
+        let srcValue = objectUtil.getValue(src[i], srcField);
+
         if (srcValue)
-          objectUtil.setValue(data[i], destField, (<any>Moment())[method](srcValue));
+          objectUtil.setValue(src[i], destField, (<any>Moment())[method](srcValue));
         else
           logger.warn(`cannot find '${srcField}' in the response object`)
       } else {
@@ -44,7 +30,22 @@ export function moment(ctx: Context, ...fields: string[]) {
       }
     }
   }
+}
 
-  ctx.setResponseData(data);
+export function moment(ctx: Context, ...fields: string[]) {
+  const logger = new Logger('moment');
+
+  if (!fields || !fields.length)
+    return ctx.next();
+
+  let responseData = ctx.response.data;
+  if (!responseData || (responseData && !responseData.length))
+    return ctx.next();
+
+  if (!Array.isArray(responseData))
+    convert([responseData], fields, logger);
+  else
+    convert(responseData, fields, logger);
+
   ctx.next();
 }

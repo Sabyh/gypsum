@@ -5,11 +5,13 @@ import { filter } from './filter';
 import { hash } from './hash';
 import { validate } from './validate';
 import { reference } from './reference';
+import { toRoom } from './to_room';
 
 export const hooks = [
   exists,
   filter,
   hash,
   validate,
-  reference
+  reference,
+  toRoom
 ];

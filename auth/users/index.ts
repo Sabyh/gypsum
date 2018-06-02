@@ -90,7 +90,7 @@ export class Users extends MongoModel {
   @HOOK()
   pushToken(ctx: Context): Promise<void> {
     return new Promise((resolve, reject) => {
-      let responseData = ctx.getResponseData();
+      let responseData = ctx.response.data;
 
       if (!responseData || Array.isArray(responseData) || !Validall.Types.object(responseData))
         return resolve();
@@ -180,7 +180,7 @@ export class Users extends MongoModel {
   verificationEmail(ctx: Context): Promise<void> {
     return new Promise((resolve, reject) => {
 
-      let user = ctx.user || ctx.getResponseData();
+      let user = ctx.user || ctx.response.data;
 
       if (!user)
         return reject({

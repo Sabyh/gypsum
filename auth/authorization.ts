@@ -115,7 +115,7 @@ export class Authorization extends Model {
   @HOOK()
   authorize(options: { field: string, match: string, fetch: any } | boolean, ctx: Context): Promise<void> {
 
-    let appName = ctx.appName.toLowerCase();
+    let appName = ctx._appName.toLowerCase();
     let modelName = ctx.model.name.toLowerCase();
     let serviceName = ctx.service.__name.toLowerCase();
 

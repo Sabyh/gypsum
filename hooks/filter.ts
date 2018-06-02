@@ -18,7 +18,7 @@ export function filter(ctx: Context, fields: string | string[], source?: string)
   if (source === 'query' || source === 'body')
     srcData = ctx[source];
   else
-    srcData = ctx.getResponseData();
+    srcData = ctx.response.data;
 
   if (!srcData || typeof srcData !== 'object')
     return ctx.next();
@@ -43,5 +43,5 @@ export function filter(ctx: Context, fields: string | string[], source?: string)
   logger.info('done filtering');
   logger.debug(`result data:`);
   console.dir(srcData);
-  ctx.ok(new Response({ data: srcData }));
+  ctx.next();
 }

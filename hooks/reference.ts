@@ -19,9 +19,9 @@ export function reference(ctx: Context, options: IReferenceHookOptions) {
     return ctx.next();
   }
 
-  let response = ctx.getResponseData();
+  let responseData = ctx.response.data;
 
-  if (!response) {
+  if (!responseData) {
     logger.warn('undefined response!');
     return ctx.next();
   }
@@ -31,14 +31,14 @@ export function reference(ctx: Context, options: IReferenceHookOptions) {
   let lookup: { [key: string]: any } = {};
   let groups: { [key: string]: string[] } = {}
 
-  if (Array.isArray(response) && response.length)
-    for (let i = 0; i < response.length; i++) {
-      let ids = objectUtil.getValue(response[i], options.path);
+  if (Array.isArray(responseData) && responseData.length)
+    for (let i = 0; i < responseData.length; i++) {
+      let ids = objectUtil.getValue(responseData[i], options.path);
       if (ids) {
         ids = Array.isArray(ids) ? ids : [ids];
         idsList.push(...ids);
-        lookup[response[i]._id.toString()] = response[i];
-        groups[response[i]._id.toString()] = ids;
+        lookup[responseData[i]._id.toString()] = responseData[i];
+        groups[responseData[i]._id.toString()] = ids;
       }
     }
 
@@ -51,23 +51,23 @@ export function reference(ctx: Context, options: IReferenceHookOptions) {
     .then(res => {
       if (!res.data) {
         logger.warn(`${model.name} references were not found`);
-      } else if (Array.isArray(response)) {
-        for (let i = 0; i < response.length; i++) {
-          let currentId: string = response[i]._id;
+      } else if (Array.isArray(responseData)) {
+        for (let i = 0; i < responseData.length; i++) {
+          let currentId: string = responseData[i]._id;
           let group = groups[currentId];
 
           for (let j = 0; j < group.length; j++) {
             group[j] = res.data[i].find((item: any) => item._id === group[j]);
-            objectUtil.injectValue(response[i], options.path, group);
+            objectUtil.injectValue(responseData[i], options.path, group);
           }
         }
       } else {
-        let currentId: string = response._id;
+        let currentId: string = responseData._id;
         let group = groups[currentId];
 
         for (let j = 0; j < group.length; j++) {
           group[j] = res.data.find((item: any) => item._id === group[j]);
-          objectUtil.injectValue(response, options.path, group);
+          objectUtil.injectValue(responseData, options.path, group);
         }
       }
 

@@ -38,7 +38,6 @@ interface IStack {
 
 export class Context {
   private _rid: string;
-  private _response: Response = <Response>{};
   private _socket: any | undefined;
   private _stack: IStack[] = [];
   private _locals: any = {};
@@ -47,11 +46,12 @@ export class Context {
   private _mainHandler = false;
   private _resolve: Function = null;
   private _reject: Function = null;
-
-  readonly appName: string;
+  
+  readonly _appName: string;
   readonly _req: express.Request | undefined;
   readonly _res: express.Response | undefined;
-
+  
+  public response: Response = <Response>{};
   public room: string;
   public model: Model;
   public service: IService;
@@ -70,7 +70,7 @@ export class Context {
     this._cookies = data.cookies;
     this._rid = data.rid;
     this._domain = data.domain;
-    this.appName = data.appName;
+    this._appName = data.appName;
     this.room = data.room || '';
     this.apiType = type;
     this.headers = data.headers;
@@ -79,7 +79,7 @@ export class Context {
     this.params = data.params;
     this.model = data.model;
     this.service = data.service;
-    this.logger = new Logger(`${this.appName}.${this.model.name}.${this.service.name}`);
+    this.logger = new Logger(`${this._appName}.${this.model.name}.${this.service.name}`);
 
     if (init)
       this._mInit();
@@ -266,73 +266,73 @@ export class Context {
   }
 
   private _mRespond(): void {
-    this._response.apiType = this.apiType;
-    this._response.code = this._response.code || RESPONSE_CODES.UNKNOWN_ERROR;
-    this._response.domain = this._response.domain || this.service.domain || RESPONSE_DOMAINS.SELF;
-    this._response.service = this._response.service || this.service.__name;
-    this._response.rid = this._rid;
+    this.response.apiType = this.apiType;
+    this.response.code = this.response.code || RESPONSE_CODES.UNKNOWN_ERROR;
+    this.response.domain = this.response.domain || this.service.domain || RESPONSE_DOMAINS.SELF;
+    this.response.service = this.response.service || this.service.__name;
+    this.response.rid = this._rid;
 
     this.logger.debug('sending response');
 
     if (this.apiType === API_TYPES.REST && this._res) {
       State.currentContext = null;
       
-      if (this._resolve && this._response.success) {
-        this._resolve(this._response);
-      } else if (this._reject && !this._response.success) {
-        this._reject(this._response);
+      if (this._resolve && this.response.success) {
+        this._resolve(this.response);
+      } else if (this._reject && !this.response.success) {
+        this._reject(this.response);
       } else {
-        this._res.status(this._response.code).json(this._response);
+        this._res.status(this.response.code).json(this.response);
       }
 
     } else if (this._socket) {
       let event = `${this.model.name} ${this.service.crud}`;
-      this._response.crud = this.service.crud;
+      this.response.crud = this.service.crud;
 
-      this.logger.debug(`dispatching event: '${event}' with domain: ${this._response.domain || this._domain || this.service.domain}`);
+      this.logger.debug(`dispatching event: '${event}' with domain: ${this.response.domain || this._domain || this.service.domain}`);
       
-      if (this._response.code < 200 || this._response.code >= 300) {
-        this._socket.emit(event, this._response);
+      if (this.response.code < 200 || this.response.code >= 300) {
+        this._socket.emit(event, this.response);
 
       } else {
-        let domain = this._response.domain || this._domain || this.service.domain;
-        this._response.room = this.room || this._response.room;
+        let domain = this.response.domain || this._domain || this.service.domain;
+        this.response.room = this.room || this.response.room;
 
-        if (this._response.domain === RESPONSE_DOMAINS.ROOM && this._response.room) {
+        if (this.response.domain === RESPONSE_DOMAINS.ROOM && this.response.room) {
           if (process && process.send)
-            (<any>process).send({ data: this._response, target: 'others', action: 'response' })
-          this._socket.to(this._response.room).emit(event, this._response);
+            (<any>process).send({ data: this.response, target: 'others', action: 'response' })
+          this._socket.to(this.response.room).emit(event, this.response);
 
-        } else if (this._response.domain === RESPONSE_DOMAINS.ALL_ROOM && this._response.room) {
+        } else if (this.response.domain === RESPONSE_DOMAINS.ALL_ROOM && this.response.room) {
           if (process && process.send)
-            (<any>process).send({ data: this._response, target: 'others', action: 'response' })
-          this._socket.broadcast.to(this._response.room).emit(event, this._response);
+            (<any>process).send({ data: this.response, target: 'others', action: 'response' })
+          this._socket.broadcast.to(this.response.room).emit(event, this.response);
 
-        } else if (this._response.domain === RESPONSE_DOMAINS.OTHERS) {
+        } else if (this.response.domain === RESPONSE_DOMAINS.OTHERS) {
           if (process && process.send)
-            (<any>process).send({ data: this._response, target: 'others', action: 'response' })
-          this._socket.broadcast.emit(event, this._response);
+            (<any>process).send({ data: this.response, target: 'others', action: 'response' })
+          this._socket.broadcast.emit(event, this.response);
 
-        } else if (this._response.domain === RESPONSE_DOMAINS.ALL) {
+        } else if (this.response.domain === RESPONSE_DOMAINS.ALL) {
           if (process && process.send)
-            (<any>process).send({ data: this._response, target: 'others', action: 'response', appName: this.appName })
+            (<any>process).send({ data: this.response, target: 'others', action: 'response', appName: this._appName })
 
-          let io: any = State.ioNamespaces[this.appName];
+          let io: any = State.ioNamespaces[this._appName];
 
           if (io)
-            io.sockets.emit(event, this._response);
+            io.sockets.emit(event, this.response);
 
         } else {
-          this._socket.emit(event, this._response);
+          this._socket.emit(event, this.response);
         }
       }
 
       State.currentContext = null;
 
-      if (this._resolve && this._response.success) {
-        this._resolve(this._response);
-      } else if (this._reject && !this._response.success) {
-        this._reject(this._response);
+      if (this._resolve && this.response.success) {
+        this._resolve(this.response);
+      } else if (this._reject && !this.response.success) {
+        this._reject(this.response);
       }
     }
   }
@@ -452,7 +452,7 @@ export class Context {
 
   socketsJoinRoom(roomName: string, socketIds: string[]) {
     if (roomName && socketIds && socketIds.length) {
-      let ns = State.ioNamespaces[this.appName];
+      let ns = State.ioNamespaces[this._appName];
 
       if (ns) {
         for (let i = 0; i < socketIds.length; i++) {
@@ -468,7 +468,7 @@ export class Context {
 
       if (socketIds.length)
         if (process && process.send)
-          (<any>process).send({ data: { room: roomName, socketIds: socketIds }, target: 'others', action: 'join room', namespace: this.appName })
+          (<any>process).send({ data: { room: roomName, socketIds: socketIds }, target: 'others', action: 'join room', namespace: this._appName })
     }
   }
 
@@ -495,7 +495,7 @@ export class Context {
   next(err?: IResponseError): void {
     if (err) {
       console.trace(err);
-      this._response = new Response({ error: new ResponseError(err), code: err.code });
+      this.response = new Response({ error: new ResponseError(err), code: err.code });
       this._mRespond();
 
     } else {
@@ -537,17 +537,8 @@ export class Context {
     else if (res.type === 'file')
       return this._mSendFile(res.data, res.code);
 
-    this._response = res;
+    this.response = res;
     this.next();
-  }
-
-  getResponseData(): any {
-    return this._response.data;
-  }
-
-  setResponseData(data: any): Context {
-    Object.assign(this._response.data || {}, data || {});
-    return this;
   }
 
   private _mSendHtml(html: string, code = 200) {

@@ -22,7 +22,7 @@ export function hash(ctx: Context, options: any) {
   if (options.source === 'query' || options.source === 'body')
     srcData = (<any>ctx)[options.source];
   else
-    srcData = ctx.getResponseData();
+    srcData = ctx.response.data;
 
   fieldValue = objectUtil.getValue(srcData, options.fieldPath);
   if (!fieldValue || typeof fieldValue !== 'string')

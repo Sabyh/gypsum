@@ -418,34 +418,55 @@ export const objectUtil = {
     return '';
   },
 
-  getChanges(obj1: any, obj2: any) {
+  getChanges(obj1: any, obj2: any): { count: number, changes: [any, any]} {
     let results: any = { count: 0, changes: [{}, {}] };
   
     if (obj1 === obj2)
       return results;
   
-    if (typeof obj1 !== 'object' && typeof obj2 !== 'object') {
+    if ((typeof obj1 !== 'object' && typeof obj2 !== 'object') || (obj1 === null || obj2 === null)) {
       results.changes[0] = obj1;
       results.changes[1] = obj2;
       results.count++;
       return results;
     }
   
-    for (let prop in obj1) {
-      if (obj2[prop] === obj1[prop])
+    let obj1Size = Object.keys(obj1).length;
+    let obj2Size = Object.keys(obj2).length;
+  
+    if (obj1Size === 0 || obj2Size === 0) {
+      results.changes[0] = obj1;
+      results.changes[1] = obj2;
+      results.count++;
+      return results;
+    }
+  
+    let ref1 = obj1Size >= obj2Size ? obj1 : obj2;
+    let ref2 = obj1Size >= obj2Size ? obj2 : obj1;
+    let swipe = ref1 === obj2;
+  
+    for (let prop in ref1) {
+      if (ref2[prop] === ref1[prop])
         continue;
   
-      if (typeof obj1[prop] === 'object' && typeof obj2[prop] === 'object') {
-        if (Array.isArray(obj1[prop])) {
-          if (Array.isArray(obj2[prop])) {
-            if (obj1[prop].length === obj2[prop].length) {
+      if (!ref2.hasOwnProperty(prop)) {
+        results.changes[swipe ? 1 : 0][prop] = ref1[prop];
+        results.count++;
+        continue;
+      }
+  
+      if (typeof ref1[prop] === 'object' && typeof ref2[prop] === 'object') {
+        if (Array.isArray(ref1[prop])) {
+          if (Array.isArray(ref2[prop])) {
+            if (ref1[prop].length === ref2[prop].length) {
                   results.changes[0][prop] = [];
                   results.changes[1][prop] = [];
-              for ( let i = 0; i < obj1[prop].length; i++) {
-                let subResults = this.getChanges(obj1[prop][i], obj2[prop][i]);
+              for ( let i = 0; i < ref1[prop].length; i++) {
+                let subResults = this.getChanges(ref1[prop][i], ref2[prop][i]);
                 if (subResults.count > 0) {
-                  results.changes[0][prop].push(subResults.changes[0]);
-                  results.changes[1][prop].push(subResults.changes[1]);
+                  results.changes[0][prop].push(swipe ? subResults.changes[1] : subResults.changes[0]);
+                  results.changes[1][prop].push(swipe ? subResults.changes[0] : subResults.changes[1]);
+                  results.count++;
                 }
               }
   
@@ -460,23 +481,54 @@ export const objectUtil = {
   
         } else {
   
-          let subResults = this.getChanges(obj1[prop], obj2[prop]);
+          let subResults = this.getChanges(ref1[prop], ref2[prop]);
           if (subResults.count > 0) {
-            results.changes[0][prop] = subResults.changes[0];
-            results.changes[1][prop] = subResults.changes[1];
+            results.changes[0][prop] = swipe ? subResults.changes[1] : subResults.changes[0];
+            results.changes[1][prop] = swipe ? subResults.changes[0] : subResults.changes[1];
+            results.count++;
           }
   
           continue;
         }
-  
-  
       }
   
-      results.changes[0][prop] = obj1[prop];
-      results.changes[1][prop] = obj2[prop];
+      results.changes[0][prop] = swipe ? ref2[prop] : ref1[prop];
+      results.changes[1][prop] = swipe ? ref1[prop] : ref2[prop];
       results.count++;
     }
   
+    for (let prop in ref2) {
+      if (!ref1.hasOwnProperty(prop)) {
+        results.changes[swipe ? 0 : 1][prop] = ref2[prop];
+        results.count++;
+      }
+    }
+  
+    return results;
+  },
+
+  getArrayChanges(arr1: any[], arr2: any[], key: string): { count: number; changes: [any, any]; _id: string }[] {
+    let arrRef1 = arr1.length > arr2.length ? arr1 : arr2;
+    let arrRef2 = arr1.length > arr2.length ? arr2 : arr1;
+    let swipe = arrRef1 === arr1 ? false : true;
+    let results: any = [];
+
+    for (let i = 0; i < arrRef1.length; i++) {
+      let compareElm = arrRef2.find(elm => elm[key] === arrRef1[i][key]) || null;
+      let compareResults = this.getChanges(swipe ? compareElm : arrRef1[i], swipe ? arrRef1[i] : compareElm);
+
+      if (compareResults.count > 0)
+        results.push({ _id: arrRef1[i][key], ...compareResults });
+    }
+
+    for (let i = 0; i < arrRef2.length; i++) {
+      let compareElm = arrRef1.find(elm => elm[key] === arrRef2[i][key]) || null;
+
+      if (!compareElm) {
+        results.push({ _id: arrRef2[i][key], count: 1, changes: [swipe ? arrRef2[i] : null, swipe ? null : arrRef2[i]] });
+      }
+    }
+
     return results;
   }
 }
