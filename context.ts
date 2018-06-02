@@ -646,7 +646,7 @@ function getReference(ctx: Context, name: string, hookName: string) {
 
     return model;
 
-    // referencing context properties locals, cookies, headers, query, body or params
+    // referencing context properties locals, cookies, headers, query, body, response, or params
   } else if (name.indexOf('.') > -1) {
     let parts = name.split('.');
 
@@ -654,7 +654,7 @@ function getReference(ctx: Context, name: string, hookName: string) {
       return ctx.get(parts[1]);
     else if (parts[0] === 'cookies')
       return ctx.cookies(parts[1]);
-    else if (['headers', 'query', 'body', 'params'].indexOf(parts[0]) > -1) {
+    else if (['headers', 'query', 'body', 'params', 'response'].indexOf(parts[0]) > -1) {
       let root = parts.shift();
       return objectUtil.getValue((<any>ctx)[<string>root], parts.join('.'));
     } else
