@@ -1,10 +1,8 @@
 import { MongoClient, Db } from 'mongodb';
 import { Logger } from '../misc/logger';
-import { Safe } from '../misc/safe';
 import { State } from '../state';
 import { MongoModel } from '../models';
-
-const safe = new Safe('mongo');
+import { gypsumEmitter } from '../emiiter';
 
 export function initMongo(): Promise<boolean> {
   const logger = new Logger('initMongo');
@@ -28,8 +26,7 @@ export function initMongo(): Promise<boolean> {
         connections.push({
           apps: [{
             name: app.name,
-            database_name: databaseName,
-            models: app.models
+            database_name: databaseName
           }],
           url: mongoUrl
         });
@@ -37,8 +34,7 @@ export function initMongo(): Promise<boolean> {
       } else {
         connections[urlIndex].apps.push({
           name: app.name,
-          database_name: databaseName,
-          models: app.models
+          database_name: databaseName
         });
       }
     }
@@ -82,17 +78,7 @@ function Connect(connection: any, logger: Logger) {
         let currentApp = connection.apps[j];
         let db: Db = client.db(currentApp.database_name);
 
-        if (currentApp.models && currentApp.models.length) {
-
-          for (let i = 0; i < currentApp.models.length; i++) {
-            let model = currentApp.models[i];
-
-            if (model.type !== 'Mongo')
-              continue;
-
-            (<MongoModel>model).$setCollection(db.collection(model.name));
-          }
-        }
+        gypsumEmitter.emit(`${currentApp.database_name} ready`, db);
       }
 
       process.on('SIGINT', () => cleanup(client));

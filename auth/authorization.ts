@@ -83,14 +83,15 @@ export class Authorization extends Model {
 
             for (let j = 0; j < matchParts.length; j++) {
               if (matchParts[i] && matchParts[i].trim()) {
-                let compareValue = objectUtil.getValue(docs[i], matchParts[i].trim());
+                let currentPart = matchParts[i].trim();
+                let compareValue = currentPart.charAt(0) === '$' ? objectUtil.getValue(docs[i], currentPart) : currentPart;
 
                 if (compareValue instanceof MongoDB.ObjectID)
                   compareValue = compareValue.toString();
 
                 if (options.userFieldValue === compareValue)
                   matchPass = true;
-                  break;
+                break;
               }
 
               if (!matchPass)
@@ -132,7 +133,6 @@ export class Authorization extends Model {
       this.$logger.debug('body:');
       this.$logger.debug(ctx.body);
 
-
       if (!ctx.user)
         return reject({
           message: 'user not logged in',
@@ -153,7 +153,11 @@ export class Authorization extends Model {
           userFieldValue = userFieldValue.toString();
 
         if (!(<any>options).fetch) {
-          let matchValue = objectUtil.getValue(ctx, (<any>options).match);
+          let matchValue = '';
+          if ((<any>options).match.charAt(0) === '$')
+            matchValue = objectUtil.getValue(ctx, (<any>options).match.slice(1));
+          else
+            matchValue = (<any>options).match;
 
           if (userFieldValue !== matchValue)
             return reject({
@@ -171,16 +175,29 @@ export class Authorization extends Model {
 
           } else {
 
-            if (typeof (<any>options).fetch.query === 'string')
-              fetchObj.query = objectUtil.getValue(ctx, (<any>options).fetch.query);
-
-            else
+            if (typeof (<any>options).fetch.query === 'string') {
+              if ((<any>options).fetch.query.charAt(0) === '$')
+                fetchObj.query = objectUtil.getValue(ctx, (<any>options).fetch.query.slice(1));
+              else
+                return reject({
+                  message: 'invalid authorization options',
+                  code: RESPONSE_CODES.BAD_REQUEST
+                });
+            } else {
               for (let prop in (<any>options).fetch.query)
-                if (typeof (<any>options).fetch.query[prop] === 'string' && (<any>options).fetch.query[prop].charAt(0) === '@')
+                if (typeof (<any>options).fetch.query[prop] === 'string' && (<any>options).fetch.query[prop].charAt(0) === '$')
                   fetchObj.query[prop] = objectUtil.getValue(ctx, (<any>options).fetch.query[prop].slice(1));
+            }
 
-            if (typeof (<any>options).fetch.options === 'string')
-              fetchObj.options = objectUtil.getValue(ctx, (<any>options).fetch.options);
+            if (typeof (<any>options).fetch.options === 'string') {
+              if ((<any>options).fetch.options.charAt(0) === '$')
+                fetchObj.options = objectUtil.getValue(ctx, (<any>options).fetch.options.slice(1));
+              else
+                return reject({
+                  message: 'invalid authorization options',
+                  code: RESPONSE_CODES.BAD_REQUEST
+                });
+            }
           }
 
           fetchObj.query = toObjectID(fetchObj.query);

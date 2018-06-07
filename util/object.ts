@@ -530,5 +530,25 @@ export const objectUtil = {
     }
 
     return results;
+  },
+
+  objectToArray<T>(obj: { [key: string]: T }, key: string = '_id'): T[] {
+    let arr: T[] = [];
+
+    for (let prop in obj) {
+      arr.push({ [key]: prop, ...(<any>obj[prop]) });
+    }
+
+    return arr;
+  },
+
+  arrayToObject<T>(arr: T[], key: string = '_id'): { [key: string]: T } {
+    let obj = <{ [key: string]: T }>{};
+
+    for (let i = 0; i < arr.length; i++) {
+      obj[(<any>arr[i])[key]] = arr[i];
+    }
+
+    return obj;
   }
 }

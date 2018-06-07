@@ -14,24 +14,10 @@ export class Permissions extends Model {
   find(): Promise<IResponse> {
     return new Promise((resolve, reject) => {
 
-      let result: any = [];
+      let result: string[] = [];
 
       for (let j = 0; j < State.apps.length; j++) {
-        if (State.apps[j].models && State.apps[j].models.length) {
-
-          for (let i = 0; i < State.apps[i].models.length; i++) {
-            let model = State.apps[i].models[i];
-            let modelName = model.name;
-            let record: { model: string; services: string[] } = { model: modelName, services: [] };
-            let services = model.$getServices();
-
-            if (Object.keys(services).length)
-              for (let prop in services)
-                record.services.push(prop);
-
-            result.push(record);
-          }
-        }
+        result.push(...State.apps[j].$getMap());
       }
 
       resolve({ data: result });

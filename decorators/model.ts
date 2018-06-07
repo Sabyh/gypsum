@@ -8,7 +8,7 @@ import { IServiceOptions } from '.';
 export interface IModelOptions {
   secure?: any;
   authorize?: any;
-  accessable?: boolean | string[];
+  private?: boolean | string[];
   internal?: boolean;
   servicesOptions?: { [key: string]: IServiceOptions };
   apiType?: API_TYPES;
@@ -23,7 +23,7 @@ export interface IModelOptions {
 const defaults: IModelOptions = {
   secure: false,
   authorize: false,
-  accessable: true,
+  private: false,
   internal: false,
   servicesOptions: {},
   apiType: API_TYPES.ALL,
@@ -74,12 +74,9 @@ export function MODEL(options: IModelOptions = {}) {
       }
     }
 
-    if (options.schema) {
-      // (<any>options.schema)['_id?'] = 'any';
-      // (<any>options.schema)['createdAt?'] = { $type: 'number', $default: Date.now };
-      // (<any>options.schema)['upatedAt?'] = { $type: 'number', $default: Date.now };
+    if (options.schema)
       options.schema = new Validall.Schema(options.schema, schemaOptions);
-    }
+    
 
     for (let prop in options) {
       if (options.hasOwnProperty(prop))

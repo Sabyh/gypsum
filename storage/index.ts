@@ -19,21 +19,17 @@ class Storage extends App {
 
   constructor() {
     super();
-
-    console.log('storageDir', State.storage.storageDir);
+    
     if (!fs.existsSync(State.storage.storageDir))
       try { fs.mkdirSync(State.storage.storageDir); }
       catch (err) { console.log(err); }
   }
 
   middlewares(app: express.Express) {
-    console.log('serving storage static from path:');
-    console.log(State.storage.storageDir);
     app.use(express.static(State.storage.storageDir));
   }
 }
 
 let storage = new Storage();
-storage.init();
 
 State.apps.push(storage);

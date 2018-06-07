@@ -20,8 +20,8 @@ import { App } from '../../app';
   authorize: true,
   schema: usersSchema,
   servicesOptions: {
-    FindById: { authorize: { field: '_id', match: 'params.id' } },
-    UpdateById: { authorize: { field: '_id', match: 'params.id' } }
+    FindById: { authorize: { field: '_id', match: '$params.id' } },
+    UpdateById: { authorize: { field: '_id', match: '$params.id' } }
   },
   domain: RESPONSE_DOMAINS.SELF,
   after: ['filter:-password,passwordSalt'],

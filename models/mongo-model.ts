@@ -4,12 +4,10 @@ import { Model } from './model';
 import { RESPONSE_CODES, ResponseError, IResponseError, Response, IResponse } from '../types';
 import { SERVICE, FRIEND } from '../decorators';
 import { Context } from '../context';
-import { Safe } from '../misc/safe';
 import { objectUtil } from '../util';
 import { App } from '../app';
 import { toObjectID } from '../util/toObjectId';
-
-const safe = new Safe('mongoModel');
+import { gypsumEmitter } from '../emiiter';
 
 export class MongoModel extends Model {
   protected collection: MongoDB.Collection;
@@ -18,17 +16,18 @@ export class MongoModel extends Model {
     super(app);
 
     this.type = 'Mongo';
-  }
 
-  $setCollection(collection: MongoDB.Collection) {
-    this.collection = collection;
+    let dbName = this.app.$get('database_name');
+    gypsumEmitter.on('dbName ready', (db: MongoDB.Db) => {
+      this.collection = db.collection(this.name);
 
-    if (this.$get('indexes') && this.$get('indexes').length)
-      for (let i = 0; i < this.$get('indexes').length; i++)
-        if (this.$get('indexes')[i].name !== '_id')
-          this.collection.createIndex(this.$get('indexes')[i].name, this.$get('indexes').options || { unique: true });
+      if (this.$get('indexes') && this.$get('indexes').length)
+        for (let i = 0; i < this.$get('indexes').length; i++)
+          if (this.$get('indexes')[i].name !== '_id')
+            this.collection.createIndex(this.$get('indexes')[i].name, this.$get('indexes').options || { unique: true });
 
-    this.onCollection();
+      this.onCollection();
+    });
   }
 
   protected onCollection() { }

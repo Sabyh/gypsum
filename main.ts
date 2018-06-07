@@ -37,6 +37,7 @@ import { IModelHook, IHook } from './decorators';
 import { App } from './app';
 import { IAuthConfig, IAuthEnvConfig } from './auth/config';
 import { IStorageEnvConfig } from './storage/config';
+import { gypsumEmitter } from './emiiter';
 
 /**
  * Instanciating Logger for gypsum
@@ -126,19 +127,22 @@ export const Gypsum: IGypsum = {
     }
 
     
+    logger.info('intializing root app');
+    require('./root');
     logger.info('intializing auth app');
     require('./auth');
     logger.info('intializing storage app');
     require('./storage');
 
-    console.log('initializing the rest apps');
+    console.log('initializing the rest of apps');
 
     if (options.apps)
       for (let i = 0; i < options.apps.length; i++) {
-        let app = new options.apps[i]()
-        app.init();
+        let app = new options.apps[i]();
         State.apps.push(app);
       }
+
+      gypsumEmitter.emit('initialize apps');
 
     logger.info('initializing mongodb...');
     try {

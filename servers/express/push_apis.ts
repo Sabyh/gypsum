@@ -14,10 +14,11 @@ export function pushApis(expressApp: express.Express, app: App) {
 
   const router = express.Router();
 
-  if (app.models) {
+  let appModels = app.publicModels;
+  if (appModels) {
 
-    for (let i = 0; i < app.models.length; i++) {
-      let model: Model = app.models[i];
+    for (let i = 0; i < appModels.length; i++) {
+      let model: Model = appModels[i];
 
       logger.info(`Implementing ${model.name} model services`);  
       if (model.$get('apiType') === API_TYPES.SOCKET)

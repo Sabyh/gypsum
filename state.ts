@@ -1,5 +1,4 @@
 import * as path from 'path';
-// import * as fs from 'fs';
 import * as express from 'express';
 import * as IO from 'socket.io';
 import { Config, IGypsumConfig, IServerConfigOptions } from './config';
@@ -7,14 +6,11 @@ import { Context } from './context';
 import { Model, MongoModel, FileModel } from './models';
 import { stringUtil } from './util/string';
 import { FRIEND, IHook } from './decorators';
-import { Safe } from './misc/safe';
 import { Logger } from './misc/logger';
 import { objectUtil } from './util';
 import { App } from './app';
 import { IAuthConfig, IAuthEnvConfig, defaultAuthConfig } from './auth/config';
 import { IStorageConfig, defaultStorageConfig, IStorageEnvConfig } from './storage/config';
-
-let safe = new Safe('state');
 
 export interface IMiddleware {
   (app: express.Express): void;
@@ -22,8 +18,6 @@ export interface IMiddleware {
 
 export class AppState {
   private _sockets: { [key: string]: any } = {};
-
-  @FRIEND(safe.set('State._io', ['ioServer', 'context']), true, true)
 
   readonly router: express.Router = express.Router();
   readonly root: string = process.cwd();
@@ -38,17 +32,17 @@ export class AppState {
   hooks: IHook[] = [];
   currentContext: Context = null;
 
-  public getModel(appName: string, name: string): Model | MongoModel | FileModel | undefined {
+  public getModel(appName: string, name: string): Model | MongoModel | FileModel {
     let app = this.apps.find(_app => _app.name.toLowerCase() === appName.toLowerCase());
 
-    if (app && app.models)
-      return app.models.find(model => model.name === name.toLowerCase()) || undefined;
+    if (app)
+      return app.$getModel(name.toLowerCase());
 
-    return undefined;
+    return null;
   }
 
-  public getHook(name: string): IHook | undefined {
-    return this.hooks.find(hook => (<any>hook).name.toLowerCase() === name.toLowerCase()) || undefined;
+  public getHook(name: string): IHook {
+    return this.hooks.find(hook => (<any>hook).name.toLowerCase() === name.toLowerCase()) || null;
   }
 
   public setConfiguration(userConfig: IGypsumConfig = <IGypsumConfig>{}) {

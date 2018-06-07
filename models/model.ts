@@ -1,12 +1,10 @@
 import { Logger } from '../misc/logger';
 import { API_TYPES } from '../types';
 import { FRIEND, IService, IModelHook, IHookOptions, IModelOptions } from '../decorators';
-import { Safe } from '../misc/safe';
 import { State } from '../state';
 import { stringUtil } from '../util';
 import { App } from '../app';
-
-const safe = new Safe('model');
+import { gypsumEmitter } from '../emiiter';
 
 export type ServiceOptions = { [key: string]: IService | boolean };
 export type getOptions = keyof IModelOptions;
@@ -22,6 +20,8 @@ export class Model {
 
   constructor(app: App) {
     this.app = app;
+
+    gypsumEmitter.on(`${this.app.name} ready`, () => this._init());
   }
 
   private _mArrangeServices(): { [key: string]: IService } {
@@ -157,9 +157,8 @@ export class Model {
 
     return this._hooksData;
   }
-
-  @FRIEND(safe.set('model.init', ['app']))
-  protected init() {
+  
+  private _init() {
     let modelName = this.name;
 
     this.$logger = new Logger(modelName);

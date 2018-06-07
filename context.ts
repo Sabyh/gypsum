@@ -1,13 +1,10 @@
 import * as express from 'express';
 import { State } from './state';
-import { Safe } from './misc/safe';
 import { Logger } from './misc/logger';
 import { Model } from './models';
 import { IService, IHookOptions, IHook, IServiceOptions } from './decorators';
 import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, Response, ResponseError, IResponseError, IResponse } from './types';
 import { objectUtil, stringUtil } from './util/index';
-
-const safe = new Safe('context');
 
 export interface IContext {
   rid: string;
@@ -21,7 +18,8 @@ export interface IContext {
   req?: express.Request;
   res?: express.Response;
   socket?: any;
-  appName?: any;
+  appName?: string;
+  namespace?: string;
   domain?: RESPONSE_DOMAINS;
   room?: string;
 }
@@ -48,6 +46,7 @@ export class Context {
   private _reject: Function = null;
   
   readonly _appName: string;
+  readonly _namespace: string;
   readonly _req: express.Request | undefined;
   readonly _res: express.Response | undefined;
   
@@ -71,6 +70,7 @@ export class Context {
     this._rid = data.rid;
     this._domain = data.domain;
     this._appName = data.appName;
+    this._namespace = data.namespace || data.appName;
     this.room = data.room || '';
     this.apiType = type;
     this.headers = data.headers;
@@ -123,6 +123,7 @@ export class Context {
         req: State.currentContext._req,
         res: State.currentContext._res,
         appName: model.app.name,
+        namespace: model.app.name,
         model: model,
         service: service
       }, false);
@@ -154,7 +155,7 @@ export class Context {
     }
   }
 
-  static Socket(appName: string, socket: any, model: Model, service: IService): (data: any) => void {
+  static Socket(appName: string, namespace: string, socket: any, model: Model, service: IService): (data: any) => void {
     return function (data: any) {
       Logger.Info(`${appName} - socket event catched: '${service.event}'`);
 
@@ -169,7 +170,8 @@ export class Context {
         room: data.room,
         model: model,
         service: service,
-        appName: appName || 'default'
+        appName: appName || 'default',
+        namespace: namespace || appName
       });
     }
   }
@@ -300,24 +302,24 @@ export class Context {
 
         if (this.response.domain === RESPONSE_DOMAINS.ROOM && this.response.room) {
           if (process && process.send)
-            (<any>process).send({ data: this.response, target: 'others', action: 'response' })
+            (<any>process).send({ data: this.response, target: 'others', action: 'response', namespace: this._namespace })
           this._socket.to(this.response.room).emit(event, this.response);
 
         } else if (this.response.domain === RESPONSE_DOMAINS.ALL_ROOM && this.response.room) {
           if (process && process.send)
-            (<any>process).send({ data: this.response, target: 'others', action: 'response' })
+            (<any>process).send({ data: this.response, target: 'others', action: 'response', namespace: this._namespace })
           this._socket.broadcast.to(this.response.room).emit(event, this.response);
 
         } else if (this.response.domain === RESPONSE_DOMAINS.OTHERS) {
           if (process && process.send)
-            (<any>process).send({ data: this.response, target: 'others', action: 'response' })
+            (<any>process).send({ data: this.response, target: 'others', action: 'response', namespace: this._namespace })
           this._socket.broadcast.emit(event, this.response);
 
         } else if (this.response.domain === RESPONSE_DOMAINS.ALL) {
           if (process && process.send)
-            (<any>process).send({ data: this.response, target: 'others', action: 'response', appName: this._appName })
+            (<any>process).send({ data: this.response, target: 'others', action: 'response', namespace: this._namespace })
 
-          let io: any = State.ioNamespaces[this._appName];
+          let io: any = State.ioNamespaces[this._namespace];
 
           if (io)
             io.sockets.emit(event, this.response);
@@ -468,7 +470,7 @@ export class Context {
 
       if (socketIds.length)
         if (process && process.send)
-          (<any>process).send({ data: { room: roomName, socketIds: socketIds }, target: 'others', action: 'join room', namespace: this._appName })
+          (<any>process).send({ data: { room: roomName, socketIds: socketIds }, target: 'others', action: 'join room', namespace: this._namespace });
     }
   }
 
@@ -636,25 +638,25 @@ function getReference(ctx: Context, name: string, hookName: string) {
       return undefined;
     }
 
-    let accessable = model.$get('accessable');
-    let isAccessable = typeof accessable === 'boolean' ? accessable : accessable.indexOf(hookName) > -1;
+    let isPrivate = model.$get('private');
 
-    if (!isAccessable) {
-      ctx.logger.warn(`model '${modelName}' is not accessable from '${hookName}' hook`)
+    if (!isPrivate) {
+      ctx.logger.warn(`'${modelName}' is a private model`);
       return undefined;
     }
 
     return model;
 
     // referencing context properties locals, cookies, headers, query, body, response, or params
-  } else if (name.indexOf('.') > -1) {
+  } else if (name.charAt(0) === '$') {
     let parts = name.split('.');
+    let targetName = parts[0].slice(1);
 
-    if (parts[0] === 'locals')
+    if (targetName === 'locals')
       return ctx.get(parts[1]);
-    else if (parts[0] === 'cookies')
+    else if (targetName === 'cookies')
       return ctx.cookies(parts[1]);
-    else if (['headers', 'query', 'body', 'params', 'response'].indexOf(parts[0]) > -1) {
+    else if (['headers', 'query', 'body', 'params', 'response'].indexOf(targetName) > -1) {
       let root = parts.shift();
       return objectUtil.getValue((<any>ctx)[<string>root], parts.join('.'));
     } else

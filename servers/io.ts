@@ -3,11 +3,8 @@ import { Context } from '../context';
 import { Model } from '../models';
 import { Response, API_TYPES, RESPONSE_DOMAINS } from '../types';
 import { Logger } from '../misc/logger';
-import { Safe } from '../misc/safe';
 import * as IO from 'socket.io';
 import { App } from '../app';
-
-let safe = new Safe('ioServer');
 
 export function initSocket(io: any) {
 
@@ -23,7 +20,7 @@ export function initSocket(io: any) {
         if ('onHandShake' in app)
           (<any>app).onHandShake(socket, namespace, next);
         else
-          next()
+          next();
 
       } else {
         next(new Error(`undefined app name: ${appName}`));
@@ -47,9 +44,10 @@ export function initSocket(io: any) {
 
     if (appNamespaces && appNamespaces.length) {
       for (let i = 0; i < appNamespaces.length; i++) {
-        let ns = io.of(State.apps[i].name.toLowerCase() + '/' + appNamespaces[i].toLowerCase());
-        State.ioNamespaces[State.apps[i].name.toLowerCase() + '/' + appNamespaces[i].toLowerCase()] = ns;
-        initializeApp(ns, State.apps[i]);
+        let namespace = `${State.apps[i].name.toLowerCase()}/${appNamespaces[i].toLowerCase()}`;
+        let ns = io.of(namespace);
+        State.ioNamespaces[namespace] = ns;
+        initializeApp(ns, State.apps[i], namespace);
       }
     }
   }
@@ -57,7 +55,7 @@ export function initSocket(io: any) {
   process.on('message', msg => {
     if (msg.data && msg.action === 'response') {
       let response: Response = msg.data;
-      let namespace = msg.namespace || 'default';
+      let namespace = msg.namespace;
 
       if (State.ioNamespaces[namespace]) {
         if ((response.domain === RESPONSE_DOMAINS.ROOM || response.domain === RESPONSE_DOMAINS.ALL_ROOM) && response.room) {
@@ -97,10 +95,11 @@ function initializeApp(io: any, app: App, ns: string = app.name) {
 
     logger.info('Implementing socket web services');
 
-    if (app.models && app.models.length) {
+    let appModels = app.publicModels;
+    if (appModels && appModels.length) {
 
-      for (let i = 0; i < app.models.length; i++) {
-        let model: Model = app.models![i];
+      for (let i = 0; i < appModels.length; i++) {
+        let model: Model = appModels![i];
 
         if (model.$get('apiType') === API_TYPES.REST)
           continue;
@@ -112,7 +111,7 @@ function initializeApp(io: any, app: App, ns: string = app.name) {
             continue;
 
           logger.info(`app ${ns} is listening on '${services[service].event}' event`);
-          socket.on(services[service].event, Context.Socket(ns, socket, model, services[service]));
+          socket.on(services[service].event, Context.Socket(app.name, ns, socket, model, services[service]));
         }
       }
     }

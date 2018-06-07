@@ -1,23 +1,32 @@
 import { IAppOptions, IAppKeys } from './decorators/app';
 import { Model } from './models';
-import { Safe } from './misc/safe';
 import { API_TYPES } from './types';
 import { State } from './state';
 import { stringUtil } from './util';
+import { gypsumEmitter } from './emiiter';
+import { Logger } from './misc/logger';
 
-const safe = new Safe('app');
-
-export class App{
-  models: Model[] = [];
+export class App {
+  private _models: Model[] = [];
   name = this.constructor.name.toLowerCase();
+  $logger = new Logger(this.name);
 
-  init() {
+  constructor() {
+    gypsumEmitter.on('initialize apps', () => this._init());
+  }
+
+  private _init() {
     let models = this.$get('models');
 
     for (let i = 0; i < models.length; i++) {
-      this.models.push(new models[i](this));
-      this.models[i][<'init'>safe.get('model.init')]();
+      this._models.push(new models[i](this));
     }
+
+    gypsumEmitter.emit(`${this.name} ready`);
+  }
+
+  get publicModels(): Model[] {
+    return this._models.filter(model => !model.$get('internal'));
   }
 
   $get(prop: IAppKeys) {
@@ -25,14 +34,18 @@ export class App{
   }
 
   $getModel(name: string): Model {
-    return this.models.find(model => model.name === name.toLowerCase()) || null;
+    let model = this._models.find(model => model.name === name.toLowerCase());
+    if (!model || model.$get('private'))
+      return null;
+
+    return model;
   }
 
   $getApis() {
     let models: any[] = [];
 
-    for (let i = 0; i < this.models.length; i++) {
-      let model = this.models[i];
+    for (let i = 0; i < this._models.length; i++) {
+      let model = this._models[i];
       let modelServices = model.$getServices();
       let services: any = {};
 
@@ -60,8 +73,11 @@ export class App{
         };
       }
 
+      let modelSchema = model.$get('schema');
+
       models.push({
         name: model.name.toLowerCase(),
+        schema: modelSchema ? modelSchema.schema : null,
         services: services
       });
     }
@@ -72,5 +88,23 @@ export class App{
       namespaces: this.$get('namespaces'),
       models: models
     }
+  }
+
+  $getMap() {
+    let map = [];
+    if (this._models && this._models.length) {
+      for (let i = 0; i < this._models.length; i++) {
+        let modelName = this._models[i].name;
+        let services = this._models[i].$getServices();
+        let serviceNames = Object.keys(services);
+
+        if (serviceNames.length) {
+          for (let name in serviceNames)
+            map.push(`${this.name}.${modelName}.${name}`);
+        }
+      }
+    }
+
+    return map;
   }
 }

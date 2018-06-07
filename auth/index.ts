@@ -24,6 +24,5 @@ import { Permissions } from "./permissions";
 class Auth extends App {}
 
 let auth = new Auth();
-auth.init();
 
 State.apps.push(auth);
