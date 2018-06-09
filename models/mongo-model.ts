@@ -11,14 +11,23 @@ import { gypsumEmitter } from '../emiiter';
 
 export class MongoModel extends Model {
   protected collection: MongoDB.Collection;
+  protected omits: string[] = [];
+  protected schema: Validall.Schema = this.$get('schema');
 
   constructor(app: App) {
     super(app);
 
     this.type = 'Mongo';
 
+    let schema = this.$get('schema');
+
+    if (this.schema) {
+      let omits = this.schema.getPropsByName('omit');
+      this.omits = omits.filter((item: any) => item.value === false).map((item: any) => item.path);
+    }
+
     let dbName = this.app.$get('database_name');
-    gypsumEmitter.on('dbName ready', (db: MongoDB.Db) => {
+    gypsumEmitter.on(`${dbName} ready`, (db: MongoDB.Db) => {
       this.collection = db.collection(this.name);
 
       if (this.$get('indexes') && this.$get('indexes').length)
@@ -54,9 +63,7 @@ export class MongoModel extends Model {
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
-
     });
-
   }
 
   @SERVICE({
@@ -82,17 +89,9 @@ export class MongoModel extends Model {
         .then(docs => {
           this.$logger.debug('find service result:', docs);
 
-          let schema = this.$get('schema');
-
-          if (!schema)
-            return resolve({ data: docs });
-
-          let selects = schema.getPropsByName('select');
-          selects = selects.filter((item: any) => item.value === false).map((item: any) => item.path);
-
-          if (selects && selects.length)
+          if (this.omits && this.omits.length)
             for (let i = 0; i < docs.length; i++)
-              objectUtil.omit(docs[i], selects);
+              objectUtil.omit(docs[i], this.omits);
 
           resolve({ data: docs });
         })
@@ -123,16 +122,8 @@ export class MongoModel extends Model {
         .then(doc => {
           this.$logger.debug('findOne service result:', doc);
 
-          let schema = this.$get('schema');
-
-          if (!schema)
-            return resolve({ data: doc });
-
-          let selects = schema.getPropsByName('select');
-          selects = selects.filter((item: any) => item.value === false).map((item: any) => item.path);
-
-          if (selects && selects.length)
-            objectUtil.omit(doc, selects);
+          if (this.omits && this.omits.length)
+            objectUtil.omit(doc, this.omits);
 
           resolve({ data: doc });
         })
@@ -142,7 +133,6 @@ export class MongoModel extends Model {
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
     });
-
   }
 
   @SERVICE({
@@ -162,16 +152,8 @@ export class MongoModel extends Model {
         .then(doc => {
           this.$logger.debug('findById service result:', doc);
 
-          let schema = this.$get('schema');
-
-          if (!schema)
-            return resolve({ data: doc });
-
-          let selects = schema.getPropsByName('select');
-          selects = selects.filter((item: any) => item.value === false).map((item: any) => item.path);
-
-          if (selects && selects.length)
-            objectUtil.omit(doc, selects);
+          if (this.omits && this.omits.length)
+            objectUtil.omit(doc, this.omits);
 
           resolve({ data: doc });
         })
@@ -199,21 +181,19 @@ export class MongoModel extends Model {
 
       documents = Array.isArray(documents) ? documents : [documents];
 
-      let schema: Validall.Schema = this.$get('schema');
-
       for (let i = 0; i < documents.length; i++) {
         let document = documents[i];
         delete document._id;
 
-        if (schema) {
-          if (!schema.test(document))
+        if (this.schema) {
+          if (!this.schema.test(document))
             return reject({
-              message: schema.error.message,
-              original: schema.error,
+              message: this.schema.error.message,
+              original: this.schema.error,
               code: RESPONSE_CODES.UNAUTHORIZED
             });
 
-          let props = schema.getProps();
+          let props = this.schema.getProps();
           let internals = [];
 
           for (let prop in props)
@@ -222,8 +202,8 @@ export class MongoModel extends Model {
 
           if (internals.length) {
             for (let i = 0; i < internals.length; i++)
-              if (schema.defaults[internals[i]] !== undefined)
-                if (objectUtil.getValue(document, internals[i]) !== schema.defaults[internals[i]])
+              if (this.schema.defaults[internals[i]] !== undefined)
+                if (objectUtil.getValue(document, internals[i]) !== this.schema.defaults[internals[i]])
                   return reject({
                     message: `[${this.name}]: '${internals[i]}' cannot be set externaly!`,
                     code: RESPONSE_CODES.UNAUTHORIZED
@@ -242,12 +222,10 @@ export class MongoModel extends Model {
           this.$logger.debug('insert service result:');
           this.$logger.debug(JSON.stringify(res, null, 4));
 
-          let schema = this.$get('schema');
-
-          if (!schema)
+          if (!this.schema)
             return resolve({ data: res.ops });
 
-          let selects = schema.getPropsByName('select');
+          let selects = this.schema.getPropsByName('select');
           selects = selects.filter((item: any) => item.value === false).map((item: any) => item.path);
 
           if (selects && selects.length)
@@ -269,13 +247,12 @@ export class MongoModel extends Model {
   })
   insertOne(document: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
-      let schema: Validall.Schema = this.$get('schema');
 
-      if (schema) {
-        if (!schema.test(document))
+      if (this.schema) {
+        if (!this.schema.test(document))
           return reject({
-            message: schema.error.message,
-            original: schema.error,
+            message: this.schema.error.message,
+            original: this.schema.error,
             code: RESPONSE_CODES.UNAUTHORIZED
           });
       }
@@ -310,17 +287,10 @@ export class MongoModel extends Model {
         .toArray()
         .then(docs => {
           this.$logger.debug('search service result:', docs);
-          let schema = this.$get('schema');
 
-          if (!schema)
-            return resolve({ data: docs });
-
-          let selects = schema.getPropsByName('select');
-          selects = selects.filter((item: any) => item.value === false).map((item: any) => item.path);
-
-          if (selects && selects.length)
+          if (this.omits && this.omits.length)
             for (let i = 0; i < docs.length; i++)
-              objectUtil.omit(docs[i], selects);
+              objectUtil.omit(docs[i], this.omits);
 
           resolve({ data: docs });
         })
@@ -402,7 +372,7 @@ export class MongoModel extends Model {
         return resolve({ data: null });
 
       if (filter._id && typeof filter._id === 'string')
-        filter._id = new MongoDB.ObjectID(filter._id);
+        filter._id = toObjectID(filter);
 
       delete update._id;
       delete update.token;
@@ -413,17 +383,15 @@ export class MongoModel extends Model {
         update.$set = { updatedAt: Date.now() };
       }
 
-      let schema: Validall.Schema = this.$get('schema');
-
       // if no schema just do find and update
-      if (!schema) {
+      if (!this.schema) {
         this.collection.findOneAndUpdate(
           filter,
           update,
           { returnOriginal: false }
         ).then(res => {
           this.$logger.debug('updateOne service result:', res);
-          resolve(res.value);
+          resolve({ data: res.value });
         })
           .catch(error => reject({
             message: `[${this.name}] - updateOne: unknown error`,
@@ -447,7 +415,7 @@ export class MongoModel extends Model {
 
             // update the doc in database
             this.collection.findOneAndUpdate(
-              filter,
+              { _id: docId },
               update,
               { returnOriginal: false }
             ).then(res => {
@@ -455,11 +423,11 @@ export class MongoModel extends Model {
 
 
               // test the updated doc in the database
-              let state = schema.test(updatedDoc);
+              let state = this.schema.test(updatedDoc);
 
               if (state) {
                 // if test pass confim that the constants and the internal fields are not changed
-                let props = schema.getProps();
+                let props = this.schema.getProps();
                 if (Object.keys(props).length) {
                   let constants: string[] = [], internals: string[] = [];
 
@@ -494,8 +462,8 @@ export class MongoModel extends Model {
 
               } else {
                 errObj = {
-                  message: schema.error.message,
-                  original: schema.error,
+                  message: this.schema.error.message,
+                  original: this.schema.error,
                   code: RESPONSE_CODES.BAD_REQUEST
                 };
               }
@@ -506,18 +474,15 @@ export class MongoModel extends Model {
                   .then(res => reject(errObj))
                   .catch(error => reject({
                     message: 'error reverting document after update',
-                    original: { message: schema.error.message, error: error },
+                    original: { message: this.schema.error.message, error: error },
                     code: RESPONSE_CODES.UNKNOWN_ERROR
                   }));
               } else {
                 // if test pass send the updated document
                 this.$logger.debug('updateOne service result:', updatedDoc);
 
-                let selects = schema.getPropsByName('select');
-                selects = selects.filter((item: any) => item.value === false).map((item: any) => item.path);
-
-                if (selects && selects.length)
-                  objectUtil.omit(updatedDoc, selects);
+                if (this.omits && this.omits.length)
+                  objectUtil.omit(updatedDoc, this.omits);
 
                 resolve({ data: updatedDoc });
               }
@@ -536,7 +501,6 @@ export class MongoModel extends Model {
           }));
       }
     });
-
   }
 
   @SERVICE({
@@ -562,9 +526,7 @@ export class MongoModel extends Model {
         update.$set = { updatedAt: Date.now() };
       }
 
-      let schema: Validall.Schema = this.$get('schema');
-
-      if (!schema) {
+      if (!this.schema) {
         this.collection.findOneAndUpdate(
           { _id: new MongoDB.ObjectID(id) },
           update,
@@ -598,16 +560,12 @@ export class MongoModel extends Model {
             ).then(res => {
               updatedDoc = res.value;
 
-              console.dir(preUpdatedDoc);
-              console.dir(updatedDoc);
-
-
               // test the updated doc in the database
-              let state = schema.test(updatedDoc);
+              let state = this.schema.test(updatedDoc);
 
               if (state) {
                 // if test pass confim that the constants and the internal fields are not changed
-                let props = schema.getProps();
+                let props = this.schema.getProps();
                 if (Object.keys(props).length) {
                   let constants: string[] = [], internals: string[] = [];
 
@@ -642,8 +600,8 @@ export class MongoModel extends Model {
 
               } else {
                 errObj = {
-                  message: schema.error.message,
-                  original: schema.error,
+                  message: this.schema.error.message,
+                  original: this.schema.error,
                   code: RESPONSE_CODES.BAD_REQUEST
                 };
               }
@@ -654,17 +612,15 @@ export class MongoModel extends Model {
                   .then(res => reject(errObj))
                   .catch(error => reject({
                     message: 'error reverting document after update',
-                    original: { message: schema.error.message, error: error },
+                    original: { message: this.schema.error.message, error: error },
                     code: RESPONSE_CODES.UNKNOWN_ERROR
                   }));
               } else {
                 // if test pass send the updated document
                 this.$logger.debug('updateOne service result:', updatedDoc);
-                let selects = schema.getPropsByName('select');
-                selects = selects.filter((item: any) => item.value === false).map((item: any) => item.path);
 
-                if (selects && selects.length)
-                  objectUtil.omit(updatedDoc, selects);
+                if (this.omits && this.omits.length)
+                  objectUtil.omit(updatedDoc, this.omits);
 
                 resolve({ data: updatedDoc });
               }
@@ -734,7 +690,13 @@ export class MongoModel extends Model {
       this.collection.findOneAndDelete(filter)
         .then(res => {
           this.$logger.debug('deleteOne service result:', res);
-          resolve({ data: res.value });
+
+          let deletedDoc = res.value;
+
+          if (this.omits && this.omits.length)
+            objectUtil.omit(deletedDoc, this.omits);
+
+          resolve({ data: deletedDoc });
         })
         .catch(error => reject({
           message: `[${this.name}] - deleteOne: unknown error`,
@@ -759,7 +721,13 @@ export class MongoModel extends Model {
       this.collection.findOneAndDelete({ _id: new MongoDB.ObjectID(id) })
         .then(res => {
           this.$logger.debug('deleteById service result:', res);
-          resolve({ data: res.value });
+
+          let deletedDoc = res.value;
+
+          if (this.omits && this.omits.length)
+            objectUtil.omit(deletedDoc, this.omits);
+
+          resolve({ data: deletedDoc });
         })
         .catch(error => reject({
           message: `[${this.name}] - deleteById: unknown error`,

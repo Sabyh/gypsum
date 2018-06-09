@@ -99,7 +99,7 @@ export class Logger {
 
   debug(...args: any[]): void {
     if (this._active && (this._levels.indexOf('debug') > -1 || this._levels.indexOf('all') > -1)) {
-      console.log(chalk.default.gray(`${this._ns}: [debug] ->`, ...args));
+      console.dir(chalk.default.gray(`${this._ns}: [debug] ->`, ...args));
 
       if (this._logOptions && (this._logOptions.indexOf('debug') > -1 || this._logOptions.indexOf('all') > -1))
         this._log('debug', ...args);
