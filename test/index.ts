@@ -5,7 +5,7 @@ import { App } from '../app';
 
 // Test Model
 @MODEL()
-class Test extends MongoModel {}
+class Test extends MongoModel { }
 
 @APP({
   dev: {
@@ -14,13 +14,16 @@ class Test extends MongoModel {}
     models: [Test],
   }
 })
-class Api extends App {}
+class Api extends App { }
 
-Gypsum.bootstrap({
-  config: {
-    dev: {
-      port: 7772
+Gypsum
+  .config({
+    config: {
+      dev: {
+        port: 7772
+      }
     }
-  },
-  apps: [Api]
-});
+  })
+  .bootstrap({
+    apps: [Api]
+  });

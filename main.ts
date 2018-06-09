@@ -56,13 +56,18 @@ export interface IGypsumUseOptions {
   models?: any[];
 }
 
-export interface IGypsumBootstrapOptions {
+export interface IGypsumConfigOptions {
   auth?: IAuthEnvConfig;
   storage?: IStorageEnvConfig;
   config?: IGypsumConfigurations;
+}
+
+export interface IGypsumBootstrapOptions {
   apps?: typeof App[];
   middlewares?: Function;
   hooks?: ((ctx: Context, ...args: any[]) => void)[];
+  users?: typeof MongoModel;
+  storage?: typeof Model;
 }
 
 export interface IGypsum {
@@ -73,6 +78,7 @@ export interface IGypsum {
   set: <T extends keyof IServerConfigOptions, U extends IServerConfigOptions[T]>(name: T, value: U) => IGypsum;
   getCurrentContext: () => Context;
   getModel: (modelName: string, appName: string) => Model | MongoModel | FileModel | undefined;
+  config: (config: IGypsumConfigOptions) => IGypsum;
   bootstrap: (options: IGypsumBootstrapOptions) => void;
 }
 
@@ -98,7 +104,7 @@ export const Gypsum: IGypsum = {
     return State.getModel(appName, modelName);
   },
 
-  bootstrap(options: IGypsumBootstrapOptions): void {
+  config(options: IGypsumConfigOptions) {
     Logger.Info('Configuring Gypsum..');
     State.setConfiguration(options.config ? <IGypsumConfig>options.config : <IGypsumConfig>{});
 
@@ -113,6 +119,10 @@ export const Gypsum: IGypsum = {
     Logger.Info('Configuring Storage App..');
     State.setStorageConfig(options.storage);
 
+    return this;
+  },
+
+  bootstrap(options: IGypsumBootstrapOptions): void {
     Logger.SetOptions(State.config.logger_options, State.config.logger_out_dir);
     logger = new Logger('gypsum');
 
@@ -126,15 +136,14 @@ export const Gypsum: IGypsum = {
       State.middlewares = options.middlewares;
     }
 
-    
     logger.info('intializing root app');
     require('./root');
     logger.info('intializing auth app');
-    require('./auth');
+    require('./auth')(options.users || null);
     logger.info('intializing storage app');
-    require('./storage');
+    require('./storage')(options.storage || null);
 
-    console.log('initializing the rest of apps');
+    logger.info('initializing the rest of apps');
 
     if (options.apps)
       for (let i = 0; i < options.apps.length; i++) {
@@ -142,7 +151,7 @@ export const Gypsum: IGypsum = {
         State.apps.push(app);
       }
 
-      gypsumEmitter.emit('initialize apps');
+    gypsumEmitter.emit('initialize apps');
 
     logger.info('initializing mongodb...');
     try {

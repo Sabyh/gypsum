@@ -6,30 +6,32 @@ import { APP } from "../decorators";
 import { API_TYPES } from "../types";
 import { State } from "../state";
 import { File } from "./file";
+import { Model } from '../models';
 
-console.log('storage app called');
+export function initStorage(extendedFileModel: typeof Model) {
 
-@APP({
-  dev: {
-    models: [File],
-    apiType: API_TYPES.REST
+  @APP({
+    dev: {
+      models: [(extendedFileModel || File)],
+      apiType: API_TYPES.REST
+    }
+  })
+  class Storage extends App {
+  
+    constructor() {
+      super();
+      
+      if (!fs.existsSync(State.storage.storageDir))
+        try { fs.mkdirSync(State.storage.storageDir); }
+        catch (err) { console.log(err); }
+    }
+  
+    middlewares(app: express.Express) {
+      app.use(express.static(State.storage.storageDir));
+    }
   }
-})
-class Storage extends App {
-
-  constructor() {
-    super();
-    
-    if (!fs.existsSync(State.storage.storageDir))
-      try { fs.mkdirSync(State.storage.storageDir); }
-      catch (err) { console.log(err); }
-  }
-
-  middlewares(app: express.Express) {
-    app.use(express.static(State.storage.storageDir));
-  }
+  
+  let storage = new Storage();
+  
+  State.apps.push(storage);
 }
-
-let storage = new Storage();
-
-State.apps.push(storage);

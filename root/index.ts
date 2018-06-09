@@ -13,7 +13,7 @@ import { State } from '../state';
     apiType: API_TYPES.REST
   }
 })
-export class Root extends App {
+class Root extends App {
 
   middlewares(app: express.Express) {
     if (State.middlewares)

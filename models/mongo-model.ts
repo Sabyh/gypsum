@@ -183,7 +183,7 @@ export class MongoModel extends Model {
 
       for (let i = 0; i < documents.length; i++) {
         let document = documents[i];
-        delete document._id;
+        document.createdAt = Date.now();
 
         if (this.schema) {
           if (!this.schema.test(document))
@@ -202,17 +202,18 @@ export class MongoModel extends Model {
 
           if (internals.length) {
             for (let i = 0; i < internals.length; i++)
-              if (this.schema.defaults[internals[i]] !== undefined)
+              if (this.schema.defaults[internals[i]] !== undefined) {
                 if (objectUtil.getValue(document, internals[i]) !== this.schema.defaults[internals[i]])
                   return reject({
                     message: `[${this.name}]: '${internals[i]}' cannot be set externaly!`,
                     code: RESPONSE_CODES.UNAUTHORIZED
                   });
-                else if (objectUtil.getValue(document, internals[i]) !== undefined)
-                  return reject({
-                    message: `[${this.name}]: '${internals[i]}' cannot be set externaly!`,
-                    code: RESPONSE_CODES.UNAUTHORIZED
-                  });
+              } else if (objectUtil.getValue(document, internals[i]) !== undefined) {
+                return reject({
+                  message: `[${this.name}]: '${internals[i]}' cannot be set externaly!`,
+                  code: RESPONSE_CODES.UNAUTHORIZED
+                });
+              }
           }
         }
       }
@@ -222,17 +223,13 @@ export class MongoModel extends Model {
           this.$logger.debug('insert service result:');
           this.$logger.debug(JSON.stringify(res, null, 4));
 
-          if (!this.schema)
-            return resolve({ data: res.ops });
+          let insertedDocs = res.ops;
 
-          let selects = this.schema.getPropsByName('select');
-          selects = selects.filter((item: any) => item.value === false).map((item: any) => item.path);
+          if (this.omits && this.omits.length)
+            for (let i = 0; i < insertedDocs.length; i++)
+              objectUtil.omit(insertedDocs[i], this.omits);
 
-          if (selects && selects.length)
-            for (let i = 0; i < res.ops.length; i++)
-              objectUtil.omit(res.ops[i], selects);
-
-          resolve({ data: res.ops });
+          resolve({ data: insertedDocs });
         })
         .catch(error => reject({
           message: `[${this.name}] - insert: unknown error`,
@@ -247,6 +244,10 @@ export class MongoModel extends Model {
   })
   insertOne(document: any, ctx?: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
+      if (!document)
+        resolve({ data: null });
+
+      document.createdAt = Date.now();
 
       if (this.schema) {
         if (!this.schema.test(document))
