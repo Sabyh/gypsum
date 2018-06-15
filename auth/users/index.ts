@@ -24,7 +24,7 @@ import { App } from '../../app';
     UpdateById: { authorize: { field: '_id', match: '$params.id' } }
   },
   domain: RESPONSE_DOMAINS.SELF,
-  after: ['filter:-password,passwordSalt'],
+  after: ['filter:-password,passwordSalt,uuids'],
   indexes: [{ name: 'email', options: { unique: true } }]
 })
 export class Users extends MongoModel {
@@ -98,6 +98,11 @@ export class Users extends MongoModel {
       responseData.token = jwt.sign({ id: responseData._id, date: Date.now(), type: 'auth' }, State.auth.tokenSecret);
       resolve();
     });
+  }
+
+  @HOOK()
+  pushNotification(ctx: Context, id: string) {
+    
   }
 
   @HOOK()
@@ -418,11 +423,11 @@ export class Users extends MongoModel {
   @SERVICE({
     secure: false,
     authorize: false,
-    args: ['body.email', 'body.password'],
+    args: ['body.email', 'body.password', 'body.uuid'],
     method: 'post',
     after: [`auth.users.pushToken`]
   })
-  signin(email: string, password: string, ctx: Context): Promise<IResponse> {
+  signin(email: string, password: string, uuid: string, ctx: Context): Promise<IResponse> {
     return new Promise((resolve, reject) => {
 
       if (!email || !email.trim())
@@ -459,7 +464,11 @@ export class Users extends MongoModel {
           verify(password, doc.password, doc.passwordSalt)
             .then((match: boolean) => {
               if (match === true) {
-                resolve({ data: doc });
+                if (uuid) {
+                  return this.updateById(doc._id, { $push: { uuids: uuid } });
+                } else {
+                  resolve({ data: doc });
+                }
               } else {
                 reject({
                   message: 'wrong password',
@@ -546,7 +555,37 @@ export class Users extends MongoModel {
       } catch (e) {
         console.trace(e);
       }
-
     });
+  }
+
+  @SERVICE({
+    secure: true,
+    authorize: false,
+    args: ['body.uuid']
+  })
+  signout(uuid: string, ctx?: Context) {
+    return new Promise((resolve, reject) => {
+
+      if (uuid) {
+        this.collection.updateOne({ _id: ctx.user._id }, {
+          $pop: { uuids: uuid }
+        })
+        .then(res => {
+          resolve({ data: true })          
+        })
+        .catch(err => {
+          this.$logger.error('error signing user out:')
+          this.$logger.error(err);
+          reject({
+            message: 'error signing user out',
+            original: err,
+            code: RESPONSE_CODES.UNKNOWN_ERROR
+          });
+        });
+
+      } else {
+        resolve(true);
+      }
+    })
   }
 }

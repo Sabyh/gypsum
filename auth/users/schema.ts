@@ -17,5 +17,6 @@ export const usersSchema: Validall.ISchema = {
   verified: {
     $type: 'boolean',
     $default: false
-  }
+  },
+  uuids: { $type: 'string[]', $default: [] }
 };
