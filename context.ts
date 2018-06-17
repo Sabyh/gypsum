@@ -494,6 +494,30 @@ export class Context {
     return false;
   }
 
+  private getRealArgsValues(args: any[], hookName: string) { 
+
+    // let params: any[] = [];
+
+    if (args && args.length) {
+      for (let j = 0; j < args.length; j++) {
+        if (typeof args[j] === 'string') {
+
+          if (args[j].indexOf(',') > -1) {
+            args[j] = args[j].split(',');
+            for (let x = 0; x < args[j].length; x++)
+              args[j][x] = getReference(this, args[j][x], hookName);
+          } else {
+            args[j] = getReference(this, args[j], hookName);
+          }
+        }
+
+        // params[j] = args[j];
+      }
+    }
+
+    return args;
+  }
+
   next(err?: IResponseError): void {
     if (err) {
       console.trace(err);
@@ -506,7 +530,7 @@ export class Context {
       if (current) {
         this.logger.debug(`running stack handler: ${(<any>current.handler).__name || current.handler.name}`);
         this._mainHandler = !!current.mainHandler;
-        current.handler(this, ...current.args);
+        current.handler(this, ...this.getRealArgsValues(current.args, current.handler.name));
       } else {
         this.logger.debug('end of stack, preparing for responding...')
         this._mRespond();
@@ -602,26 +626,7 @@ function* getHooks(context: Context, list: IHookOptions[]) {
       yield null;
     }
 
-    let params: any[] = [];
-
-    if (args && args.length) {
-      for (let j = 0; j < args.length; j++) {
-        if (typeof args[j] === 'string') {
-
-          if (args[j].indexOf(',') > -1) {
-            args[j] = args[j].split(',');
-            for (let x = 0; x < args[j].length; x++)
-              args[j][x] = getReference(context, args[j][x], hookName);
-          } else {
-            args[j] = getReference(context, args[j], hookName);
-          }
-        }
-
-        params[j] = args[j];
-      }
-    }
-
-    yield <IStack>{ handler: handler, args, params };
+    yield <IStack>{ handler: handler, args: args || [] };
   }
 }
 
@@ -657,8 +662,8 @@ function getReference(ctx: Context, name: string, hookName: string) {
     else if (targetName === 'cookies')
       return ctx.cookies(parts[1]);
     else if (['headers', 'query', 'body', 'params', 'response'].indexOf(targetName) > -1) {
-      let root = parts.shift();
-      return objectUtil.getValue((<any>ctx)[<string>root], parts.join('.'));
+      parts.shift();
+      return objectUtil.getValue((<any>ctx)[<string>targetName], parts.join('.'));
     } else
       return name;
   }
