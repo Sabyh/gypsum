@@ -139,9 +139,9 @@ export const Gypsum: IGypsum = {
     logger.info('intializing root app');
     require('./root');
     logger.info('intializing auth app');
-    require('./auth')(options.users || null);
+    require('./auth').initAuth(options.users || null);
     logger.info('intializing storage app');
-    require('./storage')(options.storage || null);
+    require('./storage').initStorage(options.storage || null);
 
     logger.info('initializing the rest of apps');
 
