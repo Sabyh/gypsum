@@ -65,17 +65,16 @@ export function initSocket(io: any) {
         }
       }
     } else if (msg.data && msg.action === 'join room') {
-      let room = msg.data.room;
+      let rooms = msg.data.rooms;
       let socketIds = msg.data.socketIds;
       let ns = State.ioNamespaces[msg.namespace];
 
-      if (ns && room && socketIds && socketIds.length) {
+      if (ns && rooms && socketIds && socketIds.length) {
+        let nsSockets = ns.sockets;
         for (let i = 0; i < socketIds.length; i++) {
-          let nsSockets = ns.sockets.sockets;
-
           if (nsSockets[socketIds[i]]) {
-            nsSockets[socketIds[i]].join(room);
-            break;
+            for (let room of rooms)
+              nsSockets[socketIds[i]].join(room);
           }
         }
       }

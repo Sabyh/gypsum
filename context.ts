@@ -44,12 +44,12 @@ export class Context {
   private _mainHandler = false;
   private _resolve: Function = null;
   private _reject: Function = null;
-  
+
   readonly _appName: string;
   readonly _namespace: string;
   readonly _req: express.Request | undefined;
   readonly _res: express.Response | undefined;
-  
+
   public response: Response = <Response>{};
   public room: string;
   public model: Model;
@@ -112,7 +112,7 @@ export class Context {
         domain: serviceData.domain,
         after: serviceData.after.slice(1)
       });
-  
+
       let context = new Context(API_TYPES.SOCKET, {
         rid: model.name === State.currentContext.model.name ? State.currentContext._rid : null,
         headers: State.currentContext.headers,
@@ -127,7 +127,7 @@ export class Context {
         model: model,
         service: service
       }, false);
-      
+
       context._resolve = resolve;
       context._reject = reject;
       context._mPushStack(service.after);
@@ -278,7 +278,7 @@ export class Context {
 
     if (this.apiType === API_TYPES.REST && this._res) {
       State.currentContext = null;
-      
+
       if (this._resolve && this.response.success) {
         this._resolve(this.response);
       } else if (this._reject && !this.response.success) {
@@ -292,7 +292,7 @@ export class Context {
       this.response.crud = this.service.crud;
 
       this.logger.debug(`dispatching event: '${event}' with domain: ${this.response.domain || this._domain || this.service.domain}`);
-      
+
       if (this.response.code < 200 || this.response.code >= 300) {
         this._socket.emit(event, this.response);
 
@@ -359,28 +359,28 @@ export class Context {
   }
 
   runService(model: Model, serviceName: string, data: IContextOptions = {}, user: any) {
-    return new Promise((resolve, reject) =>{
+    return new Promise((resolve, reject) => {
 
       let service = (<any>model)[stringUtil.capitalizeFirst(serviceName)];
-  
+
       let context = new Context(this.apiType, {
         rid: model.name === this.model.name ? this._rid : null,
         headers: this.headers,
         query: data.query || this.query,
         body: data.body || this.body,
         params: data.params || this.params,
-        cookies:data.cookies || this.cookies,
+        cookies: data.cookies || this.cookies,
         req: this._req,
         res: this._res,
         appName: model.app.name,
         model: model,
         service: service
       }, false);
-  
+
       context.user = user || this.user;
       context._resolve = resolve;
       context._reject = reject;
-  
+
       context._mInit();
     })
       .then(response => {
@@ -452,36 +452,41 @@ export class Context {
     return this;
   }
 
-  socketsJoinRoom(roomName: string, socketIds: string[]) {
-    if (roomName && socketIds && socketIds.length) {
-      let ns = State.ioNamespaces[this._appName];
+  joinRoom(rooms: string | string[], socketIds?: string | string[]) {
+    rooms = typeof rooms === "string" ? [rooms] : rooms || [this.room];
+    if (!socketIds) {
+      if (this.apiType === API_TYPES.SOCKET && this._socket)
+        for (let room of rooms) {
+          this._socket.join(room || this.room);
+
+          return true;
+        }
+
+      return false;
+    } else {
+      let ids = typeof socketIds === "string" ? [socketIds] : [].concat(socketIds);
+
+      let ns = State.ioNamespaces[this._namespace];
 
       if (ns) {
-        for (let i = 0; i < socketIds.length; i++) {
-          let nsSockets = ns.sockets.sockets;
+        let nsSockets = ns.sockets;
+        for (let i = 0; i < ids.length; i++) {
+          let nsSockets = ns.sockets;
 
-          if (nsSockets[socketIds[i]]) {
-            nsSockets[socketIds[i]].join(roomName);
-            socketIds.splice(i--, 1);
+          if (nsSockets[ids[i]]) {
+            for (let room of rooms)
+              nsSockets[ids[i]].join(room);
+
+            ids.splice(i--, 1);
             break;
           }
         }
       }
 
-      if (socketIds.length)
+      if (ids.length)
         if (process && process.send)
-          (<any>process).send({ data: { room: roomName, socketIds: socketIds }, target: 'others', action: 'join room', namespace: this._namespace });
+          (<any>process).send({ data: { room: rooms, socketIds: ids }, target: 'others', action: 'join room', namespace: this._namespace });
     }
-  }
-
-  joinRoom(roomName?: string): boolean {
-    if (this.apiType === API_TYPES.SOCKET && this._socket)
-      if (roomName || this.room) {
-        this._socket.join(roomName || this.room);
-        return true;
-      }
-
-    return false;
   }
 
   leaveRoom(room: string): boolean {
@@ -494,7 +499,7 @@ export class Context {
     return false;
   }
 
-  private getRealArgsValues(args: any[], hookName: string) { 
+  private getRealArgsValues(args: any[], hookName: string) {
 
     // let params: any[] = [];
 
