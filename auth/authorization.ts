@@ -171,7 +171,13 @@ export class Authorization extends Model {
           let fetchObj: any = { query: {} };
 
           if (typeof (<any>options).fetch === 'string') {
-            fetchObj = objectUtil.getValue(ctx, (<any>options).fetch);
+            if ((<any>options).fetch.charAt(0) === "$")
+              fetchObj = objectUtil.getValue(ctx, (<any>options).fetch);
+            else
+              return reject({
+                message: 'invalid authorization options',
+                code: RESPONSE_CODES.BAD_REQUEST
+              });
 
           } else {
 
