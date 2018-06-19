@@ -64,17 +64,18 @@ export function initSocket(io: any) {
           State.ioNamespaces[namespace].sockets.emit(response.crud, response);
         }
       }
-    } else if (msg.data && msg.action === 'join room') {
+    } else if (msg.data && (msg.action === 'join room' || msg.action === 'leave room')) {
       let rooms = msg.data.rooms;
       let socketIds = msg.data.socketIds;
       let ns = State.ioNamespaces[msg.namespace];
+      let action = msg.action === 'join room' ? 'join' : 'leave';
 
       if (ns && rooms && socketIds && socketIds.length) {
         let nsSockets = ns.sockets;
         for (let i = 0; i < socketIds.length; i++) {
           if (nsSockets[socketIds[i]]) {
             for (let room of rooms)
-              nsSockets[socketIds[i]].join(room);
+              nsSockets[socketIds[i]][action](room);
           }
         }
       }

@@ -87,6 +87,24 @@ export class Users extends MongoModel {
     });
   }
 
+  getSockets(ids: string[] | MongoDB.ObjectID[]): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+      if (ids && ids.length) {
+        for (let i = 0; i < ids.length; i++) 
+          if (typeof ids[i] === "string")
+            ids[i] = new MongoDB.ObjectID(ids[0]);
+  
+        this.collection.find({ _id: { $in: ids }})
+          .project({ socket: 1 })
+          .toArray()
+          .then(res => resolve(res.map(entry => entry.socket).filter(entry => entry)))
+          .catch(err => reject(err));
+      } else {
+        resolve([]);
+      }
+    });
+  }
+
   @HOOK()
   pushToken(ctx: Context): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -162,15 +180,21 @@ export class Users extends MongoModel {
 
       ctx.set('tokenData', data);
 
-      this.collection.findOne({ _id: new MongoDB.ObjectID(data.id) })
-        .then(doc => {
-          if (!doc || !Object.keys(doc).length)
+      this.collection.findOneAndUpdate({ 
+        _id: new MongoDB.ObjectID(data.id) 
+      },{
+        $set: { socket: ctx._socket ? ctx._socket.id : null }
+      }, {
+        returnOriginal: false
+      })
+        .then(res => {
+          if (!res.value || !Object.keys(res.value).length)
             return reject({
               message: 'out_dated_token',
               code: RESPONSE_CODES.UNAUTHORIZED
             });
 
-          ctx.user = doc;
+          ctx.user = res.value;
           resolve();
         })
         .catch(error => reject({

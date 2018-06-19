@@ -5,6 +5,7 @@ import { Model } from './models';
 import { IService, IHookOptions, IHook, IServiceOptions } from './decorators';
 import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, Response, ResponseError, IResponseError, IResponse } from './types';
 import { objectUtil, stringUtil } from './util/index';
+import { Users } from './auth/users';
 
 export interface IContext {
   rid: string;
@@ -36,15 +37,15 @@ interface IStack {
 
 export class Context {
   private _rid: string;
-  private _socket: any | undefined;
-  private _stack: IStack[] = [];
   private _locals: any = {};
   private _cookies: any;
   private _domain: RESPONSE_DOMAINS | undefined;
   private _mainHandler = false;
   private _resolve: Function = null;
   private _reject: Function = null;
+  private _stack: IStack[] = [];
 
+  readonly _socket: any | undefined;
   readonly _appName: string;
   readonly _namespace: string;
   readonly _req: express.Request | undefined;
@@ -452,56 +453,76 @@ export class Context {
     return this;
   }
 
-  joinRoom(rooms: string | string[], socketIds?: string | string[]) {
-    rooms = typeof rooms === "string" ? [rooms] : rooms || [this.room];
-    if (!socketIds) {
-      if (this.apiType === API_TYPES.SOCKET && this._socket)
-        for (let room of rooms) {
-          this._socket.join(room || this.room);
+  private toggleRoom(action: 'join' | 'leave', rooms: string | string[], users?: string | string[]) {
+    return new Promise((resolve, reject) => {
+      rooms = typeof rooms === "string" ? [rooms] : rooms || [this.room];
 
-          return true;
-        }
-
-      return false;
-    } else {
-      let ids = typeof socketIds === "string" ? [socketIds] : [].concat(socketIds);
-
-      let ns = State.ioNamespaces[this._namespace];
-
-      if (ns) {
-        let nsSockets = ns.sockets;
-        for (let i = 0; i < ids.length; i++) {
-          let nsSockets = ns.sockets;
-
-          if (nsSockets[ids[i]]) {
-            for (let room of rooms)
-              nsSockets[ids[i]].join(room);
-
-            ids.splice(i--, 1);
-            break;
-          }
-        }
+      try {
+        rooms.map((room: any) => typeof room === 'string' ? room : room.toString())
+      } catch (err) {
+        this.logger.error(`error ${action}ing room`);
+        console.log(err);
+        reject(err);
       }
 
-      if (ids.length)
-        if (process && process.send)
-          (<any>process).send({ data: { room: rooms, socketIds: ids }, target: 'others', action: 'join room', namespace: this._namespace });
-    }
+      if (!users) {
+        if (this.apiType === API_TYPES.SOCKET && this._socket)
+          for (let room of rooms) {
+            this._socket[action](room || this.room);
+
+            return resolve(true);
+          }
+
+        reject(`invalid ${action} room options`);
+      } else {
+        users = typeof users === "string" ? [users] : users;
+
+        let usersModel = State.getModel<Users>('auth', 'users');
+
+        usersModel.getSockets(users)
+          .then(sockets => {
+            let ns = State.ioNamespaces[this._namespace];
+
+            if (ns) {
+              let nsSockets = ns.sockets;
+              for (let i = 0; i < sockets.length; i++) {
+                let nsSockets = ns.sockets;
+
+                if (nsSockets[sockets[i]]) {
+                  for (let j = 0; j < rooms.length; j++)
+                    if (rooms[j])
+                      nsSockets[sockets[i]][action](rooms[j]);
+
+                  sockets.splice(i--, 1);
+                }
+              }
+            }
+
+            if (sockets.length)
+              if (process && process.send)
+                (<any>process).send({ data: { room: rooms, socketIds: sockets }, target: 'others', action: `${action} room`, namespace: this._namespace });
+
+            resolve(true);
+
+          })
+          .catch(err => {
+            console.log('error getting users sockets');
+            console.log(err);
+            reject(err);
+          });
+      }
+    });
   }
 
-  leaveRoom(room: string): boolean {
-    if (this.apiType === API_TYPES.SOCKET && this._socket)
-      if (room) {
-        this._socket.leave(room);
-        return true;
-      }
+  joinRoom(rooms: string | string[], users?: string | string[]) {
+    return this.toggleRoom('join', rooms, users);
+  }
 
-    return false;
+  leaveRoom(rooms: string | string[], users?: string | string[]) {
+    return this.toggleRoom('leave', rooms, users);
   }
 
   private getRealArgsValues(args: any[], hookName: string) {
-
-    // let params: any[] = [];
 
     if (args && args.length) {
       for (let j = 0; j < args.length; j++) {
@@ -515,8 +536,6 @@ export class Context {
             args[j] = getReference(this, args[j], hookName);
           }
         }
-
-        // params[j] = args[j];
       }
     }
 

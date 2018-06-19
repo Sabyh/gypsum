@@ -32,11 +32,11 @@ export class AppState {
   hooks: IHook[] = [];
   currentContext: Context = null;
 
-  public getModel(appName: string, name: string): Model | MongoModel | FileModel {
+  public getModel<T extends Model = Model>(appName: string, name: string): T {
     let app = this.apps.find(_app => _app.name.toLowerCase() === appName.toLowerCase());
 
     if (app)
-      return app.$getModel(name.toLowerCase());
+      return <T>app.$getModel(name.toLowerCase());
 
     return null;
   }
