@@ -292,38 +292,35 @@ export class Context {
       let event = `${this.model.name} ${this.service.crud}`;
       this.response.crud = this.service.crud;
 
-      this.logger.debug(`dispatching event: '${event}' with domain: ${this.response.domain || this._domain || this.service.domain}`);
+      this.logger.debug(`dispatching event: '${event}' with domain: ${this.response.domain || this._domain || this.service.domain}, room: ${this.response.room}`);
 
       if (this.response.code < 200 || this.response.code >= 300) {
         this._socket.emit(event, this.response);
 
       } else {
         let domain = this.response.domain || this._domain || this.service.domain;
+        let ns = State.ioNamespaces[this._namespace];
         this.response.room = this.room || this.response.room;
 
         if (this.response.domain === RESPONSE_DOMAINS.ROOM && this.response.room) {
           if (process && process.send)
-            (<any>process).send({ data: this.response, target: 'others', action: 'response', namespace: this._namespace })
-          this._socket.to(this.response.room).emit(event, this.response);
+            (<any>process).send({ data: this.response, target: 'others', action: 'response', namespace: this._namespace });
 
-        } else if (this.response.domain === RESPONSE_DOMAINS.ALL_ROOM && this.response.room) {
-          if (process && process.send)
-            (<any>process).send({ data: this.response, target: 'others', action: 'response', namespace: this._namespace })
-          this._socket.broadcast.to(this.response.room).emit(event, this.response);
-
-        } else if (this.response.domain === RESPONSE_DOMAINS.OTHERS) {
-          if (process && process.send)
-            (<any>process).send({ data: this.response, target: 'others', action: 'response', namespace: this._namespace })
-          this._socket.broadcast.emit(event, this.response);
+          if (ns)
+            ns.to(this.response.room).emit(event, this.response);
+          else
+            this._socket.emit(event, this.response);
 
         } else if (this.response.domain === RESPONSE_DOMAINS.ALL) {
           if (process && process.send)
-            (<any>process).send({ data: this.response, target: 'others', action: 'response', namespace: this._namespace })
+            (<any>process).send({ data: this.response, target: 'others', action: 'response', namespace: this._namespace });
 
           let io: any = State.ioNamespaces[this._namespace];
 
-          if (io)
-            io.sockets.emit(event, this.response);
+          if (ns)
+            ns.emit(event, this.response);
+          else
+            this._socket.emit(event, this.response);
 
         } else {
           this._socket.emit(event, this.response);
@@ -499,9 +496,9 @@ export class Context {
                 let nsSockets = ns.sockets;
 
                 if (nsSockets[sockets[i]]) {
-                  for (let j = 0; j < rooms.length; j++)
-                    if (rooms[j])
-                      nsSockets[sockets[i]][action](rooms[j]);
+                  for (let room of rooms)
+                    if (room)
+                      nsSockets[sockets[i]][action](room);
 
                   sockets.splice(i--, 1);
                 }

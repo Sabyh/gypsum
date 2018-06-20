@@ -58,10 +58,10 @@ export function initSocket(io: any) {
       let namespace = msg.namespace;
 
       if (State.ioNamespaces[namespace]) {
-        if ((response.domain === RESPONSE_DOMAINS.ROOM || response.domain === RESPONSE_DOMAINS.ALL_ROOM) && response.room) {
+        if ((response.domain === RESPONSE_DOMAINS.ROOM) && response.room) {
           State.ioNamespaces[namespace].to(response.room).emit(response.crud, response);
-        } else if (response.domain === RESPONSE_DOMAINS.OTHERS || response.domain === RESPONSE_DOMAINS.ALL) {
-          State.ioNamespaces[namespace].sockets.emit(response.crud, response);
+        } else if (response.domain === RESPONSE_DOMAINS.ALL) {
+          State.ioNamespaces[namespace].emit(response.crud, response);
         }
       }
     } else if (msg.data && (msg.action === 'join room' || msg.action === 'leave room')) {
