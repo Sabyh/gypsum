@@ -172,7 +172,7 @@ export class Authorization extends Model {
 
           if (typeof (<any>options).fetch === 'string') {
             if ((<any>options).fetch.charAt(0) === "$")
-              fetchObj = objectUtil.getValue(ctx, (<any>options).fetch);
+              fetchObj = objectUtil.getValue(ctx, (<any>options).fetch.slice(1));
             else
               return reject({
                 message: 'invalid authorization options',
