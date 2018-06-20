@@ -617,11 +617,10 @@ export class Context {
 
 function* getHooks(context: Context, list: IHookOptions[]) {
 
-  for (let i = 0; i < list.length; i++) {
-    let hook = list[i];
+  for (let hook of list) {
     let args = typeof hook === 'string' ? hook.split(':') : (hook.args ? (Array.isArray(hook.args) ? hook.args : [hook.args]) : []);
     let hookName = typeof hook === 'string' ? args.shift().toLowerCase() : hook.name.toLowerCase();
-    let handler: ((ctx: Context, ...args: any[]) => void) | undefined = undefined;
+    let handler: ((ctx: Context, ...args: any[]) => void) = null;
 
     if (hookName) {
       if (hookName.indexOf('.') > -1) {
