@@ -1,6 +1,6 @@
 {
   "name": "gypsum",
-  "version": "2.7.11",
+  "version": "2.7.12",
   "license": "ISC",
   "author": {
     "name": "AmmAr Mourad",
@@ -30,7 +30,6 @@
   },
   "dependencies": {
     "@types/body-parser": "^1.16.8",
-    "@types/chalk": "^2.2.0",
     "@types/compression": "0.0.35",
     "@types/cookie-parser": "^1.4.1",
     "@types/cors": "^2.8.3",

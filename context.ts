@@ -455,7 +455,11 @@ export class Context {
 
   private toggleRoom(action: 'join' | 'leave', rooms: string | string[], users?: string | string[]) {
     return new Promise((resolve, reject) => {
-      rooms = typeof rooms === "string" ? [rooms] : rooms || [this.room];
+      if (!rooms) {
+        rooms = [this.room];
+      } else if (!Array.isArray(rooms)) {
+        rooms = [rooms];
+      }
 
       try {
         rooms.map((room: any) => typeof room === 'string' ? room : room.toString())
