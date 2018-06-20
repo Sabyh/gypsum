@@ -464,9 +464,11 @@ export class Context {
       try {
         rooms.map((room: any) => typeof room === 'string' ? room : room.toString())
       } catch (err) {
-        this.logger.error(`error ${action}ing room`);
-        console.log(err);
-        reject(err);
+        reject({
+          message: `error ${action}ing room`,
+          original: err,
+          code: RESPONSE_CODES.BAD_REQUEST
+        });
       }
 
       if (!users) {
@@ -477,7 +479,11 @@ export class Context {
             return resolve(true);
           }
 
-        reject(`invalid ${action} room options`);
+        reject({
+          message: `invalid ${action} room options`,
+          code: RESPONSE_CODES.BAD_REQUEST
+        });
+
       } else {
         users = typeof users === "string" ? [users] : users;
 
@@ -510,9 +516,11 @@ export class Context {
 
           })
           .catch(err => {
-            console.log('error getting users sockets');
-            console.log(err);
-            reject(err);
+            reject({
+              message: 'error getting users sockets',
+              original: err,
+              code: RESPONSE_CODES.UNKNOWN_ERROR
+            });
           });
       }
     });
