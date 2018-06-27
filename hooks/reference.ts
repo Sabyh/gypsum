@@ -1,4 +1,5 @@
 import * as Mongodb from 'mongodb';
+import * as Validall from 'validall';
 import { Context } from '../context';
 import { Logger } from '../misc/logger';
 import { MongoModel, FileModel } from '../models';
@@ -8,39 +9,50 @@ import { RESPONSE_CODES } from '../types';
 
 export interface IReferenceHookOptions {
   path: string,
+  model: string,
   projections?: { [key: string]: any };
 }
 
 export function reference(ctx: Context, options: IReferenceHookOptions) {
   const logger = new Logger('referenceHook');
+  let model: MongoModel, responseData: any;
+  let idsList: string[] = [];
+  let groups: { [key: string]: string[] } = {};
 
   if (!options) {
     logger.warn('options was not provided!')
     return ctx.next();
   }
 
-  let responseData = ctx.response.data;
+  if (!options.model) {
+    logger.warn('model name was not provided!')
+    return ctx.next();
+  }
+  
+  model = <MongoModel>State.getModel(options.model);
+
+  if (!model) {
+    logger.warn(`${options.model} model not found!.`);
+    return ctx.next();
+  }
+
+  responseData = ctx.response.data;
 
   if (!responseData) {
     logger.warn('undefined response!');
     return ctx.next();
   }
 
-  let model = <MongoModel>ctx.model;
-  let idsList: string[] = [];
-  let lookup: { [key: string]: any } = {};
-  let groups: { [key: string]: string[] } = {}
+  responseData = Array.isArray(responseData) ? responseData : [responseData];
 
-  if (Array.isArray(responseData) && responseData.length)
-    for (let i = 0; i < responseData.length; i++) {
-      let ids = objectUtil.getValue(responseData[i], options.path);
-      if (ids) {
-        ids = Array.isArray(ids) ? ids : [ids];
-        idsList.push(...ids);
-        lookup[responseData[i]._id.toString()] = responseData[i];
-        groups[responseData[i]._id.toString()] = ids;
-      }
+  for (let i = 0; i < responseData.length; i++) {
+    let ids = objectUtil.getValue(responseData[i], options.path);
+    if (ids) {
+      ids = Array.isArray(ids) ? ids : [ids];
+      idsList.push(...ids);
+      groups[responseData[i]._id.toString()] = ids;
     }
+  }
 
   if (!idsList.length) {
     logger.warn(`'${options.path}' was not found in response data`);
@@ -49,27 +61,30 @@ export function reference(ctx: Context, options: IReferenceHookOptions) {
 
   model.find({ _id: { $in: idsList } }, options.projections)
     .then(res => {
-      if (!res.data) {
+      if (!res || !res.data || !res.data.length) {
         logger.warn(`${model.name} references were not found`);
-      } else if (Array.isArray(responseData)) {
-        for (let i = 0; i < responseData.length; i++) {
-          let currentId: string = responseData[i]._id;
-          let group = groups[currentId];
+        return ctx.next();
+      }
 
-          for (let j = 0; j < group.length; j++) {
-            group[j] = res.data[i].find((item: any) => item._id === group[j]);
-            objectUtil.injectValue(responseData[i], options.path, group);
-          }
-        }
-      } else {
-        let currentId: string = responseData._id;
+      for (let i = 0; i < responseData.length; i++) {
+        let currentId: string = responseData[i]._id;
         let group = groups[currentId];
+        let references: any[] = res.data.filter((entry: any) => group.indexOf(entry._id.toString()));
 
-        for (let j = 0; j < group.length; j++) {
-          group[j] = res.data.find((item: any) => item._id === group[j]);
-          objectUtil.injectValue(responseData, options.path, group);
+        objectUtil.injectValue(responseData[i], options.path, references);
+      }
+
+      if (Array.isArray(ctx.response.data)) {
+        if (!Array.isArray(objectUtil.getValue(ctx.response.data[0], options.path)))
+          for (let i = 0; i < responseData.length; i++)
+            objectUtil.injectValue(ctx.response.data[i], options.path, objectUtil.getValue(responseData[i], options.path)[0]);
+
+      } else {
+        if (!Array.isArray(objectUtil.getValue(ctx.response.data, options.path))) {
+          objectUtil.injectValue(ctx.response.data, options.path, objectUtil.getValue(responseData[0], options.path)[0]);
         }
       }
+
 
       ctx.next();
     })

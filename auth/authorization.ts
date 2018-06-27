@@ -59,7 +59,7 @@ export class Authorization extends Model {
           code: RESPONSE_CODES.BAD_REQUEST
         });
 
-      let model: any = State.getModel(appName, modelName);
+      let model: any = State.getModel(`${appName}.${modelName}`);
 
       if (!model)
         return reject({

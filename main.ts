@@ -100,8 +100,8 @@ export const Gypsum: IGypsum = {
     return State.currentContext;
   },
 
-  getModel(modelName: string, appName: string): Model | MongoModel | FileModel | undefined {
-    return State.getModel(appName, modelName);
+  getModel(path: string): Model | MongoModel | FileModel | undefined {
+    return State.getModel(path);
   },
 
   config(options: IGypsumConfigOptions) {

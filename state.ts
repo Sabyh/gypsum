@@ -32,11 +32,13 @@ export class AppState {
   hooks: IHook[] = [];
   currentContext: Context = null;
 
-  public getModel<T extends Model = Model>(appName: string, name: string): T {
+  public getModel<T extends Model = Model>(path: string): T {
+    let appName: string, modelName: string;
+    [appName, modelName] = path.split('.');
     let app = this.apps.find(_app => _app.name.toLowerCase() === appName.toLowerCase());
 
     if (app)
-      return <T>app.$getModel(name.toLowerCase());
+      return <T>app.$getModel(modelName.toLowerCase());
 
     return null;
   }

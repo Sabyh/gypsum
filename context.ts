@@ -195,7 +195,7 @@ export class Context {
     if (this.service.secure) {
       stackDetails.secure.should = 1;
 
-      let Authentication = State.getModel('auth', 'users');
+      let Authentication = State.getModel('auth.users');
       if (Authentication)
         this._stack.push({ handler: (<any>Authentication).Authenticate.bind(Authentication), args: [] });
     }
@@ -205,7 +205,7 @@ export class Context {
     if (this.service.authorize) {
       stackDetails.authorize.should = 1;
 
-      let Authorization = State.getModel('auth', 'authorization');
+      let Authorization = State.getModel('auth.authorization');
       if (Authorization)
         this._stack.push({ handler: (<any>Authorization).Authorize.bind(Authorization), args: [this.service.authorize] });
     }
@@ -487,7 +487,7 @@ export class Context {
       } else {
         users = typeof users === "string" ? [users] : users;
 
-        let usersModel = State.getModel<Users>('auth', 'users');
+        let usersModel = State.getModel<Users>('auth.users');
 
         usersModel.getSockets(users)
           .then(sockets => {
@@ -641,7 +641,7 @@ function* getHooks(context: Context, list: IHookOptions[]) {
         let appName, modelName, modelHookName;
         [appName, modelName, modelHookName] = hookName.split('.');
 
-        let model = State.getModel(appName, modelName);
+        let model = State.getModel(`${appName}.${modelName}`);
 
         if (model) {
           let modelHook = model.$getHook(modelHookName);
@@ -671,9 +671,10 @@ function getReference(ctx: Context, name: string, hookName: string) {
 
   // if referencing a model
   if (name.charAt(0) === '@') {
-    let app, modelName;
-    [app, modelName] = name.split('.');
-    let model = State.getModel(app.slice(1), modelName);
+    name = name.slice(1);
+    let appName, modelName;
+    [appName, modelName] = name.split('.');
+    let model = State.getModel(name);
 
     if (!model) {
       ctx.logger.warn(`${hookName} hook: model '${modelName}' is not found`);
