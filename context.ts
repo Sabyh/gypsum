@@ -458,6 +458,8 @@ export class Context {
         rooms = [rooms];
       }
 
+      this.logger.info(`${action}ing room`);
+
       try {
         rooms.map((room: any) => typeof room === 'string' ? room : room.toString())
       } catch (err) {
@@ -472,6 +474,7 @@ export class Context {
         if (this.apiType === API_TYPES.SOCKET && this._socket)
           for (let room of rooms) {
             this._socket[action](room || this.room);
+            this.logger.info(`socket: ${this._socket.id} ${action}ed room: ${room || this.room}`);
 
             return resolve(true);
           }
@@ -497,8 +500,10 @@ export class Context {
 
                 if (nsSockets[sockets[i]]) {
                   for (let room of rooms)
-                    if (room)
+                    if (room) {
                       nsSockets[sockets[i]][action](room);
+                      this.logger.info(`socket: ${sockets[i]} ${action}ed room: ${room}`);
+                    }
 
                   sockets.splice(i--, 1);
                 }
