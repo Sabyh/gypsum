@@ -92,7 +92,7 @@ export class Users extends MongoModel {
       if (ids && ids.length) {
         for (let i = 0; i < ids.length; i++) 
           if (typeof ids[i] === "string")
-            ids[i] = new MongoDB.ObjectID(ids[0]);
+            ids[i] = new MongoDB.ObjectID(ids[i]);
   
         this.collection.find({ _id: { $in: ids }})
           .project({ socket: 1 })
