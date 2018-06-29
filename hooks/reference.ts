@@ -6,6 +6,7 @@ import { MongoModel, FileModel } from '../models';
 import { objectUtil } from '../util';
 import { State } from '../state';
 import { RESPONSE_CODES } from '../types';
+import { toObjectID } from '../util/toObjectId';
 
 export interface IReferenceHookOptions {
   path: string,
@@ -59,7 +60,9 @@ export function reference(ctx: Context, options: IReferenceHookOptions) {
     return ctx.next()
   }
 
-  model.find({ _id: { $in: idsList } }, options.queryOptions || {})
+  let query = toObjectID({ _id: { $in: idsList } });
+
+  model.find(query, options.queryOptions || {})
     .then(res => {
       if (!res || !res.data || !res.data.length) {
         logger.warn(`${model.name} references were not found`);
