@@ -10,7 +10,7 @@ import { RESPONSE_CODES } from '../types';
 export interface IReferenceHookOptions {
   path: string,
   model: string,
-  projections?: { [key: string]: any };
+  queryOptions?: any;
 }
 
 export function reference(ctx: Context, options: IReferenceHookOptions) {
@@ -59,7 +59,7 @@ export function reference(ctx: Context, options: IReferenceHookOptions) {
     return ctx.next()
   }
 
-  model.find({ _id: { $in: idsList } }, options.projections)
+  model.find({ _id: { $in: idsList } }, options.queryOptions || {})
     .then(res => {
       if (!res || !res.data || !res.data.length) {
         logger.warn(`${model.name} references were not found`);
