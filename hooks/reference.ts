@@ -72,7 +72,7 @@ export function reference(ctx: Context, options: IReferenceHookOptions) {
       for (let i = 0; i < responseData.length; i++) {
         let currentId: string = responseData[i]._id;
         let group = groups[currentId];
-        let references: any[] = res.data.filter((entry: any) => group.indexOf(entry._id.toString()));
+        let references: any[] = res.data.filter((entry: any) => group.indexOf(entry._id.toString()) > -1);
 
         objectUtil.injectValue(responseData[i], options.path, references);
       }

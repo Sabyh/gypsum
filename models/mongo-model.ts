@@ -184,6 +184,7 @@ export class MongoModel extends Model {
       for (let i = 0; i < documents.length; i++) {
         let document = documents[i];
         document.createdAt = Date.now();
+        document.updatedAt = Date.now();
 
         if (this.schema) {
           if (!this.schema.test(document))
@@ -248,6 +249,7 @@ export class MongoModel extends Model {
         resolve({ data: null });
 
       document.createdAt = Date.now();
+      document.updatedAt = Date.now();
 
       if (this.schema) {
         if (!this.schema.test(document))
@@ -319,12 +321,12 @@ export class MongoModel extends Model {
         return resolve({ data: null });
 
       delete update._id;
-      delete update.token;
 
       if (update.$set) {
+        delete update.$set._id;
         update.$set.updatedAt = Date.now();
       } else {
-        update.$set = { updatedAt: Date.now() };
+        update.updatedAt = Date.now();
       }
 
       if (filter._id && typeof filter._id === 'string')
@@ -376,12 +378,12 @@ export class MongoModel extends Model {
         filter._id = toObjectID(filter);
 
       delete update._id;
-      delete update.token;
 
       if (update.$set) {
+        delete update.$set._id;
         update.$set.updatedAt = Date.now();
       } else {
-        update.$set = { updatedAt: Date.now() };
+        update.updatedAt = Date.now();
       }
 
       // if no schema just do find and update
@@ -519,12 +521,12 @@ export class MongoModel extends Model {
         return resolve({ data: null });
 
       delete update._id;
-      delete update.token;
 
       if (update.$set) {
+        delete update.$set._id;
         update.$set.updatedAt = Date.now();
       } else {
-        update.$set = { updatedAt: Date.now() };
+        update.updatedAt = Date.now();
       }
 
       if (!this.schema) {
