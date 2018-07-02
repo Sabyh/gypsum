@@ -326,7 +326,7 @@ export class MongoModel extends Model {
         delete update.$set._id;
         update.$set.updatedAt = Date.now();
       } else {
-        update.updatedAt = Date.now();
+        update.$set = { updatedAt: Date.now() };
       }
 
       if (filter._id && typeof filter._id === 'string')
@@ -383,7 +383,7 @@ export class MongoModel extends Model {
         delete update.$set._id;
         update.$set.updatedAt = Date.now();
       } else {
-        update.updatedAt = Date.now();
+        update.$set = { updatedAt: Date.now() };
       }
 
       // if no schema just do find and update
@@ -526,7 +526,7 @@ export class MongoModel extends Model {
         delete update.$set._id;
         update.$set.updatedAt = Date.now();
       } else {
-        update.updatedAt = Date.now();
+        update.$set = { updatedAt: Date.now() };
       }
 
       if (!this.schema) {
@@ -620,7 +620,7 @@ export class MongoModel extends Model {
                   }));
               } else {
                 // if test pass send the updated document
-                this.$logger.debug('updateOne service result:', updatedDoc);
+                this.$logger.debug('updateById service result:', updatedDoc);
 
                 if (this.omits && this.omits.length)
                   objectUtil.omit(updatedDoc, this.omits);
@@ -630,7 +630,7 @@ export class MongoModel extends Model {
 
             })
               .catch(error => reject({
-                message: `[${this.name}] - updateOne: unknown error`,
+                message: `[${this.name}] - updateById: unknown error`,
                 original: error,
                 code: RESPONSE_CODES.UNKNOWN_ERROR
               }));
