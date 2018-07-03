@@ -1,6 +1,5 @@
 import { MODEL, SERVICE } from "../decorators";
 import { Model } from "../models";
-import { API_TYPES } from "../types";
 import { Context } from "../context";
 import { State } from "../state";
 

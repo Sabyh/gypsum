@@ -1,8 +1,7 @@
 import { Logger } from '../misc/logger';
 import { API_TYPES } from '../types';
-import { FRIEND, IService, IModelHook, IHookOptions, IModelOptions } from '../decorators';
-import { State } from '../state';
-import { stringUtil } from '../util';
+import TB from 'tools-box';
+import { IService, IModelHook, IHookOptions, IModelOptions } from '../decorators';
 import { App } from '../app';
 import { gypsumEmitter } from '../emiiter';
 
@@ -239,5 +238,5 @@ function createPath(service: IService, model: Model) {
   if (service.params && service.params.length)
     path += '/' + service.params.map(param => `:${param}`).join('/');
 
-  return '/' + stringUtil.cleanPath(path);
+  return '/' + TB.cleanPath(path);
 }

@@ -1,10 +1,10 @@
 import * as express from 'express';
+import TB from 'tools-box';
 import { State } from './state';
 import { Logger } from './misc/logger';
 import { Model } from './models';
 import { IService, IHookOptions, IHook, IServiceOptions } from './decorators';
 import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, Response, ResponseError, IResponseError, IResponse } from './types';
-import { objectUtil, stringUtil } from './util/index';
 import { Users } from './auth/users';
 
 export interface IContext {
@@ -346,7 +346,7 @@ export class Context {
 
   switchService(model: Model, serviceName: string, hooks: 'before' | 'after' | 'both' | 'none' = 'both', useOwnHooks: 0 | 1 | -1 = 0) {
     this.model = model;
-    this.service = (<any>this.model)[stringUtil.capitalizeFirst(serviceName)];
+    this.service = (<any>this.model)[TB.capitalizeFirst(serviceName)];
     let extraHooks;
 
     if (useOwnHooks !== 0)
@@ -359,7 +359,7 @@ export class Context {
   runService(model: Model, serviceName: string, data: IContextOptions = {}, user: any) {
     return new Promise((resolve, reject) => {
 
-      let service = (<any>model)[stringUtil.capitalizeFirst(serviceName)];
+      let service = (<any>model)[TB.capitalizeFirst(serviceName)];
 
       let context = new Context(this.apiType, {
         rid: model.name === this.model.name ? this._rid : null,
@@ -701,7 +701,7 @@ function getReference(ctx: Context, name: string, hookName: string) {
       return ctx.cookies(parts[1]);
     else if (['headers', 'query', 'body', 'params', 'response'].indexOf(targetName) > -1) {
       parts.shift();
-      return objectUtil.getValue((<any>ctx)[<string>targetName], parts.join('.'));
+      return TB.getValue((<any>ctx)[<string>targetName], parts.join('.'));
     } else
       return name;
   }
@@ -714,7 +714,7 @@ function mimicService(name: string, options: IServiceOptions): IService {
     __name: name
   };
 
-  objectUtil.extend(service, options);
+  TB.extend(service, options);
 
   return service;
 }

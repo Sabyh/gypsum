@@ -1,7 +1,6 @@
-import { objectUtil } from '../util/object';
+import TB from 'tools-box';
 import { Context } from '../context';
 import { Logger } from '../misc/logger';
-import { Response } from '../types';
 
 export function filter(ctx: Context, fields: string | string[], source?: string) {
   const logger = new Logger('filterHook');
@@ -36,9 +35,9 @@ export function filter(ctx: Context, fields: string | string[], source?: string)
   logger.info('filtering data');
   if (Array.isArray(srcData))
     for (let i = 0; i < srcData.length; i++)
-      srcData[i] = objectUtil[method](srcData[i], fields);
+      srcData[i] = TB[method](srcData[i], fields);
   else
-    srcData = objectUtil[method](srcData, fields);
+    srcData = TB[method](srcData, fields);
 
   logger.info('done filtering');
   logger.debug(`result data:`);

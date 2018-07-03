@@ -7,7 +7,6 @@ import { Model } from "../models";
 import { Context } from "../context";
 import { RESPONSE_CODES, Response } from '../types';
 import { State } from '../state';
-import { objectUtil } from '../util';
 
 @MODEL({
   secure: State.storage.secure,

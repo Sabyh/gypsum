@@ -1,8 +1,9 @@
+
+import TB from 'tools-box';
 import { Context } from '../context';
 import { MongoModel } from '../models';
 import { RESPONSE_CODES } from '../types';
 import { Logger } from '../misc/logger';
-import { objectUtil } from '../util/index';
 
 export function exists(ctx: Context, model: MongoModel, field: string) {
   const logger = new Logger('existsHook');
@@ -14,7 +15,7 @@ export function exists(ctx: Context, model: MongoModel, field: string) {
     });
     
   logger.info(`checking ${field} value`);
-  let fieldValue = objectUtil.getValue(ctx.body, field);
+  let fieldValue = TB.getValue(ctx.body, field);
 
   if (!fieldValue)
     return ctx.next({

@@ -1,8 +1,8 @@
 import * as Validall from 'validall';
+import TB from 'tools-box';
 import { CorsOptions } from 'cors';
 import { RESPONSE_DOMAINS, API_TYPES, Response, ResponseError, IResponse } from '../types';
 import { IHookOptions } from './hook';
-import { stringUtil, objectUtil } from '../util';
 import { Context } from '../context';
 
 export interface IValidateOptions {
@@ -66,14 +66,14 @@ const defaultOptions: { [key: string]: IServiceOptions } = {
 export function SERVICE(options?: IServiceOptions) {
 
   return function (target: any, key: string, descriptor: PropertyDescriptor) {
-    let serviceName = stringUtil.capitalizeFirst(key);
+    let serviceName = TB.capitalizeFirst(key);
     
     function service(ctx: Context) {
       let args = [];
 
       if (options && options.args && options.args.length)
         for (let i = 0; i < options.args.length; i++)
-          args.push(objectUtil.getValue(ctx, options.args[i]));
+          args.push(TB.getValue(ctx, options.args[i]));
 
       args.push(ctx);
       

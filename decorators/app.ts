@@ -1,7 +1,6 @@
 import { CorsOptions } from 'cors';
-import { Model, MongoModel } from '../models';
+import TB from 'tools-box';;
 import { State } from '../state';
-import { objectUtil } from '../util';
 import { API_TYPES } from '../types';
 
 export interface IAppOptions {
@@ -36,7 +35,7 @@ export function APP(options: { dev: IAppOptions, prod?: IAppProdOptions }) {
     
     options.dev.apiType = options.dev.apiType || API_TYPES.ALL;
     options.dev.models = options.dev.models || [];
-    options.dev.cors = objectUtil.extend(options.dev.cors || {}, defaultCors);
+    options.dev.cors = TB.extend(options.dev.cors || {}, defaultCors);
 
     for (let prop in options.dev) {
       if (options.dev.hasOwnProperty(prop)) {

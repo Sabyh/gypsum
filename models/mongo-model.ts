@@ -1,12 +1,12 @@
 import * as Validall from 'validall';
 import * as MongoDB from 'mongodb';
+import TB from 'tools-box';
 import { Model } from './model';
-import { RESPONSE_CODES, ResponseError, IResponseError, Response, IResponse } from '../types';
-import { SERVICE, FRIEND } from '../decorators';
+import { RESPONSE_CODES, IResponseError, IResponse } from '../types';
+import { SERVICE } from '../decorators';
 import { Context } from '../context';
-import { objectUtil } from '../util';
 import { App } from '../app';
-import { toObjectID } from '../util/toObjectId';
+import { toObjectID } from '../util';
 import { gypsumEmitter } from '../emiiter';
 
 export class MongoModel extends Model {
@@ -91,7 +91,7 @@ export class MongoModel extends Model {
 
           if (this.omits && this.omits.length)
             for (let i = 0; i < docs.length; i++)
-              objectUtil.omit(docs[i], this.omits);
+              TB.omit(docs[i], this.omits);
 
           resolve({ data: docs });
         })
@@ -123,7 +123,7 @@ export class MongoModel extends Model {
           this.$logger.debug('findOne service result:', doc);
 
           if (this.omits && this.omits.length)
-            objectUtil.omit(doc, this.omits);
+            TB.omit(doc, this.omits);
 
           resolve({ data: doc });
         })
@@ -153,7 +153,7 @@ export class MongoModel extends Model {
           this.$logger.debug('findById service result:', doc);
 
           if (this.omits && this.omits.length)
-            objectUtil.omit(doc, this.omits);
+            TB.omit(doc, this.omits);
 
           resolve({ data: doc });
         })
@@ -204,12 +204,12 @@ export class MongoModel extends Model {
           if (internals.length) {
             for (let i = 0; i < internals.length; i++)
               if (this.schema.defaults[internals[i]] !== undefined) {
-                if (objectUtil.getValue(document, internals[i]) !== this.schema.defaults[internals[i]])
+                if (TB.getValue(document, internals[i]) !== this.schema.defaults[internals[i]])
                   return reject({
                     message: `[${this.name}]: '${internals[i]}' cannot be set externaly!`,
                     code: RESPONSE_CODES.UNAUTHORIZED
                   });
-              } else if (objectUtil.getValue(document, internals[i]) !== undefined) {
+              } else if (TB.getValue(document, internals[i]) !== undefined) {
                 return reject({
                   message: `[${this.name}]: '${internals[i]}' cannot be set externaly!`,
                   code: RESPONSE_CODES.UNAUTHORIZED
@@ -228,7 +228,7 @@ export class MongoModel extends Model {
 
           if (this.omits && this.omits.length)
             for (let i = 0; i < insertedDocs.length; i++)
-              objectUtil.omit(insertedDocs[i], this.omits);
+              TB.omit(insertedDocs[i], this.omits);
 
           resolve({ data: insertedDocs });
         })
@@ -293,7 +293,7 @@ export class MongoModel extends Model {
 
           if (this.omits && this.omits.length)
             for (let i = 0; i < docs.length; i++)
-              objectUtil.omit(docs[i], this.omits);
+              TB.omit(docs[i], this.omits);
 
           resolve({ data: docs });
         })
@@ -443,7 +443,7 @@ export class MongoModel extends Model {
                   }
 
                   if (constants.length) {
-                    let changedField = objectUtil.compareValues(constants, preUpdatedDoc, updatedDoc);
+                    let changedField = TB.compareValues(constants, preUpdatedDoc, updatedDoc);
                     if (changedField)
                       errObj = {
                         message: `[${this.name}]: '${changedField}' is a constant field that cannot be changed!`,
@@ -453,7 +453,7 @@ export class MongoModel extends Model {
 
                   if (ctx) {
                     if (!errObj && internals.length) {
-                      let changedField = objectUtil.compareValues(internals, preUpdatedDoc, updatedDoc);
+                      let changedField = TB.compareValues(internals, preUpdatedDoc, updatedDoc);
                       if (changedField)
                         errObj = {
                           message: `[${this.name}]: '${changedField}' cannot be modified externaly!`,
@@ -485,7 +485,7 @@ export class MongoModel extends Model {
                 this.$logger.debug('updateOne service result:', updatedDoc);
 
                 if (this.omits && this.omits.length)
-                  objectUtil.omit(updatedDoc, this.omits);
+                  TB.omit(updatedDoc, this.omits);
 
                 resolve({ data: updatedDoc });
               }
@@ -581,7 +581,7 @@ export class MongoModel extends Model {
                   }
 
                   if (constants.length) {
-                    let changedField = objectUtil.compareValues(constants, preUpdatedDoc, updatedDoc);
+                    let changedField = TB.compareValues(constants, preUpdatedDoc, updatedDoc);
                     if (changedField)
                       errObj = {
                         message: `[${this.name}]: '${changedField}' is a constant field that cannot be changed!`,
@@ -591,7 +591,7 @@ export class MongoModel extends Model {
 
                   if (ctx) {
                     if (!errObj && internals.length) {
-                      let changedField = objectUtil.compareValues(internals, preUpdatedDoc, updatedDoc);
+                      let changedField = TB.compareValues(internals, preUpdatedDoc, updatedDoc);
                       if (changedField)
                         errObj = {
                           message: `[${this.name}]: '${changedField}' cannot be modified externaly!`,
@@ -623,7 +623,7 @@ export class MongoModel extends Model {
                 this.$logger.debug('updateById service result:', updatedDoc);
 
                 if (this.omits && this.omits.length)
-                  objectUtil.omit(updatedDoc, this.omits);
+                  TB.omit(updatedDoc, this.omits);
 
                 resolve({ data: updatedDoc });
               }
@@ -697,7 +697,7 @@ export class MongoModel extends Model {
           let deletedDoc = res.value;
 
           if (this.omits && this.omits.length)
-            objectUtil.omit(deletedDoc, this.omits);
+            TB.omit(deletedDoc, this.omits);
 
           resolve({ data: deletedDoc });
         })
@@ -728,7 +728,7 @@ export class MongoModel extends Model {
           let deletedDoc = res.value;
 
           if (this.omits && this.omits.length)
-            objectUtil.omit(deletedDoc, this.omits);
+            TB.omit(deletedDoc, this.omits);
 
           resolve({ data: deletedDoc });
         })

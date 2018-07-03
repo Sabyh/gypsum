@@ -1,12 +1,10 @@
-import * as Mongodb from 'mongodb';
-import * as Validall from 'validall';
+import TB from 'tools-box';
 import { Context } from '../context';
 import { Logger } from '../misc/logger';
 import { MongoModel, FileModel } from '../models';
-import { objectUtil } from '../util';
 import { State } from '../state';
 import { RESPONSE_CODES } from '../types';
-import { toObjectID } from '../util/toObjectId';
+import { toObjectID } from '../util';
 
 export interface IReferenceHookOptions {
   path: string,
@@ -47,7 +45,7 @@ export function reference(ctx: Context, options: IReferenceHookOptions) {
   responseData = Array.isArray(responseData) ? responseData : [responseData];
 
   for (let i = 0; i < responseData.length; i++) {
-    let ids = objectUtil.getValue(responseData[i], options.path);
+    let ids = TB.getValue(responseData[i], options.path);
     if (ids) {
       ids = Array.isArray(ids) ? ids : [ids];
       idsList.push(...ids);
@@ -74,17 +72,17 @@ export function reference(ctx: Context, options: IReferenceHookOptions) {
         let group = groups[currentId];
         let references: any[] = res.data.filter((entry: any) => group.indexOf(entry._id.toString()) > -1);
 
-        objectUtil.injectValue(responseData[i], options.path, references);
+        TB.injectValue(responseData[i], options.path, references);
       }
 
       if (Array.isArray(ctx.response.data)) {
-        if (!Array.isArray(objectUtil.getValue(ctx.response.data[0], options.path)))
+        if (!Array.isArray(TB.getValue(ctx.response.data[0], options.path)))
           for (let i = 0; i < responseData.length; i++)
-            objectUtil.injectValue(ctx.response.data[i], options.path, objectUtil.getValue(responseData[i], options.path)[0]);
+            TB.injectValue(ctx.response.data[i], options.path, TB.getValue(responseData[i], options.path)[0]);
 
       } else {
-        if (!Array.isArray(objectUtil.getValue(ctx.response.data, options.path))) {
-          objectUtil.injectValue(ctx.response.data, options.path, objectUtil.getValue(responseData[0], options.path)[0]);
+        if (!Array.isArray(TB.getValue(ctx.response.data, options.path))) {
+          TB.injectValue(ctx.response.data, options.path, TB.getValue(responseData[0], options.path)[0]);
         }
       }
 

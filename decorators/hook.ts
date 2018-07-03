@@ -1,4 +1,4 @@
-import { stringUtil } from "../util";
+import TB from 'tools-box';
 import { Context } from "../context";
 import { ResponseError } from "../types";
 
@@ -17,7 +17,7 @@ export type IHookOptions = string | { name: string, args?: any }
 export function HOOK(options: { private: boolean } = { private: false }) {
 
   return function (target: any, key: string, descriptor: PropertyDescriptor) {
-    let hookName = stringUtil.capitalizeFirst(key);
+    let hookName = TB.capitalizeFirst(key);
 
     function hook(ctx: Context, ...args: any[]) {
       args.push(ctx);

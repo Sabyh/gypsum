@@ -1,8 +1,8 @@
-import { IAppOptions, IAppKeys } from './decorators/app';
+import { IAppKeys } from './decorators/app';
+import TB from 'tools-box';
 import { Model } from './models';
 import { API_TYPES } from './types';
 import { State } from './state';
-import { stringUtil } from './util';
 import { gypsumEmitter } from './emiiter';
 import { Logger } from './misc/logger';
 
@@ -59,7 +59,7 @@ export class App {
           path += this.name.toLowerCase() + '.' + State.config.hostName;
           path += (State.env !== 'production') ? ':' + State.config.port : '';
           path += '/' + service.path;      
-          path = stringUtil.cleanPath(path);
+          path = TB.cleanPath(path);
         }
   
         if (service.apiType !== API_TYPES.REST)

@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as Validall from 'validall';
+import TB from 'tools-box';
 import { State } from '../../state';
 import { Logger } from '../../misc/logger';
 import { RESPONSE_CODES } from '../../types';
-import { objectUtil, random } from '../../util';
 
 export namespace FileCollection {
   export interface Document { _id: string;[key: string]: any; }
@@ -140,7 +140,7 @@ export class FileCollection {
                 continue;
 
               if (projectionList.length)
-                result.push(objectUtil[method](documents[i], projectionList));
+                result.push(TB[method](documents[i], projectionList));
               else
                 result.push(documents[i]);
 
@@ -157,7 +157,7 @@ export class FileCollection {
 
           if (selects && selects.length)
             for (let i = 0; i < result.length; i++)
-              objectUtil.omit(result[i], selects);
+              TB.omit(result[i], selects);
 
           resolve(result);
         })
@@ -235,12 +235,12 @@ export class FileCollection {
               if (internals.length) {
                 for (let i = 0; i < internals.length; i++)
                   if (this.schema.defaults[internals[i]] !== undefined)
-                    if (objectUtil.getValue(document, internals[i]) !== this.schema.defaults[internals[i]])
+                    if (TB.getValue(document, internals[i]) !== this.schema.defaults[internals[i]])
                       return reject({
                         message: `[${this.filename}]: '${internals[i]}' cannot be set externaly!`,
                         code: RESPONSE_CODES.UNAUTHORIZED
                       });
-                    else if (objectUtil.getValue(document, internals[i]) !== undefined)
+                    else if (TB.getValue(document, internals[i]) !== undefined)
                       return reject({
                         message: `[${this.filename}]: '${internals[i]}' cannot be set externaly!`,
                         code: RESPONSE_CODES.UNAUTHORIZED
@@ -248,7 +248,7 @@ export class FileCollection {
               }
 
               while (true) {
-                let id: string = random();
+                let id: string = TB.random();
                 if (data.indexes.indexOf(id) === -1) {
                   document._id = id;
                   break;
@@ -271,7 +271,7 @@ export class FileCollection {
 
               if (selects && selects.length)
                 for (let i = 0; i < documents.length; i++)
-                  objectUtil.omit(documents[i], selects);
+                  TB.omit(documents[i], selects);
 
               resolve(documents);
             })
@@ -300,12 +300,12 @@ export class FileCollection {
             if (Validall(data.documents[i], filter)) {
               result++;
               let updatedDoc = <FileCollection.Document>{};
-              objectUtil.extend(updatedDoc, data.documents[i]);
+              TB.extend(updatedDoc, data.documents[i]);
 
               if (Validall.Types.primitive(data.documents[i]))
                 updatedDoc = update;
               else
-                objectUtil.extend(updatedDoc, update);
+                TB.extend(updatedDoc, update);
 
               if (this.schema) {
                 if (!this.schema.test(updatedDoc))
@@ -328,7 +328,7 @@ export class FileCollection {
                   }
 
                   if (constants.length) {
-                    let changedField = objectUtil.compareValues(constants, data.documents[i], updatedDoc);
+                    let changedField = TB.compareValues(constants, data.documents[i], updatedDoc);
                     if (changedField)
                       return reject({
                         message: `[${this.filename}]: '${changedField}' is a constant field that cannot be changed!`,
@@ -337,7 +337,7 @@ export class FileCollection {
                   }
 
                   if (internals.length) {
-                    let changedField = objectUtil.compareValues(internals, data.documents[i], updatedDoc);
+                    let changedField = TB.compareValues(internals, data.documents[i], updatedDoc);
                     if (changedField)
                       return reject({
                         message: `[${this.filename}]: '${changedField}' cannot be modified externaly!`,
@@ -368,7 +368,7 @@ export class FileCollection {
 
                   if (selects && selects.length)
                     for (let i = 0; i < docs.length; i++)
-                      objectUtil.omit(docs[i], selects);
+                      TB.omit(docs[i], selects);
 
                   resolve(single ? docs[0] : docs);
                 } else {

@@ -1,6 +1,5 @@
 import * as path from 'path';
 import * as express from 'express';
-import * as cors from 'cors';
 import { State } from '../../state';
 import { Logger } from '../../misc/logger';
 import { configure } from './configure_app';

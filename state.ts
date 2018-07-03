@@ -1,13 +1,10 @@
 import * as path from 'path';
 import * as express from 'express';
-import * as IO from 'socket.io';
+import TB from 'tools-box';
 import { Config, IGypsumConfig, IServerConfigOptions } from './config';
 import { Context } from './context';
-import { Model, MongoModel, FileModel } from './models';
-import { stringUtil } from './util/string';
-import { FRIEND, IHook } from './decorators';
-import { Logger } from './misc/logger';
-import { objectUtil } from './util';
+import { Model } from './models';
+import { IHook } from './decorators';
 import { App } from './app';
 import { IAuthConfig, IAuthEnvConfig, defaultAuthConfig } from './auth/config';
 import { IStorageConfig, defaultStorageConfig, IStorageEnvConfig } from './storage/config';
@@ -49,29 +46,29 @@ export class AppState {
 
   public setConfiguration(userConfig: IGypsumConfig = <IGypsumConfig>{}) {
 
-    objectUtil.extend(this.config, Config.dev);
+    TB.extend(this.config, Config.dev);
 
     if (userConfig.dev)
-      objectUtil.extend(this.config, userConfig.dev);
+      TB.extend(this.config, userConfig.dev);
 
     if (this.env === 'production' && userConfig.prod)
-      objectUtil.extend(this.config, userConfig.prod);
+      TB.extend(this.config, userConfig.prod);
 
-    this.config.files_data_dir = stringUtil.cleanPath(<string>this.config.files_data_dir);
+    this.config.files_data_dir = TB.cleanPath(<string>this.config.files_data_dir);
   }
 
   public setAuthConfig(auth: IAuthEnvConfig = <IAuthEnvConfig>{}) {
-    this.auth = objectUtil.extend(defaultAuthConfig, auth.dev || {});
+    this.auth = TB.extend(defaultAuthConfig, auth.dev || {});
 
     if (this.env === 'production' && auth.prod)
-      objectUtil.extend(this.auth, auth.prod);
+      TB.extend(this.auth, auth.prod);
   }
 
   public setStorageConfig(storageConfig: IStorageEnvConfig = <IStorageEnvConfig>{}) {
-    this.storage = objectUtil.extend(defaultStorageConfig, storageConfig.dev || {});
+    this.storage = TB.extend(defaultStorageConfig, storageConfig.dev || {});
 
     if (this.env === 'production' && storageConfig.prod)
-      objectUtil.extend(this.storage, storageConfig.prod);
+      TB.extend(this.storage, storageConfig.prod);
 
     this.storage.storageDir = path.join(this.root, this.storage.storageDir);
   }

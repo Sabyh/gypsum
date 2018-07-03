@@ -2,16 +2,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as MongoDB from 'mongodb';
 import * as jwt from 'jsonwebtoken';
+import TB from 'tools-box';
 import * as Validall from 'validall';
 import { MODEL, HOOK, SERVICE } from "../../decorators";
 import { MongoModel } from "../../models";
 import { createTransport, createTestAccount, SendMailOptions } from "nodemailer";
 import { State } from "../../state";
 import { usersSchema } from "./schema";
-import { hash, stringUtil, verify, toRegExp } from "../../util";
 import { Context } from "../../context";
-import { JsonWebTokenError } from 'jsonwebtoken';
-import unique from '../../util/unique';
 import { RESPONSE_CODES, IResponse, RESPONSE_DOMAINS } from '../../types';
 import { App } from '../../app';
 
@@ -67,7 +65,7 @@ export class Users extends MongoModel {
   createRootUser(): Promise<any> {
     this.$logger.info('creating root user: ' + State.auth.rootUserEmail);
     return new Promise((resolve, reject) => {
-      hash(State.auth.rootUserPassword)
+      TB.hash(State.auth.rootUserPassword)
         .then(results => {
           this.collection.insertOne({
             email: State.auth.rootUserEmail,
@@ -236,7 +234,7 @@ export class Users extends MongoModel {
           from: State.auth.supportEmail || `${State.config.server_name} Administration`,
           to: user.email,
           subject: `${State.config.server_name} Account Verification`,
-          html: stringUtil.compile(template.toString('utf-8'), { username: user.email.split('@')[0], activationLink })
+          html: TB.compile(template.toString('utf-8'), { username: user.email.split('@')[0], activationLink })
         };
 
         this.transporter.sendMail(emailOptions, (sendEmailError: any, info: any) => {
@@ -316,7 +314,7 @@ export class Users extends MongoModel {
               });
 
             let message = 'Your account has been activated successfully';
-            let template = stringUtil.compile(data, { email: ctx.user.email.split('@')[0], message: message });
+            let template = TB.compile(data, { email: ctx.user.email.split('@')[0], message: message });
             resolve({ data: template, type: 'html' });
           });
         })
@@ -358,11 +356,11 @@ export class Users extends MongoModel {
               code: RESPONSE_CODES.BAD_REQUEST
             });
 
-          let newPassword = unique.Get();
+          let newPassword = TB.Unique.Get();
           let hashedPassword;
           let passwordSalt;
 
-          hash(newPassword)
+          TB.hash(newPassword)
             .then((result: [string, string]) => {
               let hashedPassword = result[0];
               let passwordSalt = result[1];
@@ -389,7 +387,7 @@ export class Users extends MongoModel {
                       from: State.auth.supportEmail || `${State.config.server_name} Administration`,
                       to: user.email,
                       subject: `${State.config.server_name} Reset Password`,
-                      html: stringUtil.compile(template.toString('utf-8'), { username: user.email.split('@')[0], password: newPassword })
+                      html: TB.compile(template.toString('utf-8'), { username: user.email.split('@')[0], password: newPassword })
                     };
 
                     this.transporter.sendMail(emailOptions, (sendEmailError: any, info: any) => {
@@ -485,7 +483,7 @@ export class Users extends MongoModel {
               code: RESPONSE_CODES.UNAUTHORIZED
             });
 
-          verify(password, doc.password, doc.passwordSalt)
+          TB.verify(password, doc.password, doc.passwordSalt)
             .then((match: boolean) => {
               if (match === true) {
                 if (uuid) {
@@ -542,7 +540,7 @@ export class Users extends MongoModel {
                 code: RESPONSE_CODES.BAD_REQUEST
               });
 
-            hash(document.password)
+            TB.hash(document.password)
               .then(results => {
                 if (results && results.length) {
                   document.password = results[0];
