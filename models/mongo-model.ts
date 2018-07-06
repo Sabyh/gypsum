@@ -8,6 +8,7 @@ import { Context } from '../context';
 import { App } from '../app';
 import { toObjectID } from '../util';
 import { gypsumEmitter } from '../emiiter';
+import { State } from '../state';
 
 export class MongoModel extends Model {
   protected collection: MongoDB.Collection;
@@ -55,7 +56,7 @@ export class MongoModel extends Model {
 
       this.collection.count(query || {}, <MongoDB.MongoCountPreferences>options)
         .then(count => {
-          this.$logger.debug('count service result:', count);
+          this.$logger.debug('count service resolving result');
           resolve({ data: count, count: count });
         })
         .catch(error => reject({
@@ -87,7 +88,7 @@ export class MongoModel extends Model {
       cursor
         .toArray()
         .then(docs => {
-          this.$logger.debug('find service result:', docs);
+          this.$logger.debug('find service resolving result');
 
           if (this.omits && this.omits.length)
             for (let i = 0; i < docs.length; i++)
@@ -120,7 +121,7 @@ export class MongoModel extends Model {
 
       this.collection.findOne(query, <MongoDB.FindOneOptions>options)
         .then(doc => {
-          this.$logger.debug('findOne service result:', doc);
+          this.$logger.debug('findOne service resolving result');
 
           if (this.omits && this.omits.length)
             TB.omit(doc, this.omits);
@@ -150,7 +151,7 @@ export class MongoModel extends Model {
 
       this.collection.findOne({ _id: new MongoDB.ObjectID(id) }, <MongoDB.FindOneOptions>options)
         .then(doc => {
-          this.$logger.debug('findById service result:', doc);
+          this.$logger.debug('findById service resolving result');
 
           if (this.omits && this.omits.length)
             TB.omit(doc, this.omits);
@@ -185,6 +186,11 @@ export class MongoModel extends Model {
         let document = documents[i];
         document.createdAt = Date.now();
         document.updatedAt = Date.now();
+
+        if (State.currentContext) {
+          document.createdBy = State.currentContext.user._id.toString();
+          document.updatedBy = State.currentContext.user._id.toString();
+        }
 
         if (this.schema) {
           if (!this.schema.test(document))
@@ -221,8 +227,7 @@ export class MongoModel extends Model {
 
       this.collection.insertMany(documents, <MongoDB.CollectionInsertManyOptions>writeConcern)
         .then(res => {
-          this.$logger.debug('insert service result:');
-          this.$logger.debug(JSON.stringify(res, null, 4));
+          this.$logger.debug('insert service resolving result');
 
           let insertedDocs = res.ops;
 
@@ -251,6 +256,11 @@ export class MongoModel extends Model {
       document.createdAt = Date.now();
       document.updatedAt = Date.now();
 
+      if (State.currentContext) {
+        document.createdBy = State.currentContext.user._id.toString();
+        document.updatedBy = State.currentContext.user._id.toString();
+      }
+
       if (this.schema) {
         if (!this.schema.test(document))
           return reject({
@@ -262,6 +272,7 @@ export class MongoModel extends Model {
 
       this.collection.insertOne(document)
         .then((res) => {
+          this.$logger.debug('insert one service resolving result');
           resolve({ data: res.ops[0] });
         })
         .catch(err => reject(err));
@@ -289,7 +300,7 @@ export class MongoModel extends Model {
       cursor
         .toArray()
         .then(docs => {
-          this.$logger.debug('search service result:', docs);
+          this.$logger.debug('search service resolving result');
 
           if (this.omits && this.omits.length)
             for (let i = 0; i < docs.length; i++)
@@ -325,9 +336,13 @@ export class MongoModel extends Model {
       if (update.$set) {
         delete update.$set._id;
         update.$set.updatedAt = Date.now();
+
       } else {
         update.$set = { updatedAt: Date.now() };
       }
+
+      if (State.currentContext)
+        update.$set.updatedBy = State.currentContext.user._id.toString();
 
       if (filter._id && typeof filter._id === 'string')
         filter._id = new MongoDB.ObjectID(filter._id);
@@ -341,7 +356,7 @@ export class MongoModel extends Model {
             { upsert: false }
           )
             .then(res => {
-              this.$logger.debug('update service result:', res);
+              this.$logger.debug('update service resolving result');
               this.$logger.debug({ data: res.result.nModified, count: res.result.nModified });
               return this.find({ _id: { $in: ids } });
             })
@@ -386,6 +401,9 @@ export class MongoModel extends Model {
         update.$set = { updatedAt: Date.now() };
       }
 
+      if (State.currentContext)
+        update.$set.updatedBy = State.currentContext.user._id.toString();
+
       // if no schema just do find and update
       if (!this.schema) {
         this.collection.findOneAndUpdate(
@@ -393,7 +411,7 @@ export class MongoModel extends Model {
           update,
           { returnOriginal: false }
         ).then(res => {
-          this.$logger.debug('updateOne service result:', res);
+          this.$logger.debug('updateOne service resolving result');
           resolve({ data: res.value });
         })
           .catch(error => reject({
@@ -482,7 +500,7 @@ export class MongoModel extends Model {
                   }));
               } else {
                 // if test pass send the updated document
-                this.$logger.debug('updateOne service result:', updatedDoc);
+                this.$logger.debug('updateOne service resolving result');
 
                 if (this.omits && this.omits.length)
                   TB.omit(updatedDoc, this.omits);
@@ -529,13 +547,16 @@ export class MongoModel extends Model {
         update.$set = { updatedAt: Date.now() };
       }
 
+      if (State.currentContext)
+        update.$set.updatedBy = State.currentContext.user._id.toString();
+
       if (!this.schema) {
         this.collection.findOneAndUpdate(
           { _id: new MongoDB.ObjectID(id) },
           update,
           { returnOriginal: false }
         ).then(res => {
-          this.$logger.debug('updateById service result:', res);
+          this.$logger.debug('updateById service resolving result');
           resolve(res.value);
         })
           .catch(error => reject({
@@ -620,7 +641,7 @@ export class MongoModel extends Model {
                   }));
               } else {
                 // if test pass send the updated document
-                this.$logger.debug('updateById service result:', updatedDoc);
+                this.$logger.debug('updateById service resolving result');
 
                 if (this.omits && this.omits.length)
                   TB.omit(updatedDoc, this.omits);
@@ -661,7 +682,7 @@ export class MongoModel extends Model {
 
       this.collection.deleteMany(filter)
         .then(res => {
-          this.$logger.debug('delete service result:', res);
+          this.$logger.debug('delete service resolving result');
           resolve({ data: res.result.n, count: res.result.n });
         })
         .catch(error => reject({
@@ -692,7 +713,7 @@ export class MongoModel extends Model {
 
       this.collection.findOneAndDelete(filter)
         .then(res => {
-          this.$logger.debug('deleteOne service result:', res);
+          this.$logger.debug('deleteOne service resolving result');
 
           let deletedDoc = res.value;
 
@@ -723,7 +744,7 @@ export class MongoModel extends Model {
 
       this.collection.findOneAndDelete({ _id: new MongoDB.ObjectID(id) })
         .then(res => {
-          this.$logger.debug('deleteById service result:', res);
+          this.$logger.debug('deleteById service resolving result');
 
           let deletedDoc = res.value;
 
