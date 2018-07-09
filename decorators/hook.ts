@@ -2,11 +2,11 @@ import TB from 'tools-box';
 import { Context } from "../context";
 import { ResponseError } from "../types";
 
-export interface IHook {
+export interface IHookFunc {
   (ctx: Context, ...args: any[]): void;
 }
 
-export interface IModelHook extends IHook {
+export interface IHook extends IHookFunc {
   __name: string;
   isHook: boolean;
   private: boolean;
@@ -29,8 +29,8 @@ export function HOOK(options: { private: boolean } = { private: false }) {
     }
 
     (<any>hook).__name = hookName;
-    (<IModelHook>hook).isHook = true;
-    (<IModelHook>hook).private = options.private;
+    (<IHook>hook).isHook = true;
+    (<IHook>hook).private = options.private;
 
     Object.defineProperty(target.constructor.prototype, hookName, {
       value: hook,

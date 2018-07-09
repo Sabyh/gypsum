@@ -1,21 +1,23 @@
 import { Logger } from '../misc/logger';
 import { API_TYPES } from '../types';
 import TB from 'tools-box';
-import { IService, IModelHook, IHookOptions, IModelOptions } from '../decorators';
+import { IService, IHook, IHookOptions, IModelOptions, IProcess } from '../decorators';
 import { App } from '../app';
-import { gypsumEmitter } from '../emiiter';
+import { gypsumEmitter, ModelEmitter } from '../emitter';
+import { processManger } from '../process-manager';
 
 export type ServiceOptions = { [key: string]: IService | boolean };
 export type getOptions = keyof IModelOptions;
 
 export class Model {
   private _servicesData: { [key: string]: IService };
-  private _hooksData: { [key: string]: IModelHook };
+  private _hooksData: { [key: string]: IHook };
 
   public app: App;
   public type: 'Mongo' | 'File' | undefined;
   public $logger: Logger;
   public name = this.constructor.name.toLowerCase();
+  public emitter = new ModelEmitter();
 
   constructor(app: App) {
     this.app = app;
@@ -142,12 +144,12 @@ export class Model {
     return this._servicesData;
   }
 
-  private _mArrangeHooks(): { [key: string]: IModelHook } {
+  private _mArrangeHooks(): { [key: string]: IHook } {
     this._hooksData = {};
 
     for (let prop in this) {
       if (this[prop] && (<any>this[prop]).isHook) {
-        this._hooksData[prop.toLowerCase()] = <IModelHook>{};
+        this._hooksData[prop.toLowerCase()] = <IHook>{};
 
         for (let key in this[prop])
           (<any>this._hooksData[prop.toLowerCase()])[key] = this[prop][key];
@@ -155,6 +157,12 @@ export class Model {
     }
 
     return this._hooksData;
+  }
+
+  private _mArrangeProcesses() {
+    for (let prop in this)
+    if (this[prop] && (<any>this[prop]).isProcess)
+    processManger.registerProcess(this, <any>this[prop]);
   }
   
   private _init() {
@@ -164,6 +172,7 @@ export class Model {
 
     this._mArrangeServices();
     this._mArrangeHooks();
+    this._mArrangeProcesses();
   }
 
   $get(prop: getOptions) {
@@ -178,11 +187,11 @@ export class Model {
     return this._servicesData[name.toLowerCase()];
   }
 
-  $getHooks(): { [key: string]: IModelHook } {
+  $getHooks(): { [key: string]: IHook } {
     return this._hooksData || this._mArrangeHooks();
   }
 
-  $getHook(name: string): IModelHook {
+  $getHook(name: string): IHook {
     return this._hooksData[name.toLowerCase()];
   }
 

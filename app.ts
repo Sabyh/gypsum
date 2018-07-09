@@ -3,11 +3,14 @@ import TB from 'tools-box';
 import { Model } from './models';
 import { API_TYPES } from './types';
 import { State } from './state';
-import { gypsumEmitter } from './emiiter';
+import { gypsumEmitter } from './emitter';
 import { Logger } from './misc/logger';
+import { processManger } from './process-manager';
+import { IHook } from './decorators';
 
 export class App {
   private _models: Model[] = [];
+  private _hooksData: { [key: string]: IHook };
   name = this.constructor.name.toLowerCase();
   $logger = new Logger(this.name);
 
@@ -22,7 +25,30 @@ export class App {
       this._models.push(new models[i](this));
     }
 
+    this._mArrangeHooks();
+    this._mArrangeProcesses();
     gypsumEmitter.emit(`${this.name} ready`);
+  }
+
+  private _mArrangeHooks(): { [key: string]: IHook } {
+    this._hooksData = {};
+
+    for (let prop in this) {
+      if (this[prop] && (<any>this[prop]).isHook) {
+        this._hooksData[prop.toLowerCase()] = <IHook>{};
+
+        for (let key in this[prop])
+          (<any>this._hooksData[prop.toLowerCase()])[key] = this[prop][key];
+      }
+    }
+
+    return this._hooksData;
+  }
+
+  private _mArrangeProcesses() {
+    for (let prop in this)
+    if (this[prop] && (<any>this[prop]).isProcess)
+    processManger.registerProcess(this, <any>this[prop]);
   }
 
   get publicModels(): Model[] {
@@ -39,6 +65,18 @@ export class App {
       return null;
 
     return model;
+  }
+
+  $hasModel(name: string): boolean {
+    return this._models.findIndex(model => model.name === name.toLowerCase()) > -1;
+  }
+
+  $getHooks(): { [key: string]: IHook } {
+    return this._hooksData || this._mArrangeHooks();
+  }
+
+  $getHook(name: string): IHook {
+    return this._hooksData[name.toLowerCase()];
   }
 
   $getApis() {

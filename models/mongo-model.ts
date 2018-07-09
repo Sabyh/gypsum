@@ -7,7 +7,7 @@ import { SERVICE } from '../decorators';
 import { Context } from '../context';
 import { App } from '../app';
 import { toObjectID } from '../util';
-import { gypsumEmitter } from '../emiiter';
+import { gypsumEmitter } from '../emitter';
 import { State } from '../state';
 
 export class MongoModel extends Model {

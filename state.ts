@@ -4,7 +4,7 @@ import TB from 'tools-box';
 import { Config, IGypsumConfig, IServerConfigOptions } from './config';
 import { Context } from './context';
 import { Model } from './models';
-import { IHook } from './decorators';
+import { IHookFunc } from './decorators';
 import { App } from './app';
 import { IAuthConfig, IAuthEnvConfig, defaultAuthConfig } from './auth/config';
 import { IStorageConfig, defaultStorageConfig, IStorageEnvConfig } from './storage/config';
@@ -26,8 +26,12 @@ export class AppState {
   storage = <IStorageConfig>{};
   auth: IAuthConfig = <IAuthConfig>{};
   middlewares: Function;
-  hooks: IHook[] = [];
+  hooks: IHookFunc[] = [];
   currentContext: Context = null;
+
+  public getApp(name: string): App {
+    return this.apps.find(app => app.name.toLowerCase() === name.toLowerCase()) || null;
+  }
 
   public getModel<T extends Model = Model>(path: string): T {
     let appName: string, modelName: string;
@@ -40,7 +44,7 @@ export class AppState {
     return null;
   }
 
-  public getHook(name: string): IHook {
+  public getHook(name: string): IHookFunc {
     return this.hooks.find(hook => (<any>hook).name.toLowerCase() === name.toLowerCase()) || null;
   }
 

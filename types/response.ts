@@ -1,7 +1,7 @@
 import { API_TYPES } from './api-types';
 import { RESPONSE_CODES } from './response-codes';
 import { RESPONSE_DOMAINS } from './response-domains';
-import { ResponseError, IResponseError } from './index';
+import { IResponseError } from './response-error';
 
 export type responseTypes = 'json' | 'html' | 'file';
 

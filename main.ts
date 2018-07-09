@@ -1,5 +1,4 @@
 import * as cluster from 'cluster';
-import * as path from 'path';
 import { Logger } from './misc/logger';
 
 /**
@@ -33,11 +32,11 @@ import { initSocket } from './servers/io';
 import { Server } from './servers/http';
 import { initializeWorkers } from './workers';
 import { MongoModel, FileModel } from './models';
-import { IModelHook, IHook } from './decorators';
+import { IHook, IHookFunc } from './decorators';
 import { App } from './app';
-import { IAuthConfig, IAuthEnvConfig } from './auth/config';
+import { IAuthEnvConfig } from './auth/config';
 import { IStorageEnvConfig } from './storage/config';
-import { gypsumEmitter } from './emiiter';
+import { gypsumEmitter } from './emitter';
 
 /**
  * Instanciating Logger for gypsum

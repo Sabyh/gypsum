@@ -3,7 +3,7 @@ import TB from 'tools-box';
 import { State } from './state';
 import { Logger } from './misc/logger';
 import { Model } from './models';
-import { IService, IHookOptions, IHook, IServiceOptions } from './decorators';
+import { IService, IHookOptions, IHookFunc, IServiceOptions } from './decorators';
 import { API_TYPES, RESPONSE_CODES, RESPONSE_DOMAINS, Response, ResponseError, IResponseError, IResponse } from './types';
 import { Users } from './auth/users';
 
@@ -330,14 +330,14 @@ export class Context {
           this._socket.emit(event, this.response);
         }
       }
-      
+
       if (this._resolve && this.response.success) {
         this._resolve(this.response);
       } else if (this._reject && !this.response.success) {
         this._reject(this.response);
       }
     }
-    
+
     if (this === State.currentContext)
       State.currentContext = null;
   }
@@ -646,19 +646,48 @@ function* getHooks(context: Context, list: IHookOptions[]) {
         let appName, modelName, modelHookName;
         [appName, modelName, modelHookName] = hookName.split('.');
 
-        let model = State.getModel(`${appName}.${modelName}`);
+        if (modelHookName) {
+          let model = State.getModel(`${appName}.${modelName}`);
 
-        if (model) {
-          let modelHook = model.$getHook(modelHookName);
+          if (model) {
+            let modelHook = model.$getHook(modelHookName);
 
-          if (modelHook) {
-            handler = (<any>model)[modelHook.__name].bind(model);
+            if (modelHook) {
+              if (modelHook.private && context.model !== model) {
+                Logger.Warn(`getHooks: hook '${hookName}' is a private hook`);
+                yield null;
+              }
+
+              handler = (<any>model)[modelHook.__name].bind(model);
+            } else {
+              yield null;
+            }
+
           } else {
             yield null;
           }
 
         } else {
-          yield null;
+          let appHookName = modelName;
+          let app = State.getApp(appName);
+
+          if (appName) {
+            let appHook = app.$getHook(appHookName);
+
+            if (appHook) {
+              if (appHook.private && context._appName.toLowerCase() !== app.name.toLowerCase()) {
+                Logger.Warn(`getHooks: hook '${hookName}' is a private hook`);
+                yield null;
+              }
+
+              handler = (<any>app)[appHook.__name].bind(app);
+            } else {
+              yield null;
+            }
+
+          } else {
+            yield null;
+          }
         }
 
       } else {

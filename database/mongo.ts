@@ -1,8 +1,7 @@
 import { MongoClient, Db } from 'mongodb';
 import { Logger } from '../misc/logger';
 import { State } from '../state';
-import { MongoModel } from '../models';
-import { gypsumEmitter } from '../emiiter';
+import { gypsumEmitter } from '../emitter';
 
 export function initMongo(): Promise<boolean> {
   const logger = new Logger('initMongo');
