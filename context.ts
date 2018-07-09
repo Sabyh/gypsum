@@ -101,6 +101,8 @@ export class Context {
       }
 
       let serviceData = model.$getService(serviceName);
+      console.log('serviceData');
+      console.log(JSON.stringify(serviceData, null, 2));
 
       if (!serviceData) {
         return reject({
@@ -111,20 +113,22 @@ export class Context {
       let service = mimicService(serviceName, {
         crud: serviceData.crud,
         domain: serviceData.domain,
-        after: serviceData.after.slice(1)
+        after: serviceData.after.slice(0)
       });
 
       let context = new Context(API_TYPES.SOCKET, {
-        rid: model.name === State.currentContext.model.name ? State.currentContext._rid : null,
+        rid: model.name === State.currentContext.model.name ? State.currentContext._rid : TB.Unique.Get(),
         headers: State.currentContext.headers,
+        socket: State.currentContext._socket,
         query: State.currentContext.query,
         body: State.currentContext.body,
         params: State.currentContext.params,
         cookies: State.currentContext.cookies,
+        domain: serviceData.domain,
         req: State.currentContext._req,
         res: State.currentContext._res,
-        appName: model.app.name,
-        namespace: model.app.name,
+        appName: State.currentContext._appName,
+        namespace: State.currentContext._namespace,
         model: model,
         service: service
       }, false);
@@ -132,7 +136,7 @@ export class Context {
       context._resolve = resolve;
       context._reject = reject;
       context._mPushStack(service.after);
-      context.ok(<Response>data);
+      context.ok(new Response(data));
     });
   }
 
@@ -326,15 +330,16 @@ export class Context {
           this._socket.emit(event, this.response);
         }
       }
-
-      State.currentContext = null;
-
+      
       if (this._resolve && this.response.success) {
         this._resolve(this.response);
       } else if (this._reject && !this.response.success) {
         this._reject(this.response);
       }
     }
+    
+    if (this === State.currentContext)
+      State.currentContext = null;
   }
 
   private _mPushStack(hooksList: IHookOptions[]) {
@@ -566,7 +571,7 @@ export class Context {
       let current = this._stack.splice(0, 1)[0];
 
       if (current) {
-        this.logger.debug(`running stack handler: ${(<any>current.handler).__name || current.handler.name}`);
+        this.logger.debug(`running stack handler: ${(<any>current.handler).__name, current.handler.name}`);
         this._mainHandler = !!current.mainHandler;
         current.handler(this, ...this.getRealArgsValues(current.args, current.handler.name));
       } else {
@@ -711,7 +716,8 @@ function getReference(ctx: Context, name: string, hookName: string) {
 
 function mimicService(name: string, options: IServiceOptions): IService {
   let service = <IService>{
-    __name: name
+    __name: name,
+    name
   };
 
   TB.extend(service, options);

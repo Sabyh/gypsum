@@ -56,36 +56,11 @@
     let sendButton = document.getElementById("sendButton");
     let getButton = document.getElementById("getButton");
 
-    let App = gypsumClient.getApp();
-
-    console.log(App);
-
-    sendButton.addEventListener('click', e => {
-      App.users.dispatch('insert', {
-        body: JSON.parse(bodyArea.value)
-      });
+    let gypsumClient = new GypsumClient({
+      host: 'http://localhost:7771',
+      apps: ['test'],
+      connectionType: 'always'
     });
-
-    getButton.addEventListener('click', () => {
-      App.users
-        .dispatch('find', {})
-        .then(res => {
-          console.log('find results:');
-          console.log(res);
-        })
-        .catch(err => {
-          console.log(err);
-        });
-    })
-
-    App.users
-      .on('insert', res => {
-        console.log('insert results:');
-        console.log(res);
-      })
-      .catch(err => {
-        console.log(err);
-      });
 
   </script>
 </body>

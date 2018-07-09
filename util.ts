@@ -11,7 +11,12 @@ export function toObjectID(query: { [key: string]: any }) {
 
   for (let prop in query._id) {
     if (Array.isArray(query._id[prop]))
-      query._id[prop] = query._id[prop].map((id: string) => new MongoDB.ObjectId(id));
+      query._id[prop] = query._id[prop].map((id: string) => {
+        if (typeof id === "string")
+          return new MongoDB.ObjectID(id)
+
+        return id;
+      });
     else if (typeof query._id[prop] === 'string')
       query._id[prop] = new MongoDB.ObjectID(query._id[prop]);
   }
