@@ -3,7 +3,7 @@ import { API_TYPES } from '../types';
 import TB from 'tools-box';
 import { IService, IHook, IHookOptions, IModelOptions, IProcess } from '../decorators';
 import { App } from '../app';
-import { gypsumEmitter, ModelEmitter } from '../emitter';
+import { gypsumEmitter, GypsumEmitter } from '../emitter';
 import { processManger } from '../process-manager';
 
 export type ServiceOptions = { [key: string]: IService | boolean };
@@ -17,7 +17,7 @@ export class Model {
   public type: 'Mongo' | 'File' | undefined;
   public $logger: Logger;
   public name = this.constructor.name.toLowerCase();
-  public emitter = new ModelEmitter();
+  public emitter = new GypsumEmitter();
 
   constructor(app: App) {
     this.app = app;

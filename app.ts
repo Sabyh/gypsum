@@ -3,7 +3,7 @@ import TB from 'tools-box';
 import { Model } from './models';
 import { API_TYPES } from './types';
 import { State } from './state';
-import { gypsumEmitter } from './emitter';
+import { gypsumEmitter, GypsumEmitter } from './emitter';
 import { Logger } from './misc/logger';
 import { processManger } from './process-manager';
 import { IHook } from './decorators';
@@ -11,8 +11,10 @@ import { IHook } from './decorators';
 export class App {
   private _models: Model[] = [];
   private _hooksData: { [key: string]: IHook };
-  name = this.constructor.name.toLowerCase();
-  $logger = new Logger(this.name);
+
+  public emitter = new GypsumEmitter();
+  public name = this.constructor.name.toLowerCase();
+  public $logger = new Logger(this.name);
 
   constructor() {
     gypsumEmitter.on('initialize apps', () => this._init());
