@@ -74,8 +74,8 @@ export function MODEL(options: IModelOptions = {}) {
       }
     }
 
-    if (options.schema)
-      options.schema = new Validall.Schema(options.schema, Object.assign(schemaOptions, { root: Target.name.toLowerCase() }));
+    if (options.schema) 
+      options.schema = new Validall.Schema(options.schema, Object.assign(schemaOptions, { name: Target.name.toLowerCase() }));
     
 
     for (let prop in options) {
