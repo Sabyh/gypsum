@@ -165,6 +165,7 @@ export class MongoModel extends Model {
   })
   insert(documents: any, writeConcern: any = {}, ctx?: Context): Promise<IResponse> {
     this.$logger.info('insert service called');
+    ctx = ctx || State.currentContext;
 
     return new Promise((resolve, reject) => {
 
@@ -178,9 +179,9 @@ export class MongoModel extends Model {
         document.createdAt = Date.now();
         document.updatedAt = Date.now();
 
-        if (State.currentContext) {
-          document.createdBy = State.currentContext.user._id.toString();
-          document.updatedBy = State.currentContext.user._id.toString();
+        if (ctx && ctx.user) {
+          document.createdBy = ctx.user._id.toString();
+          document.updatedBy = ctx.user._id.toString();
         }
 
         if (this.schema) {
@@ -241,6 +242,8 @@ export class MongoModel extends Model {
   })
   insertOne(document: any, ctx?: Context): Promise<IResponse> {
     this.$logger.info('insert one service called');
+
+    ctx = ctx || State.currentContext;
     
     return new Promise((resolve, reject) => {
       if (!document)
@@ -249,9 +252,9 @@ export class MongoModel extends Model {
       document.createdAt = Date.now();
       document.updatedAt = Date.now();
 
-      if (State.currentContext) {
-        document.createdBy = State.currentContext.user._id.toString();
-        document.updatedBy = State.currentContext.user._id.toString();
+      if (ctx && ctx.user) {
+        document.createdBy = ctx.user._id.toString();
+        document.updatedBy = ctx.user._id.toString();
       }
 
       if (this.schema) {
@@ -312,6 +315,7 @@ export class MongoModel extends Model {
   })
   update(filter: any, update: any, ctx?: Context): Promise<IResponse> {
     this.$logger.info('update service called');
+    ctx = ctx || State.currentContext;
 
     filter = filter || {};
 
@@ -330,8 +334,8 @@ export class MongoModel extends Model {
         update.$set = { updatedAt: Date.now() };
       }
 
-      if (State.currentContext)
-        update.$set.updatedBy = State.currentContext.user._id.toString();
+      if (ctx && ctx.user)
+        update.$set.updatedBy = ctx.user._id.toString();
 
       filter = toObjectID(filter);
 
@@ -370,6 +374,7 @@ export class MongoModel extends Model {
     this.$logger.info('updateOne service called');
 
     filter = filter || {};
+    ctx = ctx || State.currentContext;
 
     return new Promise((resolve, reject) => {
 
@@ -388,8 +393,8 @@ export class MongoModel extends Model {
         update.$set = { updatedAt: Date.now() };
       }
 
-      if (State.currentContext)
-        update.$set.updatedBy = State.currentContext.user._id.toString();
+      if (ctx && ctx.user)
+        update.$set.updatedBy = ctx.user._id.toString();
 
       // if no schema just do find and update
       if (!this.schema) {
@@ -517,6 +522,8 @@ export class MongoModel extends Model {
   updateById(id: string, update: any, ctx?: Context): Promise<IResponse> {
     this.$logger.info('updateById service called');
 
+    ctx = ctx || State.currentContext;
+
     return new Promise((resolve, reject) => {
 
       if (!update || Object.keys(update).length === 0 || !id)
@@ -531,8 +538,8 @@ export class MongoModel extends Model {
         update.$set = { updatedAt: Date.now() };
       }
 
-      if (State.currentContext)
-        update.$set.updatedBy = State.currentContext.user._id.toString();
+      if (ctx && ctx.user)
+        update.$set.updatedBy = ctx.user._id.toString();
 
       if (!this.schema) {
         this.collection.findOneAndUpdate(
