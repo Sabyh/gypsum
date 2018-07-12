@@ -481,11 +481,12 @@ export class Users extends MongoModel {
           TB.verify(password, doc.password, doc.passwordSalt)
             .then((match: boolean) => {
               if (match === true) {
-                if (uuid) {
-                  return this.updateById(doc._id, { $push: { uuids: uuid } });
-                } else {
-                  resolve({ data: doc });
-                }
+                let update: any = { $set: { lastVisit: Date.now() } }
+                if (uuid && doc.uuids.indexOf(uuid) === -1)
+                  update.$push.uuids = uuid;
+                
+                return this.updateById(doc._id, update);
+
               } else {
                 reject({
                   message: 'wrong password',
