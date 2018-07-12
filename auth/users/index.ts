@@ -485,7 +485,8 @@ export class Users extends MongoModel {
                 if (uuid && doc.uuids.indexOf(uuid) === -1)
                   update.$push.uuids = uuid;
                 
-                return this.updateById(doc._id, update);
+                this.updateById(doc._id, update)
+                  .then(res => resolve(res));
 
               } else {
                 reject({
