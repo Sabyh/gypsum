@@ -88,11 +88,11 @@ export class Users extends MongoModel {
   getSockets(ids: string[] | MongoDB.ObjectID[]): Promise<string[]> {
     return new Promise((resolve, reject) => {
       if (ids && ids.length) {
-        for (let i = 0; i < ids.length; i++) 
+        for (let i = 0; i < ids.length; i++)
           if (typeof ids[i] === "string")
             ids[i] = new MongoDB.ObjectID(ids[i]);
-  
-        this.collection.find({ _id: { $in: ids }})
+
+        this.collection.find({ _id: { $in: ids } })
           .project({ socket: 1 })
           .toArray()
           .then(res => resolve(res.map(entry => entry.socket).filter(entry => entry)))
@@ -118,7 +118,7 @@ export class Users extends MongoModel {
 
   @HOOK()
   pushNotification(ctx: Context, id: string) {
-    
+
   }
 
   @HOOK()
@@ -128,17 +128,8 @@ export class Users extends MongoModel {
       let token = ctx.getHeader('token');
 
       if (!token) {
-        if (ctx.query && ctx.query.token)
-          token = ctx.query.token;
-        else if (ctx.body && ctx.body.token)
-          token = ctx.body.token;
-        else
-          token = ctx.cookies('token');
-      }
-
-      if (!token) {
         return reject({
-          message: 'user_token_is_missing',
+          message: `[${this.name}]: user token is missing`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
       }
@@ -149,55 +140,59 @@ export class Users extends MongoModel {
         data = jwt.verify(token, State.auth.tokenSecret);
       } catch (err) {
         return reject({
-          message: 'invalid_user_token',
+          message: `[${this.name}]: invalid user token`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
       }
 
       if (!data || !data.id)
         return reject({
-          message: 'invalid_user_token',
+          message: `[${this.name}]: invalid user token`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
 
       if (data.type !== 'verifyEmail' && data.type !== 'auth') {
         return reject({
-          message: 'fake_token',
+          message: `[${this.name}]: fake token`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
       }
 
-      if (data.type === 'auth') {
-        if (!data.date || ((Date.now() - data.date) > State.auth.tokenExpiry)) {
-          return reject({
-            message: 'out_dated_token',
-            code: RESPONSE_CODES.UNAUTHORIZED
-          });
-        }
-      }
-
       ctx.set('tokenData', data);
 
-      this.collection.findOneAndUpdate({ 
-        _id: new MongoDB.ObjectID(data.id) 
-      },{
-        $set: { socket: ctx._socket ? ctx._socket.id : null }
-      }, {
-        returnOriginal: false
-      })
-        .then(res => {
-          if (!res.value || !Object.keys(res.value).length)
+      let update: any = { $set: {} };
+
+      this.collection.findOne({ _id: new MongoDB.ObjectID(data.id) })
+        .then(doc => {
+          if (!doc)
             return reject({
-              message: 'out_dated_token',
+              message: `[${this.name}]: user no longer exists`,
               code: RESPONSE_CODES.UNAUTHORIZED
             });
 
-          ctx.user = res.value;
-          resolve();
+          if (!doc.lastVisit || (Date.now() - doc.lastVisit) > State.auth.tokenExpiry)
+            return reject({
+              message: `[${this.name}]: outdated token`,
+              code: RESPONSE_CODES.UNAUTHORIZED
+            });
+
+          update.$set.lastVisit = Date.now();
+          update.$set.socket = ctx._socket || doc.socket || null;
+
+          this.collection.findOneAndUpdate({ _id: new MongoDB.ObjectID(data.id) }, update, { returnOriginal: false })
+            .then((res) => {
+              ctx.user = res.value;
+              resolve();
+            })
+            .catch(err => reject({
+              message: `[${this.name}]: error updating user auth`,
+              original: err,
+              code: RESPONSE_CODES.UNKNOWN_ERROR
+            }));
         })
-        .catch(error => reject({
-          message: `${this.name}_error_finding_user`,
-          original: error,
+        .catch(err => reject({
+          message: `[${this.name}]: error finding user`,
+          original: err,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
     });
@@ -290,14 +285,14 @@ export class Users extends MongoModel {
 
       if (tokenData.type !== "verifyEmail") {
         return reject({
-          message: 'fake_token',
+          message: `[${this.name}]: fake token`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
       }
 
       if (!tokenData.date || ((Date.now() - tokenData.date) > State.auth.verificationEmailExpiry)) {
         return reject({
-          message: 'out_dated_token',
+          message: `[${this.name}]: out dated token`,
           code: RESPONSE_CODES.UNAUTHORIZED
         });
       }
@@ -307,8 +302,8 @@ export class Users extends MongoModel {
         .then(doc => {
           fs.readFile(path.join(__dirname, '../templates/activation-page-template.html'), 'utf-8', (err, data) => {
             if (err)
-              reject({
-                message: '',
+              return reject({
+                message: `[${this.name}]: error reading activation page`,
                 original: err,
                 code: RESPONSE_CODES.UNKNOWN_ERROR
               });
@@ -319,7 +314,7 @@ export class Users extends MongoModel {
           });
         })
         .catch(error => reject({
-          message: 'error_activating_account',
+          message: `[${this.name}]: error activating account`,
           original: error,
           code: RESPONSE_CODES.UNKNOWN_ERROR
         }));
@@ -592,18 +587,18 @@ export class Users extends MongoModel {
         this.collection.updateOne({ _id: ctx.user._id }, {
           $pop: { uuids: uuid }
         })
-        .then(res => {
-          resolve({ data: true })          
-        })
-        .catch(err => {
-          this.$logger.error('error signing user out:')
-          this.$logger.error(err);
-          reject({
-            message: 'error signing user out',
-            original: err,
-            code: RESPONSE_CODES.UNKNOWN_ERROR
+          .then(res => {
+            resolve({ data: true })
+          })
+          .catch(err => {
+            this.$logger.error('error signing user out:')
+            this.$logger.error(err);
+            reject({
+              message: 'error signing user out',
+              original: err,
+              code: RESPONSE_CODES.UNKNOWN_ERROR
+            });
           });
-        });
 
       } else {
         resolve(true);

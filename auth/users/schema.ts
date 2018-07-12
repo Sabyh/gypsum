@@ -19,5 +19,6 @@ export const usersSchema: Validall.ISchema = {
     $default: false
   },
   socket: { $type: 'string', $nullable: true },
-  uuids: { $type: 'string[]', $default: [] }
+  uuids: { $type: 'string[]', $default: [] },
+  lastVisit: { $type: Number }
 };

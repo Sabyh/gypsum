@@ -44,5 +44,5 @@ export const defaultAuthConfig: IAuthConfig = {
   rootUserPassword: 'g56648e1845tg565g3s',
   verificationEmailExpiry: 1000 * 60 * 60,
   tokenSecret: 'lg093ejav5mf893kjd',
-  tokenExpiry: 1000 * 60 * 60 * 24 * 7
+  tokenExpiry: 1000 * 60 * 60 * 24 * 30
 }
