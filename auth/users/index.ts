@@ -125,7 +125,7 @@ export class Users extends MongoModel {
   authenticate(ctx: Context): Promise<void> {
     return new Promise((resolve, reject) => {
       this.$logger.info(`authenticating user for ${ctx.service.__name} service...`);
-      let token = ctx.getHeader('token');
+      let token = ctx.getHeader('token') || ctx.body.token;
 
       if (!token) {
         return reject({
@@ -176,10 +176,7 @@ export class Users extends MongoModel {
               code: RESPONSE_CODES.UNAUTHORIZED
             });
 
-          update.$set.lastVisit = Date.now();
-          update.$set.socket = ctx._socket || doc.socket || null;
-
-          this.collection.findOneAndUpdate({ _id: new MongoDB.ObjectID(data.id) }, update, { returnOriginal: false })
+          this.collection.findOneAndUpdate({ _id: doc._id }, { $set: { lastVisit: Date.now(), socket: ctx._socket.id || doc.socket || null } }, { returnOriginal: false })
             .then((res) => {
               ctx.user = res.value;
               resolve();
@@ -484,7 +481,7 @@ export class Users extends MongoModel {
                 let update: any = { $set: { lastVisit: Date.now() } }
                 if (uuid && doc.uuids.indexOf(uuid) === -1)
                   update.$push.uuids = uuid;
-                
+
                 this.updateById(doc._id, update)
                   .then(res => resolve(res));
 
