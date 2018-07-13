@@ -160,8 +160,6 @@ export class Users extends MongoModel {
 
       ctx.set('tokenData', data);
 
-      let update: any = { $set: {} };
-
       this.collection.findOne({ _id: new MongoDB.ObjectID(data.id) })
         .then(doc => {
           if (!doc)
@@ -176,7 +174,8 @@ export class Users extends MongoModel {
               code: RESPONSE_CODES.UNAUTHORIZED
             });
 
-          this.collection.findOneAndUpdate({ _id: doc._id }, { $set: { lastVisit: Date.now(), socket: ctx._socket.id || doc.socket || null } }, { returnOriginal: false })
+          let socketId = ctx._socket ? ctx._socket.id : (doc.socket || null);
+          this.collection.findOneAndUpdate({ _id: doc._id }, { $set: { lastVisit: Date.now(), socket: socketId } }, { returnOriginal: false })
             .then((res) => {
               ctx.user = res.value;
               resolve();
@@ -217,7 +216,7 @@ export class Users extends MongoModel {
 
         let token = jwt.sign({ id: user._id, date: Date.now(), type: 'verifyEmail' }, State.auth.tokenSecret);
         let activationLink = `http${State.config.secure ? 's' : ''}://`;
-        activationLink += `${this.app.name}.${State.config.hostName}${State.env !== 'production' ? ':' + State.config.port : ''}/`;
+        activationLink += `${this.app.name}.${State.config.domain}/`;
         activationLink += `${this.name}/activateUser?token=${token}`;
 
         this.$logger.info('activation link:', activationLink);

@@ -96,8 +96,7 @@ export class App {
         
         if (service.apiType !== API_TYPES.SOCKET) {
           path = 'http' + (State.config.secure ? 's' : '') + '://';
-          path += this.name.toLowerCase() + '.' + State.config.hostName;
-          path += (State.env !== 'production') ? ':' + State.config.port : '';
+          path += this.name.toLowerCase() + '.' + State.config.domain;
           path += '/' + service.path;      
           path = TB.cleanPath(path);
         }

@@ -7,7 +7,8 @@ import { ILoggerOptions } from './misc/logger';
 export interface IServerConfigOptions {
   server_name: string;
   port: number;
-  hostName: string;
+  domain: string;
+  host: string;
   secure: boolean;
   statics: string[];
   spa: string;
@@ -35,9 +36,10 @@ export interface IGypsumConfigurations {
 
 export const Config: IGypsumConfig = {
   dev: {
-    hostName: "localhost",
+    host: "localhost",
     server_name: 'gypsum',
     port: 7771,
+    domain: 'localhost:7771',
     secure: false,
     statics: ['static'],
     files_data_dir: ".data",

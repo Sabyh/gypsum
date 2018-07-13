@@ -13,7 +13,7 @@ import { State } from '../state';
   authorize: State.storage.authorize
 })
 export class File extends Model {
-  origin = `http${State.config.secure ? 's' : ''}://storage.${State.config.hostName}${State.env === 'developemt' ? ':' + State.config.port : ''}`;
+  origin = `http${State.config.secure ? 's' : ''}://storage.${State.config.domain}`;
   uploader = Multer({
     storage: Multer.diskStorage({
       destination: State.storage.storageDir,
