@@ -15,9 +15,7 @@ export function configure(expressApp: express.Express, app?: App, logger?: Logge
     expressApp.use(compress());
 
   expressApp.use((req, res, next) => {
-    let subdomains = req.subdomains.join('.');
-    let subdomainsStr = subdomains.length ? subdomains + '.' : '';
-    logger.info(`request: ${req.method} - ${req.protocol}://${subdomainsStr}${req.hostname}/${req.originalUrl}`);
+    logger.info(`request: ${req.method} - ${req.protocol}://${req.hostname}${req.originalUrl}`);
     if (app && 'onRequest' in app)
       (<any>app).onRequest(req, res, next);
     else
