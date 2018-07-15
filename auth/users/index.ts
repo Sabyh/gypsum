@@ -305,7 +305,7 @@ export class Users extends MongoModel {
               });
 
             let message = 'Your account has been activated successfully';
-            let template = TB.compile(data, { email: ctx.user.email.split('@')[0], message: message });
+            let template = TB.compile(data, { username: ctx.user.email.split('@')[0], message: message });
             resolve({ data: template, type: 'html' });
           });
         })
