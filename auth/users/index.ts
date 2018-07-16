@@ -158,6 +158,13 @@ export class Users extends MongoModel {
         });
       }
 
+      if (data.type === 'auth' && (!data.date || ((Date.now() - data.date) > State.auth.tokenExpiry))) {
+        return reject({
+          message: `[${this.name}]: out dated token`,
+          code: RESPONSE_CODES.UNAUTHORIZED
+        });
+      }
+
       ctx.set('tokenData', data);
 
       this.collection.findOne({ _id: new MongoDB.ObjectID(data.id) })
@@ -168,14 +175,23 @@ export class Users extends MongoModel {
               code: RESPONSE_CODES.UNAUTHORIZED
             });
 
+          if (data.type === "verifyEmail") {
+            ctx.user = doc;
+            return resolve();
+          }
+
           if (!doc.lastVisit || (Date.now() - doc.lastVisit) > State.auth.tokenExpiry)
             return reject({
-              message: `[${this.name}]: outdated token`,
+              message: `[${this.name}]: out dated token`,
               code: RESPONSE_CODES.UNAUTHORIZED
             });
 
-          let socketId = ctx._socket ? ctx._socket.id : (doc.socket || null);
-          this.collection.findOneAndUpdate({ _id: doc._id }, { $set: { lastVisit: Date.now(), socket: socketId } }, { returnOriginal: false })
+          let update: any = { $set: { lastVisit: Date.now() } };
+
+          if (ctx._socket && ctx._socket.id !== doc.socket)
+            update.$set.socket = ctx._socket.id;
+
+          this.collection.findOneAndUpdate({ _id: doc._id }, update, { returnOriginal: false })
             .then((res) => {
               ctx.user = res.value;
               resolve();
@@ -185,6 +201,7 @@ export class Users extends MongoModel {
               original: err,
               code: RESPONSE_CODES.UNKNOWN_ERROR
             }));
+
         })
         .catch(err => reject({
           message: `[${this.name}]: error finding user`,
@@ -581,26 +598,27 @@ export class Users extends MongoModel {
   signout(uuid: string, ctx?: Context) {
     return new Promise((resolve, reject) => {
 
-      if (uuid) {
-        this.collection.updateOne({ _id: ctx.user._id }, {
-          $pop: { uuids: uuid }
-        })
-          .then(res => {
-            resolve({ data: true })
-          })
-          .catch(err => {
-            this.$logger.error('error signing user out:')
-            this.$logger.error(err);
-            reject({
-              message: 'error signing user out',
-              original: err,
-              code: RESPONSE_CODES.UNKNOWN_ERROR
-            });
-          });
+      let update: any = { $set: { socket: null } };
 
-      } else {
-        resolve(true);
-      }
-    })
+      if (uuid)
+        update.$pop = { uuids: uuid };
+
+      this.collection.updateOne({ _id: ctx.user._id }, {
+        $pop: { uuids: uuid },
+        $set: { socket: null }
+      })
+        .then(res => {
+          resolve({ data: true })
+        })
+        .catch(err => {
+          this.$logger.error('error signing user out:')
+          this.$logger.error(err);
+          reject({
+            message: 'error signing user out',
+            original: err,
+            code: RESPONSE_CODES.UNKNOWN_ERROR
+          });
+        });
+    });
   }
 }

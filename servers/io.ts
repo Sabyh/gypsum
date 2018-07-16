@@ -3,7 +3,6 @@ import { Context } from '../context';
 import { Model } from '../models';
 import { Response, API_TYPES, RESPONSE_DOMAINS } from '../types';
 import { Logger } from '../misc/logger';
-import * as IO from 'socket.io';
 import { App } from '../app';
 
 export function initSocket(io: any) {
