@@ -108,7 +108,7 @@ export class Users extends MongoModel {
     return new Promise((resolve, reject) => {
       let responseData = ctx.response.data;
 
-      if (!responseData || Array.isArray(responseData) || !Validall.Types.object(responseData))
+      if (!responseData || !responseData._id)
         return resolve();
 
       responseData.token = jwt.sign({ id: responseData._id, date: Date.now(), type: 'auth' }, State.auth.tokenSecret);
@@ -179,12 +179,6 @@ export class Users extends MongoModel {
             ctx.user = doc;
             return resolve();
           }
-
-          if (!doc.lastVisit || (Date.now() - doc.lastVisit) > State.auth.tokenExpiry)
-            return reject({
-              message: `[${this.name}]: out dated token`,
-              code: RESPONSE_CODES.UNAUTHORIZED
-            });
 
           let update: any = { $set: { lastVisit: Date.now() } };
 
