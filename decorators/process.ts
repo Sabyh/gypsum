@@ -6,9 +6,9 @@ export interface ITimePeriod {
   time: { hours: number; minutes: number }[];
 }
 
-export interface IProcess {
+export interface IJob {
   __name: string;
-  isProcess: boolean;
+  isJob: boolean;
   event: string;
   interval: number | ITimePeriod;
   triggered: boolean;
@@ -16,14 +16,14 @@ export interface IProcess {
   paused: boolean;
 }
 
-export interface IProcessOptions {
+export interface IJobOptions {
   interval: number | ITimePeriod;
   event?: string;
 }
 
-const defaultOptions: IProcess = {
+const defaultOptions: IJob = {
   __name: '',
-  isProcess: true,
+  isJob: true,
   event: null,
   triggered: false,
   interval: null,
@@ -31,24 +31,24 @@ const defaultOptions: IProcess = {
   paused: false
 }
 
-export function PROCESS(options: IProcessOptions) {
+export function JOB(options: IJobOptions) {
 
   return function (target: any, key: string, descriptor: PropertyDescriptor) {
-    let processName = capitalizeFirst(key);
+    let jobName = capitalizeFirst(key);
 
-    function userProcess() {
+    function userJob() {
       this[key]();
     }
     
-    Object.assign(userProcess, defaultOptions);
+    Object.assign(userJob, defaultOptions);
 
     if (options)
-      Object.assign(userProcess, options);
+      Object.assign(userJob, options);
 
-    (<Partial<IProcess>>userProcess).__name = key;
+    (<Partial<IJob>>userJob).__name = key;
 
-    Object.defineProperty(target.constructor.prototype, processName, {
-      value: userProcess,
+    Object.defineProperty(target.constructor.prototype, jobName, {
+      value: userJob,
       enumerable: true
     });
   }

@@ -1,10 +1,10 @@
 import { Logger } from '../misc/logger';
 import { API_TYPES } from '../types';
 import TB from 'tools-box';
-import { IService, IHook, IHookOptions, IModelOptions, IProcess } from '../decorators';
+import { IService, IHook, IHookOptions, IModelOptions, IJob } from '../decorators';
 import { App } from '../app';
 import { gypsumEmitter, GypsumEmitter } from '../emitter';
-import { processManger } from '../process-manager';
+import { JobsManger } from '../jobs-manager';
 
 export type ServiceOptions = { [key: string]: IService | boolean };
 export type getOptions = keyof IModelOptions;
@@ -159,10 +159,10 @@ export class Model {
     return this._hooksData;
   }
 
-  private _mArrangeProcesses() {
+  private _mArrangeJobs() {
     for (let prop in this)
-    if (this[prop] && (<any>this[prop]).isProcess)
-    processManger.registerProcess(this, <any>this[prop]);
+    if (this[prop] && (<any>this[prop]).isJob)
+    JobsManger.registerJob(this, <any>this[prop]);
   }
   
   private _init() {
@@ -172,7 +172,7 @@ export class Model {
 
     this._mArrangeServices();
     this._mArrangeHooks();
-    this._mArrangeProcesses();
+    this._mArrangeJobs();
   }
 
   $get(prop: getOptions) {

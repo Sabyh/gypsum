@@ -5,7 +5,7 @@ import { API_TYPES } from './types';
 import { State } from './state';
 import { gypsumEmitter, GypsumEmitter } from './emitter';
 import { Logger } from './misc/logger';
-import { processManger } from './process-manager';
+import { JobsManger } from './jobs-manager';
 import { IHook } from './decorators';
 
 export class App {
@@ -28,7 +28,7 @@ export class App {
     }
 
     this._mArrangeHooks();
-    this._mArrangeProcesses();
+    this._mArrangeJobs();
     gypsumEmitter.emit(`${this.name} ready`);
   }
 
@@ -47,10 +47,10 @@ export class App {
     return this._hooksData;
   }
 
-  private _mArrangeProcesses() {
+  private _mArrangeJobs() {
     for (let prop in this)
-    if (this[prop] && (<any>this[prop]).isProcess)
-    processManger.registerProcess(this, <any>this[prop]);
+    if (this[prop] && (<any>this[prop]).isJob)
+    JobsManger.registerJob(this, <any>this[prop]);
   }
 
   get publicModels(): Model[] {
