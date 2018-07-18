@@ -22,7 +22,7 @@ import { App } from '../../app';
     UpdateById: { authorize: { field: '_id', match: '$params.id' } }
   },
   domain: RESPONSE_DOMAINS.SELF,
-  after: ['filter:-password,passwordSalt,uuids'],
+  after: ['filter:-password,passwordSalt,uuids,sockets,lastVisit'],
   indexes: [{ name: 'email', options: { unique: true } }]
 })
 export class Users extends MongoModel {
@@ -93,9 +93,9 @@ export class Users extends MongoModel {
             ids[i] = new MongoDB.ObjectID(ids[i]);
 
         this.collection.find({ _id: { $in: ids } })
-          .project({ socket: 1 })
+          .project({ sockets: 1 })
           .toArray()
-          .then(res => resolve(res.map(entry => entry.socket).filter(entry => entry)))
+          .then(res => resolve(res.map(entry => entry.sockets).reduce((a, b: string[]) => { a.push(...(b.filter(entry => !!entry))) }, [])))
           .catch(err => reject(err));
       } else {
         resolve([]);
@@ -182,8 +182,8 @@ export class Users extends MongoModel {
 
           let update: any = { $set: { lastVisit: Date.now() } };
 
-          if (ctx._socket && ctx._socket.id !== doc.socket)
-            update.$set.socket = ctx._socket.id;
+          if (ctx._socket && (doc.sockets.indexOf(ctx._socket.id) === -1))
+            update.$push = { sockets: ctx._socket.id };
 
           this.collection.findOneAndUpdate({ _id: doc._id }, update, { returnOriginal: false })
             .then((res) => {
@@ -490,7 +490,7 @@ export class Users extends MongoModel {
               if (match === true) {
                 let update: any = { $set: { lastVisit: Date.now() } }
                 if (uuid && doc.uuids.indexOf(uuid) === -1)
-                  update.$push.uuids = uuid;
+                  update.$push = { uuids: uuid };
 
                 this.updateById(doc._id, update)
                   .then(res => resolve(res));
@@ -591,16 +591,18 @@ export class Users extends MongoModel {
   })
   signout(uuid: string, ctx?: Context) {
     return new Promise((resolve, reject) => {
+      let update: any = {};
 
-      let update: any = { $set: { socket: null } };
+      if (ctx._socket)
+        update.$pop = { sockets: ctx._socket };
 
       if (uuid)
         update.$pop = { uuids: uuid };
 
-      this.collection.updateOne({ _id: ctx.user._id }, {
-        $pop: { uuids: uuid },
-        $set: { socket: null }
-      })
+      if (!Object.keys(update).length)
+        return resolve(true);
+
+      this.collection.updateOne({ _id: ctx.user._id }, update)
         .then(res => {
           resolve({ data: true })
         })

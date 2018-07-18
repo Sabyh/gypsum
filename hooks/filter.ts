@@ -41,6 +41,5 @@ export function filter(ctx: Context, fields: string | string[], source?: string)
 
   logger.info('done filtering');
   logger.debug(`result data:`);
-  console.dir(srcData);
   ctx.next();
 }
