@@ -124,15 +124,15 @@ export class Authorization extends Model {
     return new Promise((resolve, reject) => {
 
       this.$logger.info(`authorizing service:`);
-      this.$logger.info(`${appName}${modelName}${serviceName}`);
+      console.log(`${appName}${modelName}${serviceName}`);
       this.$logger.info(`options:`);
-      this.$logger.info(options);
+      console.log(options);
       this.$logger.debug('params:');
-      this.$logger.debug(ctx.params);
+      console.log(ctx.params);
       this.$logger.debug('query:');
-      this.$logger.debug(ctx.query);
+      console.log(ctx.query);
       this.$logger.debug('body:');
-      this.$logger.debug(ctx.body);
+      console.log(ctx.body);
 
       if (!ctx.user)
         return reject({
@@ -141,14 +141,6 @@ export class Authorization extends Model {
         });
 
       if (Validall.Types.object(options) && (<any>options).match) {
-
-        let userFieldValue = TB.getValue(ctx.user, (<any>options).field);
-
-        if (!userFieldValue)
-          return reject({
-            message: `${(<any>options).field} dose not exist in user object`,
-            code: RESPONSE_CODES.UNAUTHORIZED
-          });
 
         if (!(<any>options).fetch) {
           let matchValue = '';
