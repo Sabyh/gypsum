@@ -51,7 +51,7 @@ export class Authorization extends Model {
     });
   }
 
-  private _mFetchData(appName: string, modelName: string, options: { fetch: any, userFieldValue: string, match: string }, ctx: Context): Promise<void> {
+  private _mFetchData(appName: string, modelName: string, options: { fetch: any, match: string }, ctx: Context): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!options)
         return reject({
@@ -79,22 +79,23 @@ export class Authorization extends Model {
 
           for (let i = 0; i < docs.length; i++) {
             let matchParts = options.match.split('|');
-            let matchPass = false;
+            let isAuth = false;
 
             for (let j = 0; j < matchParts.length; j++) {
               if (matchParts[i] && matchParts[i].trim()) {
                 let currentPart = matchParts[i].trim();
-                let compareValue = currentPart.charAt(0) === '$' ? TB.getValue(docs[i], currentPart) : currentPart;
+                let compareValue = TB.getValue(docs[i], currentPart);
 
                 if (compareValue instanceof MongoDB.ObjectID)
                   compareValue = compareValue.toString();
 
-                if (options.userFieldValue === compareValue)
-                  matchPass = true;
-                break;
+                if (ctx.user._id.toString() === compareValue) {
+                  isAuth = true;
+                  break;
+                }
               }
 
-              if (!matchPass)
+              if (!isAuth)
                 return reject({
                   message: 'user not authorized',
                   code: RESPONSE_CODES.UNAUTHORIZED
@@ -114,7 +115,7 @@ export class Authorization extends Model {
   }
 
   @HOOK()
-  authorize(options: { field: string, match: string, fetch: any } | boolean, ctx: Context): Promise<void> {
+  authorize(options: { match: string, fetch: any } | boolean, ctx: Context): Promise<void> {
 
     let appName = ctx._appName.toLowerCase();
     let modelName = ctx.model.name.toLowerCase();
@@ -149,9 +150,6 @@ export class Authorization extends Model {
             code: RESPONSE_CODES.UNAUTHORIZED
           });
 
-        if (userFieldValue instanceof MongoDB.ObjectID)
-          userFieldValue = userFieldValue.toString();
-
         if (!(<any>options).fetch) {
           let matchValue = '';
           if ((<any>options).match.charAt(0) === '$')
@@ -159,7 +157,7 @@ export class Authorization extends Model {
           else
             matchValue = (<any>options).match;
 
-          if (userFieldValue !== matchValue)
+          if (ctx.user._id.toString() !== matchValue)
             return reject({
               message: 'user not authorized',
               code: RESPONSE_CODES.UNAUTHORIZED
@@ -208,7 +206,7 @@ export class Authorization extends Model {
 
           fetchObj.query = toObjectID(fetchObj.query);
 
-          return this._mFetchData(appName, modelName, { fetch: fetchObj, userFieldValue: userFieldValue, match: (<any>options).match }, ctx)
+          return this._mFetchData(appName, modelName, { fetch: fetchObj, match: (<any>options).match }, ctx)
             .then(() => resolve())
             .catch(err => reject(err));
         }
