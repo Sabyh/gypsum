@@ -95,7 +95,14 @@ export class Users extends MongoModel {
         this.collection.find({ _id: { $in: ids } })
           .project({ sockets: 1 })
           .toArray()
-          .then(res => resolve(res.map(entry => entry.sockets).reduce((a, b: string[]) => { a.push(...(b.filter(entry => !!entry))) }, [])))
+          .then(res => resolve(
+            res
+              .map(entry => entry.sockets)
+              .reduce((a, b: string[]) => { 
+                a.push(...(b.filter(entry => !!entry))) ;
+                return a;
+              }, []))
+            )
           .catch(err => reject(err));
       } else {
         resolve([]);
