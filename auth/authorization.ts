@@ -140,7 +140,7 @@ export class Authorization extends Model {
           code: RESPONSE_CODES.UNAUTHORIZED
         });
 
-      if (Validall.Types.object(options) && (<any>options).field && (<any>options).match) {
+      if (Validall.Types.object(options) && (<any>options).match) {
 
         let userFieldValue = TB.getValue(ctx.user, (<any>options).field);
 
