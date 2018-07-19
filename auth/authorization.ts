@@ -106,10 +106,7 @@ export class Authorization extends Model {
           ctx.set('fetchedData', docs);
           resolve();
         })
-        .catch((err: any) => reject({
-          message: err,
-          code: RESPONSE_CODES.UNKNOWN_ERROR
-        }));
+        .catch((err: any) => reject(err));
 
     });
   }
