@@ -1,5 +1,5 @@
 import { CorsOptions } from 'cors';
-import TB from 'tools-box';;
+import { extend } from 'tools-box/object';
 import { State } from '../state';
 import { API_TYPES } from '../types';
 
@@ -35,7 +35,7 @@ export function APP(options: { dev: IAppOptions, prod?: IAppProdOptions }) {
     
     options.dev.apiType = options.dev.apiType || API_TYPES.ALL;
     options.dev.models = options.dev.models || [];
-    options.dev.cors = TB.extend(options.dev.cors || {}, defaultCors);
+    options.dev.cors = extend(options.dev.cors || {}, defaultCors);
 
     for (let prop in options.dev) {
       if (options.dev.hasOwnProperty(prop)) {

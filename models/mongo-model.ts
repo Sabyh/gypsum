@@ -1,6 +1,6 @@
 import * as Validall from 'validall';
 import * as MongoDB from 'mongodb';
-import TB from 'tools-box';
+import { getValue, omit, compareValues } from 'tools-box/object';
 import { Model } from './model';
 import { RESPONSE_CODES, IResponseError, IResponse } from '../types';
 import { SERVICE } from '../decorators';
@@ -88,7 +88,7 @@ export class MongoModel extends Model {
 
           if (this.omits && this.omits.length)
             for (let i = 0; i < docs.length; i++)
-              TB.omit(docs[i], this.omits);
+              omit(docs[i], this.omits);
 
           resolve({ data: docs });
         })
@@ -118,7 +118,7 @@ export class MongoModel extends Model {
           this.$logger.debug('findOne service resolving result');
 
           if (this.omits && this.omits.length)
-            TB.omit(doc, this.omits);
+            omit(doc, this.omits);
 
           resolve({ data: doc });
         })
@@ -148,7 +148,7 @@ export class MongoModel extends Model {
           this.$logger.debug('findById service resolving result');
 
           if (this.omits && this.omits.length)
-            TB.omit(doc, this.omits);
+            omit(doc, this.omits);
 
           resolve({ data: doc });
         })
@@ -202,12 +202,12 @@ export class MongoModel extends Model {
           if (internals.length) {
             for (let i = 0; i < internals.length; i++)
               if (this.schema.defaults[internals[i]] !== undefined) {
-                if (TB.getValue(document, internals[i]) !== this.schema.defaults[internals[i]])
+                if (getValue(document, internals[i]) !== this.schema.defaults[internals[i]])
                   return reject({
                     message: `[${this.name}]: '${internals[i]}' cannot be set externaly!`,
                     code: RESPONSE_CODES.UNAUTHORIZED
                   });
-              } else if (TB.getValue(document, internals[i]) !== undefined) {
+              } else if (getValue(document, internals[i]) !== undefined) {
                 return reject({
                   message: `[${this.name}]: '${internals[i]}' cannot be set externaly!`,
                   code: RESPONSE_CODES.UNAUTHORIZED
@@ -225,7 +225,7 @@ export class MongoModel extends Model {
 
           if (this.omits && this.omits.length)
             for (let i = 0; i < insertedDocs.length; i++)
-              TB.omit(insertedDocs[i], this.omits);
+              omit(insertedDocs[i], this.omits);
 
           resolve({ data: insertedDocs });
         })
@@ -298,7 +298,7 @@ export class MongoModel extends Model {
 
           if (this.omits && this.omits.length)
             for (let i = 0; i < docs.length; i++)
-              TB.omit(docs[i], this.omits);
+              omit(docs[i], this.omits);
 
           resolve({ data: docs });
         })
@@ -453,7 +453,7 @@ export class MongoModel extends Model {
                   }
 
                   if (constants.length) {
-                    let changedField = TB.compareValues(constants, preUpdatedDoc, updatedDoc);
+                    let changedField = compareValues(constants, preUpdatedDoc, updatedDoc);
                     if (changedField)
                       errObj = {
                         message: `[${this.name}]: '${changedField}' is a constant field that cannot be changed!`,
@@ -463,7 +463,7 @@ export class MongoModel extends Model {
 
                   if (ctx) {
                     if (!errObj && internals.length) {
-                      let changedField = TB.compareValues(internals, preUpdatedDoc, updatedDoc);
+                      let changedField = compareValues(internals, preUpdatedDoc, updatedDoc);
                       if (changedField)
                         errObj = {
                           message: `[${this.name}]: '${changedField}' cannot be modified externaly!`,
@@ -495,7 +495,7 @@ export class MongoModel extends Model {
                 this.$logger.debug('updateOne service resolving result');
 
                 if (this.omits && this.omits.length)
-                  TB.omit(updatedDoc, this.omits);
+                  omit(updatedDoc, this.omits);
 
                 resolve({ data: updatedDoc });
               }
@@ -593,7 +593,7 @@ export class MongoModel extends Model {
                   }
 
                   if (constants.length) {
-                    let changedField = TB.compareValues(constants, preUpdatedDoc, updatedDoc);
+                    let changedField = compareValues(constants, preUpdatedDoc, updatedDoc);
                     if (changedField)
                       errObj = {
                         message: `[${this.name}]: '${changedField}' is a constant field that cannot be changed!`,
@@ -603,7 +603,7 @@ export class MongoModel extends Model {
 
                   if (ctx) {
                     if (!errObj && internals.length) {
-                      let changedField = TB.compareValues(internals, preUpdatedDoc, updatedDoc);
+                      let changedField = compareValues(internals, preUpdatedDoc, updatedDoc);
                       if (changedField)
                         errObj = {
                           message: `[${this.name}]: '${changedField}' cannot be modified externaly!`,
@@ -635,7 +635,7 @@ export class MongoModel extends Model {
                 this.$logger.debug('updateById service resolving result');
 
                 if (this.omits && this.omits.length)
-                  TB.omit(updatedDoc, this.omits);
+                  omit(updatedDoc, this.omits);
 
                 resolve({ data: updatedDoc });
               }
@@ -707,7 +707,7 @@ export class MongoModel extends Model {
           let deletedDoc = res.value;
 
           if (this.omits && this.omits.length)
-            TB.omit(deletedDoc, this.omits);
+            omit(deletedDoc, this.omits);
 
           resolve({ data: deletedDoc });
         })
@@ -737,7 +737,7 @@ export class MongoModel extends Model {
           let deletedDoc = res.value;
 
           if (this.omits && this.omits.length)
-            TB.omit(deletedDoc, this.omits);
+            omit(deletedDoc, this.omits);
 
           resolve({ data: deletedDoc });
         })

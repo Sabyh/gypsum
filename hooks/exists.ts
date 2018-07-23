@@ -1,5 +1,5 @@
 
-import TB from 'tools-box';
+import { getValue } from 'tools-box/object';
 import { Context } from '../context';
 import { MongoModel } from '../models';
 import { RESPONSE_CODES } from '../types';
@@ -15,7 +15,7 @@ export function exists(ctx: Context, model: MongoModel, field: string) {
     });
     
   logger.info(`checking ${field} value`);
-  let fieldValue = TB.getValue(ctx.body, field);
+  let fieldValue = getValue(ctx.body, field);
 
   if (!fieldValue)
     return ctx.next({

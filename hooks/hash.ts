@@ -1,4 +1,5 @@
-import TB from 'tools-box';
+import { hash as hsh, verify } from 'tools-box/crypt';
+import { getValue, injectValue } from 'tools-box/object';
 import { Context } from '../context';
 import { Logger } from '../misc/logger';
 import { RESPONSE_CODES } from '../types';
@@ -23,7 +24,7 @@ export function hash(ctx: Context, options: any) {
   else
     srcData = ctx.response.data;
 
-  fieldValue = TB.getValue(srcData, options.fieldPath);
+  fieldValue = getValue(srcData, options.fieldPath);
   if (!fieldValue || typeof fieldValue !== 'string')
     return ctx.next({
       message: `${options.fieldPath} must have a string value`,
@@ -36,13 +37,13 @@ export function hash(ctx: Context, options: any) {
   
   logger.debug(options.fieldPath, 'has value of:', ctx.body[options.fieldPath]);
   logger.info('incrypting', options.fieldPath);
-  TB.hash(srcData[options.fieldPath])
+  hsh(srcData[options.fieldPath])
     .then(results => {
       logger.info('incrypting passed');
       logger.debug('saving', options.fieldPath, 'in', options.savePath);
-      TB.injectValue(srcData, options.savePath, results[0]);
+      injectValue(srcData, options.savePath, results[0]);
       logger.debug('saving', options.fieldPath, 'in', options.savePath + 'Salt');
-      TB.injectValue(srcData, options.saltSavePath, results[1]);
+      injectValue(srcData, options.saltSavePath, results[1]);
       ctx.next();
     })
     .catch(error => ctx.next({

@@ -1,10 +1,10 @@
-import TB from 'tools-box';
+import { URL } from 'tools-box/url';
 
 export function searchQuery(req: any, res: any, next: Function): void {
   let query = req.originalUrl.split('?')[1];
 
   if (query && typeof query === 'string')
-    req.query = TB.queryStrToObject(query);
+    req.query = URL.GetQueryObject(query);
 
   next();
 }

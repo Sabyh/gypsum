@@ -2,7 +2,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as MongoDB from 'mongodb';
 import * as jwt from 'jsonwebtoken';
-import TB from 'tools-box';
+import { hash, verify } from 'tools-box/crypt';
+import { compile } from 'tools-box/string';
+import { Unique } from 'tools-box/unique';
 import * as Validall from 'validall';
 import { MODEL, HOOK, SERVICE } from "../../decorators";
 import { MongoModel } from "../../models";
@@ -65,7 +67,7 @@ export class Users extends MongoModel {
   createRootUser(): Promise<any> {
     this.$logger.info('creating root user: ' + State.auth.rootUserEmail);
     return new Promise((resolve, reject) => {
-      TB.hash(State.auth.rootUserPassword)
+      hash(State.auth.rootUserPassword)
         .then(results => {
           this.collection.insertOne({
             email: State.auth.rootUserEmail,
@@ -243,7 +245,7 @@ export class Users extends MongoModel {
           from: State.auth.supportEmail || `${State.config.server_name} Administration`,
           to: user.email,
           subject: `${State.config.server_name} Account Verification`,
-          html: TB.compile(template.toString('utf-8'), { username: user.email.split('@')[0], activationLink })
+          html: compile(template.toString('utf-8'), { username: user.email.split('@')[0], activationLink })
         };
 
         this.transporter.sendMail(emailOptions, (sendEmailError: any, info: any) => {
@@ -323,7 +325,7 @@ export class Users extends MongoModel {
               });
 
             let message = 'Your account has been activated successfully';
-            let template = TB.compile(data, { username: ctx.user.email.split('@')[0], message: message });
+            let template = compile(data, { username: ctx.user.email.split('@')[0], message: message });
             resolve({ data: template, type: 'html' });
           });
         })
@@ -365,11 +367,11 @@ export class Users extends MongoModel {
               code: RESPONSE_CODES.BAD_REQUEST
             });
 
-          let newPassword = TB.Unique.Get();
+          let newPassword = Unique.Get();
           let hashedPassword;
           let passwordSalt;
 
-          TB.hash(newPassword)
+          hash(newPassword)
             .then((result: [string, string]) => {
               let hashedPassword = result[0];
               let passwordSalt = result[1];
@@ -396,7 +398,7 @@ export class Users extends MongoModel {
                       from: State.auth.supportEmail || `${State.config.server_name} Administration`,
                       to: user.email,
                       subject: `${State.config.server_name} Reset Password`,
-                      html: TB.compile(template.toString('utf-8'), { username: user.email.split('@')[0], password: newPassword })
+                      html: compile(template.toString('utf-8'), { username: user.email.split('@')[0], password: newPassword })
                     };
 
                     this.transporter.sendMail(emailOptions, (sendEmailError: any, info: any) => {
@@ -492,7 +494,7 @@ export class Users extends MongoModel {
               code: RESPONSE_CODES.UNAUTHORIZED
             });
 
-          TB.verify(password, doc.password, doc.passwordSalt)
+          verify(password, doc.password, doc.passwordSalt)
             .then((match: boolean) => {
               if (match === true) {
                 let update: any = { $set: { lastVisit: Date.now() } }
@@ -551,7 +553,7 @@ export class Users extends MongoModel {
                 code: RESPONSE_CODES.BAD_REQUEST
               });
 
-            TB.hash(document.password)
+            hash(document.password)
               .then(results => {
                 if (results && results.length) {
                   document.password = results[0];

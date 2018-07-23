@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as Multer from 'multer';
 import * as mime from 'mime';
+import { URL } from 'tools-box/url';
 import { MODEL, SERVICE } from "../decorators";
 import { Model } from "../models";
 import { Context } from "../context";
@@ -230,6 +231,8 @@ export class File extends Model {
           code: RESPONSE_CODES.BAD_REQUEST
         })
       }
+
+      filePath = URL.GetPath(filePath);
       let fullPath = path.join(State.storage.storageDir, filePath);
       fs.unlink(fullPath, (err) => {
         if (err) {
@@ -261,7 +264,8 @@ export class File extends Model {
 
       try {
         for (let i = 0; i < filesPaths.length; i++) {
-          let fullPath = path.join(State.storage.storageDir, filesPaths[i]);
+          let filePath = URL.GetPath(filesPaths[i]);
+          let fullPath = path.join(State.storage.storageDir, filePath);
           fs.unlinkSync(fullPath);
         }
 

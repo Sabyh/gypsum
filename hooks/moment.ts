@@ -1,5 +1,5 @@
 import * as Moment from 'moment';
-import TB from 'tools-box';
+import { getValue, setValue } from 'tools-box/object';
 import { Context } from "../context";
 import { Types } from 'validall';
 import { Logger } from '../misc/logger';
@@ -19,10 +19,10 @@ function convert(src: any[], fields: string[], logger: Logger) {
         src[i] = (<any>Moment())[method](src[i]);
 
       } else if (Types.object(src[i])) {
-        let srcValue = TB.getValue(src[i], srcField);
+        let srcValue = getValue(src[i], srcField);
 
         if (srcValue)
-          TB.setValue(src[i], destField, (<any>Moment())[method](srcValue));
+          setValue(src[i], destField, (<any>Moment())[method](srcValue));
         else
           logger.warn(`cannot find '${srcField}' in the response object`)
       } else {

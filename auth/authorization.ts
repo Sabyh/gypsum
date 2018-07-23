@@ -1,6 +1,6 @@
 import * as Validall from 'validall';
 import * as MongoDB from 'mongodb';
-import TB from 'tools-box';
+import { getValue } from 'tools-box/object';
 import { MODEL, HOOK } from "../decorators";
 import { Model, MongoModel } from "../models";
 import { RESPONSE_CODES, RESPONSE_DOMAINS } from '../types';
@@ -82,9 +82,9 @@ export class Authorization extends Model {
             let isAuth = false;
 
             for (let j = 0; j < matchParts.length; j++) {
-              if (matchParts[i] && matchParts[i].trim()) {
-                let currentPart = matchParts[i].trim();
-                let compareValue = TB.getValue(docs[i], currentPart);
+              if (matchParts[j] && matchParts[j].trim()) {
+                let currentPart = matchParts[j].trim();
+                let compareValue = getValue(docs[i], currentPart);
 
                 if (compareValue instanceof MongoDB.ObjectID)
                   compareValue = compareValue.toString();
@@ -94,13 +94,13 @@ export class Authorization extends Model {
                   break;
                 }
               }
-
-              if (!isAuth)
-                return reject({
-                  message: 'user not authorized',
-                  code: RESPONSE_CODES.UNAUTHORIZED
-                });
             }
+
+            if (!isAuth)
+              return reject({
+                message: 'user not authorized',
+                code: RESPONSE_CODES.UNAUTHORIZED
+              });
           }
 
           ctx.set('fetchedData', docs);
@@ -142,7 +142,7 @@ export class Authorization extends Model {
         if (!(<any>options).fetch) {
           let matchValue = '';
           if ((<any>options).match.charAt(0) === '$')
-            matchValue = TB.getValue(ctx, (<any>options).match.slice(1));
+            matchValue = getValue(ctx, (<any>options).match.slice(1));
           else
             matchValue = (<any>options).match;
 
@@ -159,7 +159,7 @@ export class Authorization extends Model {
 
           if (typeof (<any>options).fetch === 'string') {
             if ((<any>options).fetch.charAt(0) === "$")
-              fetchObj = TB.getValue(ctx, (<any>options).fetch.slice(1));
+              fetchObj = getValue(ctx, (<any>options).fetch.slice(1));
             else
               return reject({
                 message: 'invalid authorization options',
@@ -170,7 +170,7 @@ export class Authorization extends Model {
 
             if (typeof (<any>options).fetch.query === 'string') {
               if ((<any>options).fetch.query.charAt(0) === '$')
-                fetchObj.query = TB.getValue(ctx, (<any>options).fetch.query.slice(1));
+                fetchObj.query = getValue(ctx, (<any>options).fetch.query.slice(1));
               else
                 return reject({
                   message: 'invalid authorization options',
@@ -179,12 +179,12 @@ export class Authorization extends Model {
             } else {
               for (let prop in (<any>options).fetch.query)
                 if (typeof (<any>options).fetch.query[prop] === 'string' && (<any>options).fetch.query[prop].charAt(0) === '$')
-                  fetchObj.query[prop] = TB.getValue(ctx, (<any>options).fetch.query[prop].slice(1));
+                  fetchObj.query[prop] = getValue(ctx, (<any>options).fetch.query[prop].slice(1));
             }
 
             if (typeof (<any>options).fetch.options === 'string') {
               if ((<any>options).fetch.options.charAt(0) === '$')
-                fetchObj.options = TB.getValue(ctx, (<any>options).fetch.options.slice(1));
+                fetchObj.options = getValue(ctx, (<any>options).fetch.options.slice(1));
               else
                 return reject({
                   message: 'invalid authorization options',

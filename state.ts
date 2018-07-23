@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as express from 'express';
-import TB from 'tools-box';
+import { URL } from 'tools-box/url';
+import { extend } from 'tools-box/object';
 import { Config, IGypsumConfig, IServerConfigOptions } from './config';
 import { Context } from './context';
 import { Model } from './models';
@@ -50,29 +51,29 @@ export class AppState {
 
   public setConfiguration(userConfig: IGypsumConfig = <IGypsumConfig>{}) {
 
-    TB.extend(this.config, Config.dev);
+    extend(this.config, Config.dev);
 
     if (userConfig.dev)
-      TB.extend(this.config, userConfig.dev);
+      extend(this.config, userConfig.dev);
 
     if (this.env === 'production' && userConfig.prod)
-      TB.extend(this.config, userConfig.prod);
+      extend(this.config, userConfig.prod);
 
-    this.config.files_data_dir = TB.cleanPath(<string>this.config.files_data_dir);
+    this.config.files_data_dir = URL.Clean(<string>this.config.files_data_dir);
   }
 
   public setAuthConfig(auth: IAuthEnvConfig = <IAuthEnvConfig>{}) {
-    this.auth = TB.extend(defaultAuthConfig, auth.dev || {});
+    this.auth = extend(defaultAuthConfig, auth.dev || {});
 
     if (this.env === 'production' && auth.prod)
-      TB.extend(this.auth, auth.prod);
+      extend(this.auth, auth.prod);
   }
 
   public setStorageConfig(storageConfig: IStorageEnvConfig = <IStorageEnvConfig>{}) {
-    this.storage = TB.extend(defaultStorageConfig, storageConfig.dev || {});
+    this.storage = extend(defaultStorageConfig, storageConfig.dev || {});
 
     if (this.env === 'production' && storageConfig.prod)
-      TB.extend(this.storage, storageConfig.prod);
+      extend(this.storage, storageConfig.prod);
 
     this.storage.storageDir = path.join(this.root, this.storage.storageDir);
   }

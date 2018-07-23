@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as cors from 'cors';
-import TB from 'tools-box';
+import { extend } from 'tools-box/object';
 import { Model } from '../../models';
 import { API_TYPES, RESPONSE_CODES, ResponseError, Response } from '../../types';
 import { Logger } from '../../misc/logger';
@@ -25,12 +25,12 @@ export function pushApis(expressApp: express.Express, app: App) {
   
       let corsOptions: cors.CorsOptions = {};
       let appCors = app.$get('cors');
-      TB.extend(corsOptions, appCors);
+      extend(corsOptions, appCors);
   
       let modelCors = model.$get('cors');
 
       if (modelCors)
-        TB.extend(corsOptions, modelCors);
+        extend(corsOptions, modelCors);
   
       let services = model.$getServices();
   
@@ -41,7 +41,7 @@ export function pushApis(expressApp: express.Express, app: App) {
         let serviceCors = services[service].cors;
 
         if (serviceCors)
-          TB.extend(corsOptions, serviceCors);
+          extend(corsOptions, serviceCors);
   
         logger.info(`adding service for ${app.name} app: (${services[service].method}) - ${services[service].path}`);
         router.options(services[service].path, cors(corsOptions), (req, res) => res.status(204).end());

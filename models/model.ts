@@ -1,6 +1,6 @@
 import { Logger } from '../misc/logger';
 import { API_TYPES } from '../types';
-import TB from 'tools-box';
+import { URL } from 'tools-box/url';
 import { IService, IHook, IHookOptions, IModelOptions, IJob } from '../decorators';
 import { App } from '../app';
 import { gypsumEmitter, GypsumEmitter } from '../emitter';
@@ -247,5 +247,5 @@ function createPath(service: IService, model: Model) {
   if (service.params && service.params.length)
     path += '/' + service.params.map(param => `:${param}`).join('/');
 
-  return '/' + TB.cleanPath(path);
+  return '/' + URL.Clean(path);
 }

@@ -1,5 +1,5 @@
 import { IAppKeys } from './decorators/app';
-import TB from 'tools-box';
+import { URL } from 'tools-box/url';
 import { Model } from './models';
 import { API_TYPES } from './types';
 import { State } from './state';
@@ -98,7 +98,7 @@ export class App {
           path = 'http' + (State.config.secure ? 's' : '') + '://';
           path += this.name.toLowerCase() + '.' + State.config.domain;
           path += '/' + service.path;      
-          path = TB.cleanPath(path);
+          path = URL.Clean(path);
         }
   
         if (service.apiType !== API_TYPES.REST)

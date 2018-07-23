@@ -1,5 +1,7 @@
 import * as express from 'express';
-import TB from 'tools-box';
+import { Unique } from 'tools-box/unique';
+import { capitalizeFirst } from 'tools-box/string';
+import { extend, getValue } from 'tools-box/object';
 import { State } from './state';
 import { Logger } from './misc/logger';
 import { Model } from './models';
@@ -117,7 +119,7 @@ export class Context {
       });
 
       let context = new Context(API_TYPES.SOCKET, {
-        rid: model.name === State.currentContext.model.name ? State.currentContext._rid : TB.Unique.Get(),
+        rid: model.name === State.currentContext.model.name ? State.currentContext._rid : Unique.Get(),
         headers: State.currentContext.headers,
         socket: State.currentContext._socket,
         query: State.currentContext.query,
@@ -351,7 +353,7 @@ export class Context {
 
   switchService(model: Model, serviceName: string, hooks: 'before' | 'after' | 'both' | 'none' = 'both', useOwnHooks: 0 | 1 | -1 = 0) {
     this.model = model;
-    this.service = (<any>this.model)[TB.capitalizeFirst(serviceName)];
+    this.service = (<any>this.model)[capitalizeFirst(serviceName)];
     let extraHooks;
 
     if (useOwnHooks !== 0)
@@ -364,7 +366,7 @@ export class Context {
   runService(model: Model, serviceName: string, data: IContextOptions = {}, user: any) {
     return new Promise((resolve, reject) => {
 
-      let service = (<any>model)[TB.capitalizeFirst(serviceName)];
+      let service = (<any>model)[capitalizeFirst(serviceName)];
 
       let context = new Context(this.apiType, {
         rid: model.name === this.model.name ? this._rid : null,
@@ -476,13 +478,14 @@ export class Context {
       }
 
       if (!users) {
-        if (this.apiType === API_TYPES.SOCKET && this._socket)
+        if (this.apiType === API_TYPES.SOCKET && this._socket) {
           for (let room of rooms) {
             this._socket[action](room || this.room);
             this.logger.info(`socket: ${this._socket.id} ${action}ed room: ${room || this.room}`);
-
-            return resolve(true);
           }
+
+          return resolve(true);
+        }
 
         reject({
           message: `invalid ${action} room options`,
@@ -735,7 +738,7 @@ function getReference(ctx: Context, name: string, hookName: string) {
       return ctx.cookies(parts[1]);
     else if (['headers', 'query', 'body', 'params', 'response'].indexOf(targetName) > -1) {
       parts.shift();
-      return TB.getValue((<any>ctx)[<string>targetName], parts.join('.'));
+      return getValue((<any>ctx)[<string>targetName], parts.join('.'));
     } else
       return name;
   }
@@ -749,7 +752,7 @@ function mimicService(name: string, options: IServiceOptions): IService {
     name
   };
 
-  TB.extend(service, options);
+  extend(service, options);
 
   return service;
 }

@@ -1,4 +1,4 @@
-import TB from 'tools-box';
+import { omit, pick } from 'tools-box/object';
 import { Context } from '../context';
 import { Logger } from '../misc/logger';
 
@@ -35,9 +35,9 @@ export function filter(ctx: Context, fields: string | string[], source?: string)
   logger.info('filtering data');
   if (Array.isArray(srcData))
     for (let i = 0; i < srcData.length; i++)
-      srcData[i] = TB[method](srcData[i], fields);
+      srcData[i] = method === "omit" ? omit(srcData[i], fields) : pick(srcData[i], fields);
   else
-    srcData = TB[method](srcData, fields);
+    srcData = method === "omit" ? omit(srcData, fields) : pick(srcData, fields);
 
   logger.info('done filtering');
   logger.debug(`result data:`);
